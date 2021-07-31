@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import interpolate
 
-from . import amath
+from vampire import amath
 
 
 def sample_contour(contour, num_sample_points):

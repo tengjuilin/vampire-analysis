@@ -4,7 +4,7 @@ from scipy import spatial
 from sklearn import preprocessing
 from sklearn.cluster import KMeans
 
-from . import amath
+from vampire import amath
 
 
 def pca_contours(contours):
