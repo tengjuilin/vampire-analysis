@@ -12,7 +12,7 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../vampire'))
+sys.path.insert(0, os.path.abspath('..'))
 
 
 # -- Project information -----------------------------------------------------
@@ -22,7 +22,7 @@ copyright = '2021, Teng-Jui Lin'
 author = 'Teng-Jui Lin'
 
 # The full version, including alpha/beta/rc tags
-release = '1.0'
+release = '0.0.1.dev5'
 
 
 # -- General configuration ---------------------------------------------------

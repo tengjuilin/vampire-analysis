@@ -2,7 +2,7 @@
 Analysis
 ========
 
-.. currentmodule:: analysis
+.. currentmodule:: vampire.analysis
 
 .. autosummary::
    :toctree: api/

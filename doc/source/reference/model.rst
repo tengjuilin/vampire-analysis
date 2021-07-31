@@ -2,7 +2,7 @@
 Model
 =====
 
-.. currentmodule:: model
+.. currentmodule:: vampire.model
 
 .. autosummary::
    :toctree: api/

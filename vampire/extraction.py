@@ -6,7 +6,7 @@ import pandas as pd
 from skimage import io
 from skimage.measure import regionprops_table
 
-from vampire import util
+from . import util
 
 
 def _is_filtered_img(filename, filter_info):

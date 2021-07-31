@@ -2,7 +2,7 @@
 Applied Math
 ============
 
-.. currentmodule:: amath
+.. currentmodule:: vampire.amath
 
 .. autosummary::
    :toctree: api/

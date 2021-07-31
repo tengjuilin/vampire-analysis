@@ -2,7 +2,7 @@
 Processing
 ==========
 
-.. currentmodule:: processing
+.. currentmodule:: vampire.processing
 
 .. autosummary::
    :toctree: api/

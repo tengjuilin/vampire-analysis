@@ -4,11 +4,11 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from vampire import analysis
-from vampire import extraction
-from vampire import plot
-from vampire import processing
-from vampire import util
+from . import analysis
+from . import extraction
+from . import plot
+from . import processing
+from . import util
 
 
 def _check_prohibited_char(text, input_type='path'):

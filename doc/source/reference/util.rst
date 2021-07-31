@@ -2,7 +2,7 @@
 Utility
 =======
 
-.. currentmodule:: util
+.. currentmodule:: vampire.util
 
 .. autosummary::
    :toctree: api/

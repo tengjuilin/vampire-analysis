@@ -2,7 +2,7 @@
 Extraction
 ==========
 
-.. currentmodule:: extraction
+.. currentmodule:: vampire.extraction
 
 .. autosummary::
    :toctree: api/

@@ -2,7 +2,7 @@
 Plot
 ====
 
-.. currentmodule:: plot
+.. currentmodule:: vampire.plot
 
 .. autosummary::
    :toctree: api/
