@@ -4,11 +4,11 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-import analysis
-import extraction
-import plot
-import processing
-import util
+from . import analysis
+from . import extraction
+from . import plot
+from . import processing
+from . import util
 
 
 def _check_prohibited_char(text, input_type='path'):
@@ -595,4 +595,4 @@ def my_test():
     print('done')
 
 
-my_test()
+# my_test()

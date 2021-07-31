@@ -4,14 +4,14 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="vampire",
-    version="0.0.dev1",
+    name="vampiremorph",
+    version="0.0.1.dev5",
     author="Teng-Jui Lin",
     author_email="lintengjui@outlook.com",
     description="Visually Aided Morpho-Phenotyping Image Recognition, a robust method to quantify cell morphological heterogeneity.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/tengjuilin/vampire",
+    url="https://github.com/tengjuilin/VAMPIRE",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
