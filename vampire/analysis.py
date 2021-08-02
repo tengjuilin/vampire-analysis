@@ -57,7 +57,6 @@ def pca_transform_contours(contours, mean_contour, principal_directions):
         in their principal directions, with shape (num_contours, 2*num_points).
 
     """
-
     mean_centered_contours = contours - mean_contour
     principal_components = mean_centered_contours @ principal_directions
     return principal_components
@@ -124,7 +123,7 @@ def assign_clusters_id(pc, contours, centroids, num_pc=20):
     contours : ndarray
         Object contours, with shape (num_contour, 2*num_points).
     centroids : ndarray
-        .Coordinates of cluster centers of K-means clusters.
+        Coordinates of cluster centers of K-means clusters.
     num_pc : int, optional
         Number of principal components used for approximation.
 

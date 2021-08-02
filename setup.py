@@ -5,18 +5,27 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="vampiremorph",
-    version="0.0.1.dev5",
+    version="0.0.1.dev6",
     author="Teng-Jui Lin",
     author_email="lintengjui@outlook.com",
     description="Visually Aided Morpho-Phenotyping Image Recognition, a robust method to quantify cell morphological heterogeneity.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/tengjuilin/VAMPIRE",
+    url="https://github.com/tengjuilin/vampire",
     packages=setuptools.find_packages(),
+    install_requires=[
+        'numpy',
+        'pandas',
+        'scipy',
+        'matplotlib',
+        'opencv-python',
+        'scikit-image',
+        'scikit-learn',
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.8',
 )

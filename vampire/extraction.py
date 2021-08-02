@@ -59,7 +59,7 @@ def _generate_file_paths(img_set_path, filter_info):
 
     """
     filter_tag = '_'.join(filter_info)
-    contours_pickle_path = os.path.join(img_set_path, f'boundary_coordinates__{filter_tag}.pickle')
+    contours_pickle_path = os.path.join(img_set_path, f'contour_coordinates__{filter_tag}.pickle')
     properties_csv_path = os.path.join(img_set_path, f'vampire_datasheet__{filter_tag}.csv')
     return contours_pickle_path, properties_csv_path
 

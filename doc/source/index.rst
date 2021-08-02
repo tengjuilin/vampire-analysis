@@ -9,6 +9,7 @@ Welcome to vampire's documentation!
 .. toctree::
    :maxdepth: 2
 
+   user/index
    reference/index
 
 
@@ -16,5 +17,4 @@ Indices and search
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`

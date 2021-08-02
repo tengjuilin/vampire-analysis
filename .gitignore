@@ -73,18 +73,13 @@ fabric.properties
 # Android studio 3.1+ serialized cache file
 .idea/caches/build_file_checksums.ser
 
-    © 2021 GitHub, Inc.
-    Terms
-    Privacy
-    Security
-    Status
-    Docs
+# Non-pycharm specific
+# Compiled python modules.
+*.pyc
 
-    Contact GitHub
-    Pricing
-    API
-    Training
-    Blog
-    About
+# Setuptools distribution folder.
+/dist/
 
-Loading complete
+# Python egg metadata, regenerated from source files by setuptools.
+/*.egg-info
+/*.egg
