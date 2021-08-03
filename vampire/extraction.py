@@ -38,32 +38,6 @@ def _is_filtered_img(filename, filter_info):
     return True
 
 
-def _generate_file_paths(img_set_path, filter_info):
-    """
-    Returns paths to contour ``pickle`` file and property ``csv`` file.
-
-    Parameters
-    ----------
-    img_set_path : str
-        Path to the directory of images to be analyzed.
-    filter_info : ndarray
-        Unique filter(s) of image filenames to be analyzed. Empty if no filter
-        needed.
-
-    Returns
-    -------
-    contours_pickle_path : str
-        Path to contour ``pickle`` file.
-    properties_csv_path : str
-        Path to property ``csv`` file.
-
-    """
-    filter_tag = '_'.join(filter_info)
-    contours_pickle_path = os.path.join(img_set_path, f'contour_coordinates__{filter_tag}.pickle')
-    properties_csv_path = os.path.join(img_set_path, f'vampire_datasheet__{filter_tag}.csv')
-    return contours_pickle_path, properties_csv_path
-
-
 def get_contour_from_object(object_img):
     """
     Returns x and y coordinates of the object contour.
@@ -153,7 +127,7 @@ def get_properties_from_image(img, filename, image_index, object_labels):
     properties = ('label', 'centroid', 'area', 'perimeter', 'major_axis_length', 'minor_axis_length')
     properties_df = pd.DataFrame(regionprops_table(img, properties=properties)).set_index('label')
     properties_df.rename(columns={'centroid-0': 'y', 'centroid-1': 'x'}, inplace=True)
-    properties_df['circularity'] = 4 * np.pi * properties_df['area'] * properties_df['perimeter'] ** 2
+    properties_df['circularity'] = 4 * np.pi * properties_df['area'] / properties_df['perimeter'] ** 2
     properties_df['aspect_ratio'] = np.nan_to_num(np.divide(properties_df['major_axis_length'],
                                                             properties_df['minor_axis_length']))
     # label each object
@@ -225,7 +199,7 @@ def write_contours(img_set_path, filter_info):
     # calculations
     contours, properties = get_info_from_folder(img_set_path, filter_info)
     # write the files
-    contours_pickle_path, properties_csv_path = _generate_file_paths(img_set_path, filter_info)
+    contours_pickle_path, properties_csv_path = util.generate_file_paths(img_set_path, filter_info)
     util.write_pickle(contours_pickle_path, contours)
     pd.concat(properties).to_csv(properties_csv_path)
     return contours
@@ -269,7 +243,7 @@ def extract_contours(img_set_path, filter_info):
         List of ndarray of contour coordinates.
 
     """
-    contours_pickle_path, properties_csv_path = _generate_file_paths(img_set_path, filter_info)
+    contours_pickle_path, properties_csv_path = util.generate_file_paths(img_set_path, filter_info)
     if os.path.exists(contours_pickle_path) and os.path.exists(properties_csv_path):
         print(f'Contour and properties data already exist in path: {img_set_path}')
         contours = read_contours(contours_pickle_path)

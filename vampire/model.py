@@ -500,7 +500,8 @@ def apply_model(img_set_path, model_path, output_path, img_set_name, filter_info
     contours, _ = processing.align_contours(contours, model_mean_registered_contour)
 
     principal_components = analysis.pca_transform_contours(contours, mean_aligned_contour, principal_directions)
-    apply_contours_df = analysis.assign_clusters_id(principal_components, contours, centroids, num_pc=20)
+    apply_contours_df, min_distance = analysis.assign_clusters_id(principal_components, contours, centroids, num_pc=20)
+    util.write_clusters_info(img_set_path, filter_info, apply_contours_df, min_distance)
 
     plot.set_plot_style()
     plot.plot_distribution_contour_dendrogram(build_contours_df, apply_contours_df, output_path, model_name, img_set_name)

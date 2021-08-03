@@ -22,5 +22,4 @@ Implementation Details
 .. autosummary::
    :toctree: api/
 
-   _generate_file_paths
    _is_filtered_img

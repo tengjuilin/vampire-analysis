@@ -129,16 +129,19 @@ def assign_clusters_id(pc, contours, centroids, num_pc=20):
 
     Returns
     -------
-    centroids : ndarray
-        Coordinates of cluster centers of K-means clusters.
+    contours_df : DataFrame
+        DataFrame of objects' contour coordinates with cluster id.
+    min_distance : ndarray
+        Distance of truncated principal components to the closest centroid.
 
     """
     # find closest centroid and get cluster id
     pc_truncated = pc[:, :num_pc]
     distance = spatial.distance.cdist(pc_truncated, centroids)
     cluster_id = np.argmin(distance, axis=1)
+    min_distance = np.min(distance, axis=1)
 
     # tag each object with cluster id
     contours_df = pd.DataFrame(contours)
     contours_df['cluster_id'] = cluster_id
-    return contours_df
+    return contours_df, min_distance

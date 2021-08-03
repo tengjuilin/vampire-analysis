@@ -9,3 +9,5 @@ Utility
 
    read_pickle
    write_pickle
+   generate_file_paths
+   write_clusters_info
