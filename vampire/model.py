@@ -92,10 +92,10 @@ def _build_models_parse_required_info(required_info):
     Returns
     -------
     img_set_path : str
-        Path to the image set(s) to be used to build model.
+        Path to the directory containing the image set(s) used to build model.
     output_path : str
         Path of the directory used to output model and figures. Defaults to
-        the path of the directory of each image set.
+        ``img_set_path``.
     model_name : str
         Name of the model. Defaults to time of function call.
     num_points : int
@@ -122,7 +122,7 @@ def _build_models_parse_required_info(required_info):
 
     # output_path
     if pd.isna(output_path):
-        output_path = os.path.normpath(os.path.dirname(img_set_path))  # default
+        output_path = os.path.normpath(img_set_path)  # default
     else:
         _check_prohibited_char(output_path)
         output_path = os.path.normpath(output_path)
@@ -191,12 +191,12 @@ def _apply_models_parse_required_info(required_info):
     Returns
     -------
     img_set_path : str
-        Path to the image set(s) to be used to apply the model.
+        Path to the directory containing the image set(s) used to apply model.
     model_path : str
         Path to the pickle file that stores model information.
     output_path : str
         Path of the directory used to output model and figures. Defaults to
-        the path of the directory of each image set.
+        ``img_set_path``.
     img_set_name : str
         Name of the image set being applied to.
         Defaults to time of function call.
@@ -238,7 +238,7 @@ def _apply_models_parse_required_info(required_info):
 
     # output_path
     if pd.isna(output_path):
-        output_path = os.path.normpath(os.path.dirname(img_set_path))
+        output_path = os.path.normpath(img_set_path)
     else:
         _check_prohibited_char(output_path)
         output_path = os.path.normpath(output_path)
@@ -304,7 +304,35 @@ def initialize_model(model_name, num_points, num_clusters):
     Returns
     -------
     model : dict
-        Contains information about the model.
+        Contains information about the model. See notes.
+
+    Notes
+    -----
+    The VAMPIRE model is contained the dict ``model``, which is stored
+    in a ``.pickle`` file named by the model name. The following can
+    properties can be accessed as attributes or keys.
+    For more information, see :ref:`the VAMPIRE model <the_vampire_model>`.
+
+    model_name : str
+        Name of the model (build image set).
+    num_point : int
+        Number of points used to describe the contour.
+    num_clusters : int
+        Number of cluster centers for K-means clustering.
+    num_pc : int
+        Number of principal components used after truncation.
+    mean_registered_contour : ndarray
+        Mean registered contour.
+    mean_aligned_contour : ndarray
+        Mean aligned contour.
+    principal_directions : ndarray
+        Principal direction of PCA.
+    centroids : ndarray
+        Cluster center in K-means clustering.
+    build_contours_df : DataFrame
+        DataFrame of objects' contour coordinates with cluster id.
+
+
 
     """
     model = {
@@ -328,10 +356,10 @@ def build_model(img_set_path, output_path, model_name, num_points, num_clusters,
     Parameters
     ----------
     img_set_path : str
-        Path to the image set(s) to be used to build model.
+        Path to the directory containing the image set(s) used to build model.
     output_path : str
         Path of the directory used to output model and figures. Defaults to
-        the path of the directory of each image set.
+        ``img_set_path``.
     model_name : str
         Name of the model. Defaults to time of function call.
     num_points : int
@@ -389,8 +417,9 @@ def build_models(img_info_df, random_state=None):
 
     Notes
     -----
-    Learn more about :ref:`details of input requirement and examples here
-    <basics.broadcasting>`. Below is a general description.
+    Learn more about :ref:`basics <build_basics>` and
+    :ref:`advanced <build_advanced>` input requirement
+    and examples. Below is a general description.
 
     .. rubric:: **Required columns of** ``img_info_df`` **(col 1-5)**
 
@@ -398,10 +427,10 @@ def build_models(img_info_df, random_state=None):
     required columns of
 
     img_set_path : str
-        Path to the image set(s) to be used to build model.
-    output_path : str, default
+        Path to the directory containing the image set(s) used to build model.
+    output_path : str
         Path of the directory used to output model and figures. Defaults to
-        the path of the directory of each image set.
+        ``img_set_path``.
     model_name : str, default
         Name of the model. Defaults to time of function call.
     num_points : int, default
@@ -466,12 +495,12 @@ def apply_model(img_set_path, model_path, output_path, img_set_name, filter_info
     Parameters
     ----------
     img_set_path : str
-        Path to the image set(s) to be used to build model.
+        Path to the directory containing the image set(s) used to apply model.
     model_path : str
         Path to the pickle file that stores model information.
     output_path : str
         Path of the directory used to output model and figures. Defaults to
-        the path of the directory of each image set.
+        ``img_set_path``.
     img_set_name : str
         Name of the image set being applied to.
         Defaults to time of function call.
@@ -519,8 +548,9 @@ def apply_models(img_info_df):
 
     Notes
     -----
-    Learn more about :ref:`details of input requirement and examples here
-    <basics.broadcasting>`. Below is a general description.
+    Learn more about :ref:`basics <apply_basics>` and
+    :ref:`advanced <apply_advanced>` input requirement
+    and examples. Below is a general description.
 
     .. rubric:: **Required columns of** ``img_info_df`` **(col 1-4)**
 
@@ -528,12 +558,12 @@ def apply_models(img_info_df):
     required columns of
 
     img_set_path : str
-        Path to the image set(s) to be used to build model.
+        Path to the directory containing the image set(s) used to apply model.
     model_path : str
         Path to the pickle file that stores model information.
     output_path : str
         Path of the directory used to output model and figures. Defaults to
-        the path of the directory of each image set.
+        ``img_set_path``.
     img_set_name : str, default
         Name of the image set being applied to.
         Defaults to time of function call.

@@ -8,3 +8,7 @@ User Guide
    installation
    build_basics
    apply_basics
+   build_advanced
+   apply_advanced
+   vampire_model
+   release

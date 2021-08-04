@@ -81,8 +81,8 @@ def cluster_contours(pc, contours, num_clusters=5, num_pc=20, random_state=None)
 
     Returns
     -------
-    contours_df : DataFrame
-        DataFrame of objects' contour coordinates with cluster id.
+    contours_df : DataFrameDataFrame of objects' contour coordinates with cluster id.
+
     centroids : ndarray
         Coordinates of cluster centers of K-means clusters.
 

@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to vampire's documentation!
-===================================
+``vampire-analysis`` documentation
+==================================
 
 .. toctree::
    :maxdepth: 2
@@ -13,8 +13,6 @@ Welcome to vampire's documentation!
    reference/index
 
 
-Indices and search
-==================
 
-* :ref:`genindex`
-* :ref:`search`
+- :ref:`genindex`
+- :ref:`search`

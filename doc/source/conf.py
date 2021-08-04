@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'vampire'
+project = 'vampire-analysis'
 copyright = '2021, Teng-Jui Lin'
 author = 'Teng-Jui Lin'
 
@@ -31,7 +31,7 @@ release = '0.0.1.dev5'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc',
-              # 'sphinx.ext.napoleon',
+              # 'sphinx.ext.napoleon',  # use numpydoc instead
               'numpydoc',
               'sphinx.ext.autosummary',
               'sphinx.ext.intersphinx']

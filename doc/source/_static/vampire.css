@@ -19,18 +19,19 @@ pre, code {
 }
 
 h1 {
+  font-family: "Lato", sans-serif;
   color: #013243; /* warm black */
 }
 
 
 h2 {
+  font-family: "Lato", sans-serif;
   color: #4d77cf; /* han blue */
-  letter-spacing: -.03em;
 }
 
 h3 {
+  font-family: "Lato", sans-serif;
   color: #013243; /* warm black */
-  letter-spacing: -.03em;
 }
 
 /* Override some aspects of the pydata-sphinx-theme: taken from Pandas */

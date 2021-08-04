@@ -1,8 +1,13 @@
+.. _apply_basics:
+
 Apply Models: The Basics
 ========================
 
 In this section, we provide a basic example of applying VAMPIRE models
 by
+
+-  understanding information used to apply model
+-  apply model using ``vampire.model.apply_models``
 
 Directory structure
 -------------------
@@ -173,4 +178,4 @@ Conclusion
 
 Congratulations! We have applied our first VAMPIRE model to two image sets.
 Next, we’ll look at some advanced options when specifying image set
-information.
+information for building models.

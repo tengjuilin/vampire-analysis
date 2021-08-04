@@ -1,3 +1,5 @@
+.. _build_basics:
+
 Build Models: The Basics
 ========================
 
@@ -90,6 +92,8 @@ example, we have
 
 Be sure to save and close the file to avoid potential permission error
 in future steps.
+
+.. _build_basics_building_models:
 
 Building models
 ---------------
