@@ -28,7 +28,7 @@ def pca_contours(contours):
 
     See Also
     --------
-    amath.pca : Implementation of principal component analysis.
+    vampire.amath.pca : Implementation of principal component analysis.
 
     """
     principal_directions, principal_components, variance = amath.pca(contours, 'eig')

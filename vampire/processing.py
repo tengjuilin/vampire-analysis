@@ -298,7 +298,7 @@ def align_contour(contour, mean_contour):
 
     See Also
     --------
-    amath.get_rotation_matrix : Find rotation matrix by Kabsch algorithm.
+    vampire.amath.get_rotation_matrix : Find rotation matrix by Kabsch algorithm.
 
     Notes
     -----
