@@ -12,7 +12,7 @@ from . import util
 
 
 def _check_prohibited_char(text, input_type='path'):
-    """
+    r"""
     Checks if path contains characters prohibited by the operating system.
 
     Parameters
@@ -331,8 +331,6 @@ def initialize_model(model_name, num_points, num_clusters):
         Cluster center in K-means clustering.
     build_contours_df : DataFrame
         DataFrame of objects' contour coordinates with cluster id.
-
-
 
     """
     model = {

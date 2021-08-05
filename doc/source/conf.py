@@ -22,7 +22,7 @@ copyright = '2021, Teng-Jui Lin'
 author = 'Teng-Jui Lin'
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.1.dev5'
+release = '0.0.1.dev8'
 
 
 # -- General configuration ---------------------------------------------------
@@ -34,7 +34,8 @@ extensions = ['sphinx.ext.autodoc',
               # 'sphinx.ext.napoleon',  # use numpydoc instead
               'numpydoc',
               'sphinx.ext.autosummary',
-              'sphinx.ext.intersphinx']
+              'sphinx.ext.intersphinx',
+              'sphinx.ext.viewcode']
 
 autosummary_generate = True
 

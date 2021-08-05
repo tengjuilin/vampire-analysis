@@ -12,3 +12,4 @@ User Guide
    apply_advanced
    vampire_model
    release
+   license
