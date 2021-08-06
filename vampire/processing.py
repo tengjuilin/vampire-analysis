@@ -385,6 +385,8 @@ def align_contours(contours, mean_contour):
     -------
     aligned_contours_flat : ndarray
         Flattened aligned contours, with shape (num_contours, 2*num_points).
+    mean_contour_flat : ndarray
+        Flattened mean contours, with size 2*num_points.
 
     See Also
     --------

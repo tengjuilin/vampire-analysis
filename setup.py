@@ -1,14 +1,14 @@
 import setuptools
 
-with open("README.md", "r") as fh:
+with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="vampire-analysis",
-    version="0.0.1.dev8",
+    version="0.0.1.dev10",
     author="Teng-Jui Lin",
     author_email="lintengjui@outlook.com",
-    description="Visually Aided Morpho-Phenotyping Image Recognition, a robust method to quantify cell morphological heterogeneity.",
+    description="VAMPIRE (Visually Aided Morpho-Phenotyping Image Recognition) analysis quantifies and visualizes heterogeneity of cell and nucleus morphology.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/tengjuilin/vampire-analysis",

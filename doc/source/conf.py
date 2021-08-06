@@ -22,7 +22,7 @@ copyright = '2021, Teng-Jui Lin'
 author = 'Teng-Jui Lin'
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.1.dev8'
+release = '0.0.1.dev10'
 
 
 # -- General configuration ---------------------------------------------------
@@ -54,6 +54,9 @@ exclude_patterns = []
 # a list of builtin themes.
 #
 html_theme = 'pydata_sphinx_theme'
+html_theme_options = {
+  "github_url": "https://github.com/tengjuilin/vampire-analysis",
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

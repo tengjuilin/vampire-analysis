@@ -1,2 +1,139 @@
 ``vampire-analysis`` 0.0.1 Release Notes
 ========================================
+
+``vampire-analysis`` is a package based on ``vampireanalysis`` GUI
+(https://doi.org/10.1038/s41596-020-00432-x). The algorithmic operations
+are isolated from the GUI component and grouped into modules to
+encourage reuse and improve reproducibility. With extensive
+documentation and tutorial, ``vampire-analysis`` provides a flexible
+alternative to the GUI.
+
+Changes
+-------
+
+Interface changes from GUI to package
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``vampire-analysis`` provides package API instead of graphical user
+interface (GUI).
+
+Model information stored in files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Information used to build and apply model are now stored in a ``.csv``
+or ``.xlsx`` file or in a ``DataFrame``, instead of being manually
+inputted when prompted by GUI.
+
+.. seealso::
+
+    :func:`vampire.model.build_models`
+
+    :func:`vampire.model.apply_models`
+
+New Features
+------------
+
+Option for random state
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Option for random state of K-means clustering and plotting
+representative contours are now to the user for reproducible testing.
+
+.. seealso::
+
+    :func:`vampire.analysis.cluster_contours`
+
+    :func:`vampire.plot.plot_representatives`
+
+AND filtering of image
+~~~~~~~~~~~~~~~~~~~~~~
+
+Image filename can be screened using AND filtering when building and
+applying models with optional columns, being more flexible than tags.
+
+.. seealso::
+
+    :func:`vampire.model.build_models`
+
+    :func:`vampire.model.apply_models`
+
+New PCA implementation
+~~~~~~~~~~~~~~~~~~~~~~
+
+Principal component analysis is widely used in this package. PCA is
+implemented using singular value decomposition (SVD) and
+eigen-decomposition, depending on the input matrix. The implementation
+is faster than the past and ``sklearn``.
+
+.. seealso::
+
+    :func:`vampire.amath.pca`
+
+More plotting options
+~~~~~~~~~~~~~~~~~~~~~
+
+The package comes with plotting of shape mode distribution, dengrogram,
+and mean shape mode, in the form of isolated plots and combined plots.
+
+.. seealso::
+
+    :func:`vampire.plot.plot_distribution_contour_dendrogram`
+
+Improvements
+------------
+
+Defaults for model parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Parameters such as ``output_path``, ``model_name``, ``num_points``, and
+``num_clusters`` are given default values. Default values are used when
+corresponding value is left black in ``.csv``/``.xlsx`` or being
+``None``/``np.NaN`` in ``DataFrame``.
+
+.. seealso::
+
+    :func:`vampire.model.build_models`
+
+Performance Improvements
+------------------------
+
+For an image set of 221 images that contains 11173 segmented cells, the
+performance is as follows:
+
++------------------------------+------------------+------------------+
+|                              | Build model [s]  | Apply model [s]  |
++==============================+==================+==================+
+| ``vampireanalysis`` GUI      | 517              | 98               |
++------------------------------+------------------+------------------+
+| ``vampire-analysis`` package | 80               | 26               |
++------------------------------+------------------+------------------+
+| Improvement                  | 85% faster       | 73% faster       |
++------------------------------+------------------+------------------+
+
+
+TODO
+----
+
+The very first release of ``vampire-analysis`` aims to reproduce the
+result of the ``vampireanalysis`` GUI. There are a few improvements that
+can be made in future releases.
+
+Flexible ``num_pc``
+~~~~~~~~~~~~~~~~~~~
+
+Currently, the number of principal component used, ``num_pc`` is
+hardcoded as 20, as seen in the GUI implementation. Ideally, the value
+should change based on the explained variance of the principal
+components, as described in the paper.
+
+We could also allow the option for user input ``num_pc``, where integer
+in the range (0, 2*num_points] specifies the truncation, and float in
+the range (0, 1) specifies the percent total variance captured.
+
+Scree plot for PCA
+~~~~~~~~~~~~~~~~~~
+
+When using principal component analysis, we usually need scree plot to
+observe the amount of variance captured in the top few principal
+components. Support for plotting scree plot and incorporation into the
+API is needed.
