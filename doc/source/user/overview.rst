@@ -1,7 +1,7 @@
 Overview
 ========
 
-|GitHub| |Documentation Status| |GitHub all releases|
+|GitHub| |Documentation Status| |PyPI|
 
 VAMPIRE (Visually Aided Morpho-Phenotyping Image Recognition) analysis
 quantifies and visualizes heterogeneity of cell and nucleus morphology
@@ -86,4 +86,4 @@ References
 .. |GitHub| image:: https://img.shields.io/github/license/tengjuilin/vampire-analysis
 .. |Documentation Status| image:: https://readthedocs.org/projects/vampire/badge/?version=latest
    :target: https://vampire.readthedocs.io/en/latest/?badge=latest
-.. |GitHub all releases| image:: https://img.shields.io/github/downloads/tengjuilin/vampire-analysis/total
+.. |PyPI| image:: https://img.shields.io/pypi/v/vampire-analysis

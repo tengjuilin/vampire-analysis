@@ -2,7 +2,7 @@
 
 ![GitHub](https://img.shields.io/github/license/tengjuilin/vampire-analysis)
 [![Documentation Status](https://readthedocs.org/projects/vampire/badge/?version=latest)](https://vampire.readthedocs.io/en/latest/?badge=latest)
-![GitHub all releases](https://img.shields.io/github/downloads/tengjuilin/vampire-analysis/total)
+![PyPI](https://img.shields.io/pypi/v/vampire-analysis)
 
 VAMPIRE (Visually Aided Morpho-Phenotyping Image Recognition) analysis quantifies and visualizes heterogeneity of cell and nucleus morphology [1]. It is used widely in analyzing microglial shape change in response to oxygen-glucose deprivation [2] and morphological changes in cancer metastasis [3].
 
