@@ -17,13 +17,13 @@ VAMPIRE (Visually Aided Morpho-Phenotyping Image Recognition) analysis quantifie
 
 See documentation for [detailed installation guide](https://vampire.readthedocs.io/en/latest/user/installation.html). If Python is installed on your machine, type the following line into your command prompt to install via [PyPI](https://pypi.org/project/vampire-analysis/):
 
-```
+```bash
 pip install vampire-analysis
 ```
 
 ## Getting started
 
-See documentation for detailed guide for basics of [building]([file:///C:/Files/UniversityofWashington/_nance-lab/projects/VAMPIRE%20Package/doc/build/html/user/build_basics.html](https://vampire.readthedocs.io/en/latest/user/build_basics.html)) and [applying]([file:///C:/Files/UniversityofWashington/_nance-lab/projects/VAMPIRE%20Package/doc/build/html/user/apply_basics.html](https://vampire.readthedocs.io/en/latest/user/apply_basics.html)) models. If you have `build.xlsx` under `C:\vampire` containing the build image set information, you can build the model with
+See documentation for detailed guide for basics of [building](https://vampire.readthedocs.io/en/latest/user/build_basics.html) and [applying](https://vampire.readthedocs.io/en/latest/user/apply_basics.html) models. If you have `build.xlsx` under `C:\vampire` containing the build image set information, you can build the model with
 
 ```python
 >>> import pandas as pd  # used to read excel files
@@ -44,9 +44,8 @@ Flexible options are provided for [building](https://vampire.readthedocs.io/en/l
 
 ## References
 
-[1] Phillip, J.M., Han, KS., Chen, WC. et al. A robust unsupervised machine-learning method to quantify the morphological heterogeneity of cells and nuclei. *Nat Protoc* **16**, 754–774 (2021). https://doi.org/10.1038/s41596-020-00432-x
+[1] Phillip, J.M., Han, KS., Chen, WC. et al. A robust unsupervised machine-learning method to quantify the morphological heterogeneity of cells and nuclei. *Nat Protoc* **16**, 754–774 (2021). <https://doi.org/10.1038/s41596-020-00432-x>
 
-[2]  Joseph, A, Liao, R, Zhang, M, et al. Nanoparticle-microglial interaction in the ischemic brain is modulated by injury duration and treatment. *Bioeng Transl Med.* 2020; 5:e10175. https://doi.org/10.1002/btm2.10175
+[2]  Joseph, A, Liao, R, Zhang, M, et al. Nanoparticle-microglial interaction in the ischemic brain is modulated by injury duration and treatment. *Bioeng Transl Med.* 2020; 5:e10175. <https://doi.org/10.1002/btm2.10175>
 
-[3] Wu, PH., Phillip, J., Khatau, S. et al. Evolution of cellular morpho-phenotypes in cancer metastasis. *Sci Rep* **5**, 18437 (2016). https://doi.org/10.1038/srep18437
-
+[3] Wu, PH., Phillip, J., Khatau, S. et al. Evolution of cellular morpho-phenotypes in cancer metastasis. *Sci Rep* **5**, 18437 (2016). <https://doi.org/10.1038/srep18437>
