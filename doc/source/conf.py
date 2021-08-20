@@ -22,7 +22,7 @@ copyright = '2021, Teng-Jui Lin'
 author = 'Teng-Jui Lin'
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.1.dev10'
+release = '0.0.1'
 
 
 # -- General configuration ---------------------------------------------------
