@@ -7,7 +7,6 @@ install:
   - pip install numpy
   - pip install scipy
   - pip install matplotlib
-  - pip install numpydoc
   - pip install opencv-python
   - pip install pandas
   - pip install pytest
