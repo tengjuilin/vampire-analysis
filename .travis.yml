@@ -1,10 +1,11 @@
 language: python
 python:
   - '3.8'
+os: windows
 
 # command to install dependencies
 install:
-  - pip install numpy==1.12.1
+  - pip install numpy
   - pip install scipy
   - pip install matplotlib
   - pip install opencv-python
