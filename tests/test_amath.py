@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from numpy import testing
+from numpy.testing import assert_allclose
 
 from vampire import amath
 
@@ -14,7 +14,7 @@ from vampire import amath
      np.array([[1.375, -33.25], [-10.125, 105.35], [9.375, -38.65], [-0.625, -33.45]])),
 ])
 def test_mean_center(A, expected):
-    testing.assert_allclose(amath.mean_center(A), expected)
+    assert_allclose(amath.mean_center(A), expected)
 
 
 @pytest.mark.parametrize('A, expected_V, expected_T, expected_d', [
@@ -38,9 +38,9 @@ def test_mean_center(A, expected):
 ])
 def test__pca_svd(A, expected_V, expected_T, expected_d):
     V, T, d = amath._pca_svd(A)
-    testing.assert_allclose(V, expected_V, atol=1e-7)
-    testing.assert_allclose(T, expected_T, atol=1e-7)
-    testing.assert_allclose(d, expected_d, atol=1e-7)
+    assert_allclose(np.abs(V), np.abs(expected_V), atol=1e-7)
+    assert_allclose(np.abs(T), np.abs(expected_T), atol=1e-7)
+    assert_allclose(d, expected_d, atol=1e-7)
 
 
 @pytest.mark.parametrize('A, expected_V, expected_T, expected_d', [
@@ -64,9 +64,9 @@ def test__pca_svd(A, expected_V, expected_T, expected_d):
 ])
 def test__pca_eig(A, expected_V, expected_T, expected_d):
     V, T, d = amath._pca_eig(A)
-    testing.assert_allclose(V, expected_V, atol=1e-7)
-    testing.assert_allclose(T, expected_T, atol=1e-7)
-    testing.assert_allclose(d, expected_d, atol=1e-7)
+    assert_allclose(np.abs(V), np.abs(expected_V), atol=1e-7)
+    assert_allclose(np.abs(T), np.abs(expected_T), atol=1e-7)
+    assert_allclose(d, expected_d, atol=1e-7)
 
 
 @pytest.mark.parametrize('A, B, expected', [
@@ -78,4 +78,4 @@ def test__pca_eig(A, expected_V, expected_T, expected_d):
      np.array([[0.776114, 0.63059263], [-0.63059263, 0.776114]])),
 ])
 def test_get_rotation_matrix(A, B, expected):
-    testing.assert_allclose(amath.get_rotation_matrix(A, B), expected)
+    assert_allclose(amath.get_rotation_matrix(A, B), expected)
