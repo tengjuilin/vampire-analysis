@@ -1,18 +1,10 @@
 language: python
 python:
   - '3.8'
-os: windows
 
 # command to install dependencies
 install:
-  - pip install numpy
-  - pip install scipy
-  - pip install matplotlib
-  - pip install opencv-python
-  - pip install pandas
-  - pip install pytest
-  - pip install scikit-image
-  - pip install scikit-learn
+  - pip install -r requirements.txt
 
 # command to run tests
 script:
