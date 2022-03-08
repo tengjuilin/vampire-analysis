@@ -262,7 +262,6 @@ def test_apply_model(img_set_path, model_path, output_path,
                                     empty_filter,
                                     write_csv=False,
                                     savefig=False)
-    # util.write_pickle(r'data/quickstart/apply_model.pickle', actual)
     actual_write = read_abs_pickle(r'data/quickstart/output/apply-properties_quickstart-test_on_quickstart-test__.pickle')
     expected = apply_model_df
     assert_frame_equal(actual, expected)

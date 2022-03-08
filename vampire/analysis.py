@@ -228,7 +228,7 @@ def hierarchical_cluster_contour(labeled_contours_df):
     linkage_matrix = cluster.hierarchy.linkage(pair_distance, method='complete')
     branches = cluster.hierarchy.dendrogram(linkage_matrix,
                                             p=0,
-                                            truncate_mode='mlab',
+                                            truncate_mode='lastp',
                                             orientation='bottom',
                                             above_threshold_color='k')
     return pair_distance, linkage_matrix, branches

@@ -16,6 +16,10 @@ def assert_list_equal(actual, expected):
         assert_equal(actual[i], expected[i])
 
 
-def read_abs_pickle(path):
-    abs_path = os.path.join(os.path.dirname(__file__), path)
+def get_abs_path(rel_path):
+    return os.path.join(os.path.dirname(__file__), rel_path)
+
+
+def read_abs_pickle(rel_path):
+    abs_path = get_abs_path(rel_path)
     return util.read_pickle(abs_path)

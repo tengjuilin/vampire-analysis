@@ -85,9 +85,9 @@ def color_img(img, background=0, cmap=None, background_color=None):
 
     """
     if cmap is None:
-        cmap = plt.get_cmap('twilight')
+        cmap = plt.get_cmap('twilight').copy()
     else:
-        cmap = plt.get_cmap(cmap)
+        cmap = plt.get_cmap(cmap).copy()
     if background_color is None:
         cmap.set_bad(color='white')
     else:

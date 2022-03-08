@@ -114,7 +114,6 @@ def test_get_labeled_contours_df(aligned_contours_flat,
 
 def test_get_mean_cluster_contours(labeled_contours_df):
     actual = analysis.get_mean_cluster_contours(labeled_contours_df)
-    # util.write_pickle('data/analysis/mean_cluster_contours.pickle', actual)
     expected = read_abs_pickle('data/analysis/mean_cluster_contours.pickle')
     assert_allclose(actual, expected)
 

@@ -5,17 +5,17 @@ from pandas.testing import assert_frame_equal
 from skimage import measure
 
 from vampire import extraction
-from vampire.tests.testing import assert_list_allclose, read_abs_pickle
+from vampire.tests.testing import assert_list_allclose, read_abs_pickle, get_abs_path
 
 
 @pytest.fixture
 def img1():
-    return measure.label((np.load(r'data/real_img/img1.npy')))
+    return measure.label((np.load(get_abs_path(r'data/real_img/img1.npy'))))
 
 
 @pytest.fixture
 def img2():
-    return measure.label((np.load(r'data/real_img/img2.npy')))
+    return measure.label((np.load(get_abs_path(r'data/real_img/img2.npy'))))
 
 
 @pytest.fixture
