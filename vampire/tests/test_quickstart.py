@@ -7,8 +7,7 @@ from numpy.testing import assert_array_equal
 from pandas.testing import assert_frame_equal
 
 from vampire import quickstart
-from vampire import util
-from vampire.tests.testing import assert_list_equal
+from vampire.tests.testing import assert_list_equal, read_abs_pickle
 
 
 @pytest.fixture
@@ -91,7 +90,7 @@ def model_path():
 
 @pytest.fixture
 def built_model(model_path):
-    return util.read_pickle(model_path)
+    return read_abs_pickle(model_path)
 
 
 @pytest.fixture
@@ -113,7 +112,7 @@ def apply_required_info(apply_img_info_df):
 
 @pytest.fixture
 def apply_model_df():
-    return util.read_pickle('data\\quickstart\\apply_model.pickle')
+    return read_abs_pickle('data\\quickstart\\apply_model.pickle')
 
 
 def test__check_prohibited_char():
@@ -216,7 +215,7 @@ def test_build_model(img_set_path, output_path, model_name,
                                     empty_filter,
                                     random_state=random_state,
                                     savefig=False)
-    actual_write = util.read_pickle(r'data/quickstart/output/model_quickstart-test__.pickle')
+    actual_write = read_abs_pickle(r'data/quickstart/output/model_quickstart-test__.pickle')
     expected = built_model
     assert actual == actual_write
     assert actual == expected
@@ -228,7 +227,7 @@ def test_build_models(build_img_info_df, random_state,
     quickstart.build_models(build_img_info_df,
                             random_state=random_state,
                             savefig=False)
-    actual_write = util.read_pickle(r'data/quickstart/output/model_quickstart-test__img.pickle')
+    actual_write = read_abs_pickle(r'data/quickstart/output/model_quickstart-test__img.pickle')
     expected = built_model
     assert actual_write == expected
 
@@ -264,7 +263,7 @@ def test_apply_model(img_set_path, model_path, output_path,
                                     write_csv=False,
                                     savefig=False)
     # util.write_pickle(r'data/quickstart/apply_model.pickle', actual)
-    actual_write = util.read_pickle(r'data/quickstart/output/apply-properties_quickstart-test_on_quickstart-test__.pickle')
+    actual_write = read_abs_pickle(r'data/quickstart/output/apply-properties_quickstart-test_on_quickstart-test__.pickle')
     expected = apply_model_df
     assert_frame_equal(actual, expected)
     assert_frame_equal(actual, actual_write)
@@ -275,6 +274,6 @@ def test_apply_models(apply_img_info_df, apply_model_df):
     quickstart.apply_models(apply_img_info_df,
                             write_csv=False,
                             savefig=False)
-    actual_write = util.read_pickle(r'data/quickstart/output/apply-properties_quickstart-test_on_quickstart-test__img.pickle')
+    actual_write = read_abs_pickle(r'data/quickstart/output/apply-properties_quickstart-test_on_quickstart-test__img.pickle')
     expected = apply_model_df
     assert_frame_equal(actual_write, expected)

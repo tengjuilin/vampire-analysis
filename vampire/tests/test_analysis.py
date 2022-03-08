@@ -4,33 +4,31 @@ from numpy.testing import assert_allclose
 from pandas.testing import assert_frame_equal
 
 from vampire import analysis
-from vampire import util
-from vampire.tests.testing import assert_list_allclose
-
+from vampire.tests.testing import assert_list_allclose, read_abs_pickle
 
 @pytest.fixture
 def aligned_contours_flat():
-    return util.read_pickle('data/processing/align_contours.pickle')
+    return read_abs_pickle('data/processing/align_contours.pickle')
 
 
 @pytest.fixture
 def mean_aligned_contour_flat():
-    return util.read_pickle('data/processing/get_mean_aligned_contour.pickle')
+    return read_abs_pickle('data/processing/get_mean_aligned_contour.pickle')
 
 
 @pytest.fixture
 def pca_contour():
-    return util.read_pickle('data/analysis/pca_contours.pickle')
+    return read_abs_pickle('data/analysis/pca_contours.pickle')
 
 
 @pytest.fixture
 def principal_components():
-    return util.read_pickle('data/analysis/pca_transform_contours.pickle')
+    return read_abs_pickle('data/analysis/pca_transform_contours.pickle')
 
 
 @pytest.fixture
 def cluster_contours_info():
-    return util.read_pickle('data/analysis/cluster_contours.pickle')
+    return read_abs_pickle('data/analysis/cluster_contours.pickle')
 
 
 @pytest.fixture
@@ -45,12 +43,12 @@ def centroids(cluster_contours_info):
 
 @pytest.fixture
 def labeled_contours_df(cluster_contours_info):
-    return util.read_pickle('data/analysis/labeled_contours_df.pickle')
+    return read_abs_pickle('data/analysis/labeled_contours_df.pickle')
 
 
 @pytest.fixture
 def hierarchical_cluster_contour(cluster_contours_info):
-    return util.read_pickle('data/analysis/hierarchical_cluster_contour.pickle')
+    return read_abs_pickle('data/analysis/hierarchical_cluster_contour.pickle')
 
 
 @pytest.fixture
@@ -65,7 +63,7 @@ def object_index():
 
 @pytest.fixture
 def applied_contours_df():
-    return util.read_pickle('data/analysis/assign_clusters_id.pickle')
+    return read_abs_pickle('data/analysis/assign_clusters_id.pickle')
 
 
 def test_pca_contours(aligned_contours_flat, pca_contour):
@@ -117,7 +115,7 @@ def test_get_labeled_contours_df(aligned_contours_flat,
 def test_get_mean_cluster_contours(labeled_contours_df):
     actual = analysis.get_mean_cluster_contours(labeled_contours_df)
     # util.write_pickle('data/analysis/mean_cluster_contours.pickle', actual)
-    expected = util.read_pickle('data/analysis/mean_cluster_contours.pickle')
+    expected = read_abs_pickle('data/analysis/mean_cluster_contours.pickle')
     assert_allclose(actual, expected)
 
 
@@ -144,12 +142,12 @@ def test_get_distribution(applied_contours_df):
 def test_reorder_clusters(cluster_id_df, object_index):
     actual = analysis.reorder_clusters(cluster_id_df['cluster_id'],
                                        object_index)
-    expected = util.read_pickle('data/analysis/reordered_cluster.pickle')
+    expected = read_abs_pickle('data/analysis/reordered_cluster.pickle')
     assert_allclose(actual, expected)
 
 
 def test_reorder_centroids(centroids, object_index):
     actual = analysis.reorder_centroids(centroids,
                                         object_index)
-    expected = util.read_pickle('data/analysis/reordered_centroids.pickle')
+    expected = read_abs_pickle('data/analysis/reordered_centroids.pickle')
     assert_allclose(actual, expected)

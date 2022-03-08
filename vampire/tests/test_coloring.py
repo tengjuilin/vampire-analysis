@@ -5,7 +5,7 @@ from skimage import measure
 
 from vampire import coloring
 from vampire import util
-from vampire.tests.testing import assert_list_allclose
+from vampire.tests.testing import assert_list_allclose, read_abs_pickle
 
 
 @pytest.fixture
@@ -25,7 +25,7 @@ def img_set(img1, img2):
 
 @pytest.fixture
 def apply_properties_df():
-    return util.read_pickle(r'data/model/Vampire_apply.pickle')
+    return read_abs_pickle(r'data/model/Vampire_apply.pickle')
 
 
 @pytest.fixture
@@ -40,17 +40,17 @@ def img2_df(apply_properties_df):
 
 @pytest.fixture
 def labeled_img1():
-    return util.read_pickle(r'data/coloring/label_img_1.pickle')
+    return read_abs_pickle(r'data/coloring/label_img_1.pickle')
 
 
 @pytest.fixture
 def labeled_img2():
-    return util.read_pickle(r'data/coloring/label_img_2.pickle')
+    return read_abs_pickle(r'data/coloring/label_img_2.pickle')
 
 
 @pytest.fixture
 def labeled_imgs():
-    return util.read_pickle(r'data/coloring/label_imgs.pickle')
+    return read_abs_pickle(r'data/coloring/label_imgs.pickle')
 
 
 def test_label_img(img1, img2, img1_df, img2_df, labeled_img1, labeled_img2):
@@ -72,9 +72,9 @@ def test_label_imgs(img_set, apply_properties_df, labeled_imgs):
 def test_color_img(labeled_img1, labeled_img2):
     # only test output colors, fig is hard to test
     _, _, actual = coloring.color_img(labeled_img1)
-    expected = util.read_pickle('data/coloring/color_img_1.pickle')
+    expected = read_abs_pickle('data/coloring/color_img_1.pickle')
     assert_allclose(actual, expected)
 
     _, _, actual = coloring.color_img(labeled_img2)
-    expected = util.read_pickle('data/coloring/color_img_2.pickle')
+    expected = read_abs_pickle('data/coloring/color_img_2.pickle')
     assert_allclose(actual, expected)

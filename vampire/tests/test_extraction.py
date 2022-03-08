@@ -5,8 +5,7 @@ from pandas.testing import assert_frame_equal
 from skimage import measure
 
 from vampire import extraction
-from vampire import util
-from vampire.tests.testing import assert_list_allclose
+from vampire.tests.testing import assert_list_allclose, read_abs_pickle
 
 
 @pytest.fixture
@@ -199,27 +198,27 @@ def test_get_img_set(img_set_path, empty_filter):
 
 def test_extract_contour_from_object(img1, img2):
     actual = extraction.extract_contour_from_object(img1)
-    expected = util.read_pickle('data/extraction/extract_contour_from_object_1.pickle')
+    expected = read_abs_pickle('data/extraction/extract_contour_from_object_1.pickle')
     assert_allclose(actual, expected)
 
     actual = extraction.extract_contour_from_object(img2)
-    expected = util.read_pickle('data/extraction/extract_contour_from_object_2.pickle')
+    expected = read_abs_pickle('data/extraction/extract_contour_from_object_2.pickle')
     assert_allclose(actual, expected)
 
 
 def test_extract_properties_from_img(img1, img2):
     actual = extraction.extract_properties_from_img(img1)
-    expected = util.read_pickle('data/extraction/extract_properties_from_img_1.pickle')
+    expected = read_abs_pickle('data/extraction/extract_properties_from_img_1.pickle')
     assert_frame_equal(actual, expected)
 
     actual = extraction.extract_properties_from_img(img2)
-    expected = util.read_pickle('data/extraction/extract_properties_from_img_2.pickle')
+    expected = read_abs_pickle('data/extraction/extract_properties_from_img_2.pickle')
     assert_frame_equal(actual, expected)
 
 
 def test_extract_properties_from_img_set(img_set):
     actual = extraction.extract_properties_from_img_set(img_set)
-    expected = util.read_pickle('data/extraction/extract_properties_from_img_set.pickle')
+    expected = read_abs_pickle('data/extraction/extract_properties_from_img_set.pickle')
     assert_frame_equal(actual, expected)
 
     # argument len inconsistent
@@ -232,7 +231,7 @@ def test_extract_properties_from_img_set(img_set):
 def test_read_properties(real_img_set_path, img1_filter):
     actual = extraction.read_properties(real_img_set_path, img1_filter)
     actual = actual.drop(['filename', 'image_id'], axis=1)
-    expected = util.read_pickle('data/extraction/extract_properties_from_img_1.pickle')
+    expected = read_abs_pickle('data/extraction/extract_properties_from_img_1.pickle')
     assert_frame_equal(actual, expected)
 
 
@@ -243,23 +242,23 @@ def test_extract_properties(real_img_set_path,
                             empty_filter):
     # full property already exist
     actual = extraction.extract_properties(real_img_set_path, empty_filter, write=False)
-    expected = util.read_pickle('data/extraction/extract_properties_img_set.pickle')
+    expected = read_abs_pickle('data/extraction/extract_properties_img_set.pickle')
     assert_frame_equal(actual, expected)
 
     # specific property does not already exist
     # but the result is the same as full property
     actual = extraction.extract_properties(real_img_set_path, img_tif_filter, write=False)
-    expected = util.read_pickle('data/extraction/extract_properties_img_set.pickle')
+    expected = read_abs_pickle('data/extraction/extract_properties_img_set.pickle')
     assert_frame_equal(actual, expected)
 
     # specific property already exist
     actual = extraction.extract_properties(real_img_set_path, img1_filter, write=False)
     actual = actual.drop(['filename', 'image_id'], axis=1)
-    expected = util.read_pickle('data/extraction/extract_properties_from_img_1.pickle')
+    expected = read_abs_pickle('data/extraction/extract_properties_from_img_1.pickle')
     assert_frame_equal(actual, expected)
 
     # specific property does not exist
     actual = extraction.extract_properties(real_img_set_path, img2_filter, write=False)
     actual = actual.drop(['filename', 'image_id'], axis=1)
-    expected = util.read_pickle('data/extraction/extract_properties_from_img_2.pickle')
+    expected = read_abs_pickle('data/extraction/extract_properties_from_img_2.pickle')
     assert_frame_equal(actual, expected)

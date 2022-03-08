@@ -3,12 +3,12 @@ from numpy.testing import assert_allclose
 
 from vampire import processing
 from vampire import util
-from vampire.tests.testing import assert_list_allclose
+from vampire.tests.testing import assert_list_allclose, read_abs_pickle
 
 
 @pytest.fixture
 def properties_df():
-    return util.read_pickle('data/extraction/extract_properties_img_set.pickle')
+    return read_abs_pickle('data/extraction/extract_properties_img_set.pickle')
 
 
 @pytest.fixture
@@ -18,67 +18,67 @@ def raw_contours(properties_df):
 
 @pytest.fixture
 def raw_contour1():
-    return util.read_pickle('data/extraction/extract_contour_from_object_1.pickle')
+    return read_abs_pickle('data/extraction/extract_contour_from_object_1.pickle')
 
 
 @pytest.fixture
 def raw_contour2():
-    return util.read_pickle('data/extraction/extract_contour_from_object_2.pickle')
+    return read_abs_pickle('data/extraction/extract_contour_from_object_2.pickle')
 
 
 @pytest.fixture
 def sampled_contours():
-    return util.read_pickle('data/processing/sample_contours.pickle')
+    return read_abs_pickle('data/processing/sample_contours.pickle')
 
 
 @pytest.fixture
 def sampled_contour1():
-    return util.read_pickle('data/processing/sample_contour_1.pickle')
+    return read_abs_pickle('data/processing/sample_contour_1.pickle')
 
 
 @pytest.fixture
 def sampled_contour2():
-    return util.read_pickle('data/processing/sample_contour_2.pickle')
+    return read_abs_pickle('data/processing/sample_contour_2.pickle')
 
 
 @pytest.fixture
 def registered_contours():
-    return util.read_pickle('data/processing/register_contours.pickle')
+    return read_abs_pickle('data/processing/register_contours.pickle')
 
 
 @pytest.fixture
 def registered_contour1():
-    return util.read_pickle('data/processing/register_contour_1.pickle')
+    return read_abs_pickle('data/processing/register_contour_1.pickle')
 
 
 @pytest.fixture
 def registered_contour2():
-    return util.read_pickle('data/processing/register_contour_2.pickle')
+    return read_abs_pickle('data/processing/register_contour_2.pickle')
 
 
 @pytest.fixture
 def mean_registered_contour():
-    return util.read_pickle('data/processing/get_mean_registered_contour.pickle')
+    return read_abs_pickle('data/processing/get_mean_registered_contour.pickle')
 
 
 @pytest.fixture
 def aligned_contours_flat():
-    return util.read_pickle('data/processing/align_contours.pickle')
+    return read_abs_pickle('data/processing/align_contours.pickle')
 
 
 @pytest.fixture
 def aligned_contour1():
-    return util.read_pickle('data/processing/align_contour_1.pickle')
+    return read_abs_pickle('data/processing/align_contour_1.pickle')
 
 
 @pytest.fixture
 def aligned_contour2():
-    return util.read_pickle('data/processing/align_contour_2.pickle')
+    return read_abs_pickle('data/processing/align_contour_2.pickle')
 
 
 @pytest.fixture
 def mean_aligned_contour_flat():
-    return util.read_pickle('data/processing/get_mean_aligned_contour.pickle')
+    return read_abs_pickle('data/processing/get_mean_aligned_contour.pickle')
 
 
 @pytest.fixture
