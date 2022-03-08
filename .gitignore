@@ -19,3 +19,6 @@ venv/
 doc/source/reference/api
 # documentation builds
 doc/build
+
+######### Testing Output
+vampire/tests/data/quickstart/output

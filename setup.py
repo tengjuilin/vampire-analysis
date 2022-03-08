@@ -21,6 +21,10 @@ setuptools.setup(
         'opencv-python',
         'scikit-image',
         'scikit-learn',
+        'Sphinx',
+        'numpydoc',
+        'pydata-sphinx-theme',
+        'pytest'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
