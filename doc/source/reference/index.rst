@@ -9,10 +9,12 @@ API Reference
 .. toctree::
    :maxdepth: 2
 
+   quickstart
    model
    extraction
    processing
    analysis
    plot
+   coloring
    amath
    util

@@ -7,19 +7,12 @@ Extraction
 .. autosummary::
    :toctree: api/
 
-   extract_contours
-   write_contours
-   read_contours
-   get_info_from_folder
-   get_properties_from_image
-   get_contours_from_image
-   get_contour_from_object
-
-
-Implementation Details
-----------------------
-
-.. autosummary::
-   :toctree: api/
-
-   _is_filtered_img
+   check_property_csv_existence
+   get_filtered_filenames
+   get_img_set
+   extract_contour_from_object
+   extract_properties_from_img
+   extract_properties_from_img_set
+   read_properties
+   write_properties
+   extract_properties

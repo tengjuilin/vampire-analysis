@@ -261,8 +261,6 @@ def register_contours(contours):
     registered_contours : list[ndarray]
         Registered contours, list with length num_contours, ndarray with
         shape (2, num_points).
-    mean_contour : ndarray
-        Mean of registered contours, with shape (2, num_points).
 
     See Also
     --------
@@ -274,9 +272,28 @@ def register_contours(contours):
     for i in range(num_contours):
         registered_contour = register_contour(contours[i])
         registered_contours.append(registered_contour)
-    registered_contours_flat = np.asarray(registered_contours).reshape(num_contours, -1)
-    mean_contour = np.mean(registered_contours_flat, axis=0).reshape(2, -1)
-    return registered_contours, mean_contour
+    return registered_contours
+
+
+def get_mean_registered_contour(registered_contours):
+    """
+    Compute mean of registered contours.
+
+    Parameters
+    ----------
+    registered_contours : list[ndarray]
+        Registered contours, list with length num_contours, ndarray with
+        shape (2, num_points).
+
+    Returns
+    -------
+    mean_registered_contour : ndarray
+        Mean of registered contours, with shape (2, num_points).
+
+    """
+    registered_contours_flat = np.asarray(registered_contours)
+    mean_registered_contour = np.mean(registered_contours_flat, axis=0)
+    return mean_registered_contour
 
 
 # noinspection PyPep8Naming
@@ -385,8 +402,6 @@ def align_contours(contours, mean_contour):
     -------
     aligned_contours_flat : ndarray
         Flattened aligned contours, with shape (num_contours, 2*num_points).
-    mean_contour_flat : ndarray
-        Flattened mean contours, with size 2*num_points.
 
     See Also
     --------
@@ -398,84 +413,24 @@ def align_contours(contours, mean_contour):
     for j in range(num_contours):
         aligned_contour = align_contour(contours[j], mean_contour)
         aligned_contours_flat.append(aligned_contour.reshape(-1))
+    return aligned_contours_flat
+
+
+def get_mean_aligned_contour(aligned_contours_flat):
+    """
+    Compute mean of aligned contours.
+
+    Parameters
+    ----------
+    aligned_contours_flat : ndarray
+        Flattened aligned contours, with shape (num_contours, 2*num_points).
+
+    Returns
+    -------
+    mean_contour_flat : ndarray
+        Flattened mean contours, with size 2*num_points.
+
+    """
     aligned_contours_flat = np.asarray(aligned_contours_flat)
     mean_contour_flat = np.mean(aligned_contours_flat, axis=0)
-    return aligned_contours_flat, mean_contour_flat
-
-
-# def process_contours(contours, num_points=50):
-#     """
-#     Returns processed contours ready for PCA.
-#
-#     The contours are sampled, registered, and aligned to produce processed
-#     contours.
-#
-#     Parameters
-#     ----------
-#     contours : list[ndarray]
-#         List of contour coordinates.
-#     num_points : int, optional
-#         Number of sample points of object contour. Defaults to 50.
-#
-#     Returns
-#     -------
-#     aligned_contours_flat : ndarray
-#         Flattened contour coordinates of all objects.
-#         With shape (num_contours, 2*num_points).
-#
-#     """
-#     num_contours = len(contours)
-#     processed_contours = []
-#     processed_contours_flat = np.zeros([num_contours, 2*num_points])
-#
-#     # sample and register contour, then calculate mean contour
-#     for i in range(num_contours):
-#         processed_contour = sample_contour(contours[i], num_points)
-#         # plt.plot(*contours[i], '.-', alpha=0.5)
-#         # plt.plot(*processed_contour, '.-', alpha=0.5)
-#         # plt.axis('equal')
-#         processed_contour = register_contour(processed_contour)
-#         # plt.plot(*processed_contour, 'k.-', alpha=0.1)
-#         # plt.plot(processed_contour[0][0], processed_contour[1][0], 'ro', alpha=0.5)
-#         # plt.plot(processed_contour[0][-1], processed_contour[1][-1], 'go', alpha=0.5)
-#         processed_contours.append(processed_contour)
-#         processed_contours_flat[i] = processed_contour.reshape(-1)
-#     mean_contour = np.mean(processed_contours_flat, axis=0).reshape(2, -1)
-#     # plt.plot(*mean_contour, 'bo-')
-#     # plt.axis('equal')
-#
-#     # align contours based on mean contour
-#     aligned_contours_flat = []
-#     for j in range(num_contours):
-#         aligned_contour = align_contour(processed_contours[j], mean_contour)
-#         aligned_contours_flat.append(aligned_contour.reshape(-1))
-#     aligned_contours_flat = np.asarray(aligned_contours_flat)
-#
-#     # testing visualization
-#     # for contour in aligned_contours_flat:
-#     #     plt.plot(contour[:50], contour[50:], 'k.-', alpha=0.1)
-#     # plt.plot(*mean_contour, 'bo-')
-#     # plt.axis('equal')
-#     return aligned_contours_flat
-
-
-# def test():
-#     contours = []
-#     for i in range(len(B)):
-#         contours.append(B[i].T)
-#     import mod_processing
-#     mod_processing.sample_contour(contours[0], N)
-#     mod_processing.register_contour(bdt)
-#
-#     contours = []
-#     for i in range(len(bstack[0])):
-#         contours.append(bstack[0][i].T)
-#     import mod_processing, mod_analysis, mod_plot
-#     contours = mod_processing.process_contours(contours, num_points=50)
-#     principal_coord = mod_analysis.pca_contours(contours)
-#     contours_df = mod_analysis.cluster_contours(principal_coord, contours,
-#                                                 num_clusters=5,
-#                                                 num_pc=20, random_state=1)
-#     mod_plot.custom_plot_settings()
-#     mod_plot.plot_full(contours_df)
-#     return
+    return mean_contour_flat

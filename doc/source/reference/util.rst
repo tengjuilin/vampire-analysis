@@ -10,4 +10,8 @@ Utility
    read_pickle
    write_pickle
    generate_file_paths
-   write_clusters_info
+   get_properties_pickle_path
+   get_properties_csv_path
+   get_model_pickle_path
+   get_apply_properties_csv_path
+   get_apply_properties_pickle_path

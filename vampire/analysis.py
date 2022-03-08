@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from scipy import spatial
+from scipy import cluster, spatial
 from sklearn import preprocessing
 from sklearn.cluster import KMeans
 
@@ -62,7 +62,7 @@ def pca_transform_contours(contours, mean_contour, principal_directions):
     return principal_components
 
 
-def cluster_contours(pc, contours, num_clusters=5, num_pc=20, random_state=None):  # random: None
+def cluster_contours(pc, num_clusters=5, num_pc=20, random_state=None):
     """
     K-means clustering of contour principal components.
 
@@ -70,8 +70,6 @@ def cluster_contours(pc, contours, num_clusters=5, num_pc=20, random_state=None)
     ----------
     pc : ndarray
         Principal components of contours.
-    contours : ndarray
-        Object contours, with shape (num_contour, 2*num_points).
     num_clusters : int, optional
         Number of clusters.
     num_pc : int, optional
@@ -81,8 +79,8 @@ def cluster_contours(pc, contours, num_clusters=5, num_pc=20, random_state=None)
 
     Returns
     -------
-    contours_df : DataFrameDataFrame of objects' contour coordinates with cluster id.
-
+    cluster_id_df : DataFrame
+        DataFrame of objects' cluster id and min distance to centroid.
     centroids : ndarray
         Coordinates of cluster centers of K-means clusters.
 
@@ -101,15 +99,14 @@ def cluster_contours(pc, contours, num_clusters=5, num_pc=20, random_state=None)
                      n_init=3,
                      max_iter=300).fit(pc_truncated_normalized)
     centroids = k_means.cluster_centers_
-    # distance = spatial.distance.cdist(pc_truncated_normalized, centroid)  # D, why not this line?
-    distance = spatial.distance.cdist(pc_truncated, centroids)
+    distance = spatial.distance.cdist(pc_truncated_normalized, centroids)
     cluster_id = np.argmin(distance, axis=1)
+    min_distance = np.min(distance, axis=1)
 
     # tag each object with cluster id
-    contours_df = pd.DataFrame(contours)
-    contours_df['cluster_id'] = cluster_id
-
-    return contours_df, centroids
+    cluster_id_df = pd.DataFrame({'cluster_id': cluster_id,
+                                  'distance_to_centroid': min_distance})
+    return cluster_id_df, centroids
 
 
 def assign_clusters_id(pc, contours, centroids, num_pc=20):
@@ -130,18 +127,195 @@ def assign_clusters_id(pc, contours, centroids, num_pc=20):
     Returns
     -------
     contours_df : DataFrame
-        DataFrame of objects' contour coordinates with cluster id.
-    min_distance : ndarray
-        Distance of truncated principal components to the closest centroid.
+        DataFrame of objects' contour coordinates, cluster id,
+        and min distance from centroid.
 
     """
     # find closest centroid and get cluster id
     pc_truncated = pc[:, :num_pc]
+    # Original VAMPIRE GUI software did not normalize when
+    # assigning clusters. However, it is logical to keep the
+    # input of clustering and classifying consistent, so that
+    # the same data used in clustering and assign cluster give
+    # the same result.
+    pc_truncated = preprocessing.normalize(pc_truncated)
+
     distance = spatial.distance.cdist(pc_truncated, centroids)
     cluster_id = np.argmin(distance, axis=1)
     min_distance = np.min(distance, axis=1)
 
     # tag each object with cluster id
-    contours_df = pd.DataFrame(contours)
+    normalized_contours = {'normalized_contour': list(contours)}
+    contours_df = pd.DataFrame(normalized_contours)
     contours_df['cluster_id'] = cluster_id
-    return contours_df, min_distance
+    contours_df['distance_to_centroid'] = min_distance
+    return contours_df
+
+
+def get_labeled_contours_df(contours, cluster_id_df):
+    """
+    Return contour coordinates, cluster id, and distance to centroid.
+
+    Parameters
+    ----------
+    contours : ndarray
+        Object contours, with shape (num_contour, 2*num_points).
+    cluster_id_df : DataFrame
+        DataFrame of objects' cluster id and min distance to centroid.
+
+    Returns
+    -------
+    labeled_contours_df : DaraFrame
+        DataFrame of contour coordinates, cluster id, and min
+        distance to centroid.
+
+    """
+    return pd.DataFrame(contours).join(cluster_id_df)
+
+
+def get_mean_cluster_contours(labeled_contours_df):
+    """
+    Return mean contour of each cluster.
+
+    Parameters
+    ----------
+    labeled_contours_df : DaraFrame
+        DataFrame of contour coordinates, cluster id, and min
+        distance to centroid.
+
+    Returns
+    -------
+    mean_cluster_contours : ndarray
+        Mean contour of each cluster.
+
+    """
+    return labeled_contours_df.drop(['distance_to_centroid'], axis=1) \
+        .groupby('cluster_id') \
+        .mean().values
+
+
+def hierarchical_cluster_contour(labeled_contours_df):
+    """
+    Compute data structure for rendering dendrogram.
+
+    Parameters
+    ----------
+    labeled_contours_df : DaraFrame
+        DataFrame of contour coordinates, cluster id, and min
+        distance to centroid.
+
+    Returns
+    -------
+    pair_distance : ndarray
+        Pairwise distance of mean cluster contour.
+        Result of `scipy.spatial.distance.pdist`.
+    linkage_matrix : ndarray
+        Linkage matrix for dendrogram.
+        Result of `scipy.cluster.hierarchy.linkage`.
+    branches : dict
+        A dictionary of data structures computed to render the dendrogram.
+        Result of `scipy.cluster.hierarchy.dendrogram`.
+
+    See Also
+    --------
+    scipy.spatial.distance.pdist
+    scipy.cluster.hierarchy.linkage
+    scipy.cluster.hierarchy.dendrogram
+
+    """
+    mean_cluster_contours = get_mean_cluster_contours(labeled_contours_df)
+    pair_distance = spatial.distance.pdist(mean_cluster_contours, 'euclidean')
+    linkage_matrix = cluster.hierarchy.linkage(pair_distance, method='complete')
+    branches = cluster.hierarchy.dendrogram(linkage_matrix,
+                                            p=0,
+                                            truncate_mode='mlab',
+                                            orientation='bottom',
+                                            above_threshold_color='k')
+    return pair_distance, linkage_matrix, branches
+
+
+def get_cluster_order(branches):
+    """
+    Get the cluster id of contours in order of dendrogram.
+
+    Parameters
+    ----------
+    branches : dict
+        Output of ``scipy.cluster.hierarchy.dendrogram``.
+
+    Returns
+    -------
+    object_index
+        The cluster id of contours in order of dendrogram.
+
+    See Also
+    --------
+    scipy.cluster.hierarchy.dendrogram
+
+    """
+    object_index = np.array(branches['ivl'], dtype=int)
+    return object_index
+
+
+def get_distribution(properties_df):
+    """
+    Return proportion of each cluster.
+
+    Parameters
+    ----------
+    properties_df : DataFrame
+        DataFrame containing column `cluster_id`.
+
+    Returns
+    -------
+    distribution : ndarray
+        Proportion of each cluster.
+
+    """
+    cluster_id = properties_df['cluster_id'].values
+    unique, counts = np.unique(cluster_id, return_counts=True)
+    distribution = counts / np.sum(counts)
+    return distribution
+
+
+def reorder_clusters(cluster_id, object_index):
+    """
+    Reorder cluster id according to dendrogram order.
+
+    Parameters
+    ----------
+    cluster_id : ndarray
+        Cluster ids.
+    object_index : ndarray
+        How original cluster id correspond to new id.
+
+    Returns
+    -------
+    cluster_id_sorted : ndarray
+        Reordered cluster id.
+
+    """
+    cluster_id_sorted = np.zeros_like(cluster_id)
+    for i in range(len(object_index)):
+        cluster_id_sorted[cluster_id == object_index[i]] = i
+    return cluster_id_sorted
+
+
+def reorder_centroids(centroids, object_index):
+    """
+    Reorder centroids according to dendrogram order.
+
+    Parameters
+    ----------
+    centroids : ndarray
+        Centroids
+    object_index : ndarray
+        How original cluster id correspond to new id.
+
+    Returns
+    -------
+    reordered_centroids : ndarray
+        Reordered centroids.
+
+    """
+    return centroids[object_index, :]

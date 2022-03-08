@@ -22,7 +22,7 @@ copyright = '2021, Teng-Jui Lin'
 author = 'Teng-Jui Lin'
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.1'
+release = '0.1.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -38,6 +38,10 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.viewcode']
 
 autosummary_generate = True
+# numpydoc interferes with autosummary to generate two method sections
+# for each class.
+# https://stackoverflow.com/questions/34216659/sphinx-autosummary-produces-two-summaries-for-each-class
+numpydoc_show_class_members = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

@@ -42,53 +42,53 @@ def write_pickle(path, variable):
     opened_file.close()
 
 
-def generate_file_paths(img_set_path, filter_info):
+def generate_file_paths(filepath, filename, filter_info, extension):
     """
-    Returns paths to contour ``pickle`` file and property ``csv`` file.
+    Generates file paths according to regex filters.
 
     Parameters
     ----------
-    img_set_path : str
-        Path to the directory of images to be analyzed.
+    filepath : str
+        Path to the file.
+    filename : str
+        Common filename of the file.
     filter_info : ndarray
-        Unique filter(s) of image filenames to be analyzed. Empty if no filter
-        needed.
+        Regex filter(s) of image filenames to be analyzed.
+        Empty if no filter needed.
+    extension : str
+        Extension of the file, including the dot `.`.
 
     Returns
     -------
-    contours_pickle_path : str
-        Path to contour ``pickle`` file.
-    properties_csv_path : str
-        Path to property ``csv`` file.
+    file_path : str
+        Path to named file.
 
     """
+    filter_info = pd.Series(filter_info)
+    prohibited_char_regex = r'(\\)|(\/)|(\,)|(\:)|(\*)|(\")|(\<)|(\>)|(\|)'
+    replacement = '-'
+    filter_info = filter_info.str.replace(prohibited_char_regex, replacement, regex=True)
     filter_tag = '_'.join(filter_info)
-    contours_pickle_path = os.path.join(img_set_path, f'contour_coordinates__{filter_tag}.pickle')
-    properties_csv_path = os.path.join(img_set_path, f'vampire_datasheet__{filter_tag}.csv')
-    return contours_pickle_path, properties_csv_path
+
+    file_path = os.path.join(filepath, f'{filename}__{filter_tag}{extension}')
+    return file_path
 
 
-def write_clusters_info(img_set_path, filter_info, contours_df, distance):
-    """
-    Writes cluster id (closest centroid) and distance to closest centroid
-    to property csv file.
+def get_properties_pickle_path(filepath, filter_info):
+    return generate_file_paths(filepath, 'raw-properties', filter_info, '.pickle')
 
-    Parameters
-    ----------
-    img_set_path : str
-        Path of folder that contains images to be analyzed.
-    filter_info : ndarray
-        Unique filter(s) of image filenames to be analyzed.
-        Empty if no filter is needed.
-    contours_df : DataFrame
-        DataFrame of objects' contour coordinates with cluster id.
-    distance : ndarray
-        Distance of truncated principal components to the closest centroid.
 
-    """
-    _, properties_csv_path = generate_file_paths(img_set_path, filter_info)
-    properties_df = pd.read_csv(properties_csv_path)
-    properties_df['cluster_id'] = contours_df['cluster_id']
-    properties_df['distance_to_centroid'] = distance
-    properties_df.to_csv(properties_csv_path, index=False)
-    return
+def get_properties_csv_path(filepath, filter_info):
+    return generate_file_paths(filepath, 'raw-properties', filter_info, '.csv')
+
+
+def get_model_pickle_path(filepath, filter_info, model_name):
+    return generate_file_paths(filepath, f'model_{model_name}', filter_info, '.pickle')
+
+
+def get_apply_properties_csv_path(filepath, filter_info, model_name, img_set_name):
+    return generate_file_paths(filepath, f'apply-properties_{model_name}_on_{img_set_name}', filter_info, '.csv')
+
+
+def get_apply_properties_pickle_path(filepath, filter_info, model_name, img_set_name):
+    return generate_file_paths(filepath, f'apply-properties_{model_name}_on_{img_set_name}', filter_info, '.pickle')

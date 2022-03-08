@@ -17,12 +17,3 @@ Plot
 
    set_plot_style
    save_fig
-
-
-Implementation Details
-----------------------
-
-.. autosummary::
-   :toctree: api/
-
-   _get_df_info
