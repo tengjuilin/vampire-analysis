@@ -1,6 +1,5 @@
 from datetime import datetime
 
-import os
 import numpy as np
 import pandas as pd
 import pytest
@@ -38,12 +37,12 @@ def img2_nan_filter():
 
 @pytest.fixture
 def img_set_path():
-    return os.path.normpath('data\\real_img')
+    return 'data\\real_img'
 
 
 @pytest.fixture
 def output_path():
-    return os.path.normpath('data\\quickstart\\output')
+    return 'data\\quickstart\\output'
 
 
 @pytest.fixture

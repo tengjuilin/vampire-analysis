@@ -17,7 +17,7 @@ def assert_list_equal(actual, expected):
 
 
 def get_abs_path(rel_path):
-    return os.path.join(os.path.dirname(__file__), rel_path)
+    return os.path.normpath(os.path.join(os.path.dirname(__file__), rel_path))
 
 
 def read_abs_pickle(rel_path):
