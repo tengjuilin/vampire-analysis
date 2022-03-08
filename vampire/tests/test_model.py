@@ -3,22 +3,22 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 from vampire import model
-from vampire import util
+from vampire.tests.testing import read_abs_pickle
 
 
 @pytest.fixture
 def properties_df():
-    return util.read_pickle(os.path.join(os.path.dirname(__file__), 'data/extraction/extract_properties_img_set.pickle'))
+    return read_abs_pickle('data/extraction/extract_properties_img_set.pickle')
 
 
 @pytest.fixture
 def built_model():
-    return util.read_pickle(os.path.join(os.path.dirname(__file__), 'data/model/Vampire_build.pickle'))
+    return read_abs_pickle('data/model/Vampire_build.pickle')
 
 
 @pytest.fixture
 def apply_properties_df():
-    return util.read_pickle(os.path.join(os.path.dirname(__file__), 'data/model/Vampire_apply.pickle'))
+    return read_abs_pickle('data/model/Vampire_apply.pickle')
 
 
 def test_Vampire__init__():
