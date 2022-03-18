@@ -137,7 +137,8 @@ def extract_properties_from_img(img, filename=None, img_id=None):
     """
     # get properties of objects
     properties = ('label', 'centroid', 'area',
-                  'perimeter', 'major_axis_length', 'minor_axis_length')
+                  'perimeter', 'major_axis_length', 'minor_axis_length',
+                  'eccentricity', 'solidity', 'extent')
     properties_dict = regionprops_table(img,
                                         properties=properties,
                                         extra_properties=(extract_contour_from_object,))
