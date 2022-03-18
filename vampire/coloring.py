@@ -22,9 +22,9 @@ def label_imgs(img_set, properties_df):
     """
     img_ids = np.unique(properties_df['image_id'])
     labeled_imgs = []
-    for img_id in img_ids:
+    for i, img_id in enumerate(img_ids):
         img_df = properties_df[properties_df['image_id'] == img_id]
-        labeled_img = label_img(img_set[img_id], img_df)
+        labeled_img = label_img(img_set[i], img_df)
         labeled_imgs.append(labeled_img)
     return labeled_imgs
 
