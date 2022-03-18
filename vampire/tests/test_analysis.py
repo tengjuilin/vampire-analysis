@@ -6,6 +6,7 @@ from pandas.testing import assert_frame_equal
 from vampire import analysis
 from vampire.tests.testing import assert_list_allclose, read_abs_pickle
 
+
 @pytest.fixture
 def aligned_contours_flat():
     return read_abs_pickle('data/processing/align_contours.pickle')
