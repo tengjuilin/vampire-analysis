@@ -8,7 +8,7 @@ from numpy.testing import assert_array_equal
 from pandas.testing import assert_frame_equal
 
 from vampire import quickstart
-from vampire.tests.testing import assert_list_equal, read_abs_pickle
+from vampire.tests.testing import assert_list_equal, read_abs_pickle, get_abs_path
 
 
 @pytest.fixture
@@ -38,12 +38,12 @@ def img2_nan_filter():
 
 @pytest.fixture
 def img_set_path():
-    return r'data/real_img'
+    return get_abs_path(r'data/real_img')
 
 
 @pytest.fixture
 def output_path():
-    return r'data/quickstart/output'
+    return get_abs_path(r'data/quickstart/output')
 
 
 @pytest.fixture
@@ -86,7 +86,7 @@ def build_required_info(build_img_info_df):
 
 @pytest.fixture
 def model_path():
-    return r'data/quickstart/build_model.pickle'
+    return get_abs_path(r'data/quickstart/build_model.pickle')
 
 
 @pytest.fixture
