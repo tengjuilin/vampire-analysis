@@ -19,6 +19,7 @@ def read_pickle(path):
         Content of the pickle file.
 
     """
+    path = os.path.normpath(path)
     opened_file = open(path, 'rb')
     content = pickle.load(opened_file)
     opened_file.close()
@@ -37,6 +38,7 @@ def write_pickle(path, variable):
         A variable to be saved in pickle file.
 
     """
+    path = os.path.normpath(path)
     opened_file = open(path, 'wb')
     pickle.dump(variable, opened_file)
     opened_file.close()
