@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 import numpy as np
@@ -37,12 +38,12 @@ def img2_nan_filter():
 
 @pytest.fixture
 def img_set_path():
-    return 'data\\real_img'
+    return r'data/real_img'
 
 
 @pytest.fixture
 def output_path():
-    return 'data\\quickstart\\output'
+    return r'data/quickstart/output'
 
 
 @pytest.fixture
@@ -85,7 +86,7 @@ def build_required_info(build_img_info_df):
 
 @pytest.fixture
 def model_path():
-    return 'data\\quickstart\\build_model.pickle'
+    return r'data/quickstart/build_model.pickle'
 
 
 @pytest.fixture
@@ -112,7 +113,7 @@ def apply_required_info(apply_img_info_df):
 
 @pytest.fixture
 def apply_model_df():
-    return read_abs_pickle('data\\quickstart\\apply_model.pickle')
+    return read_abs_pickle(r'data/quickstart/apply_model.pickle')
 
 
 def test__check_prohibited_char():
@@ -191,13 +192,15 @@ def test__build_models_check_required_info(build_required_info, img_set_path,
                                            output_path, model_name,
                                            num_points, num_clusters):
     actual = quickstart._build_models_check_required_info(build_required_info)
-    expected = (img_set_path, output_path,
+    expected = (os.path.normpath(img_set_path),
+                os.path.normpath(output_path),
                 model_name, num_points, num_clusters)
     assert_list_equal(actual, expected)
 
     required_info = pd.Series([img_set_path, None, None, None, None])
     actual = quickstart._build_models_check_required_info(required_info)
-    expected = (img_set_path, img_set_path,
+    expected = (os.path.normpath(img_set_path),
+                os.path.normpath(img_set_path),
                 datetime.now().strftime('%Y-%m-%d_%H-%M-%S'),
                 50, 5)
     assert_list_equal(actual, expected)
@@ -242,22 +245,26 @@ def test__apply_models_check_df(apply_img_info_df):
 def test__apply_models_check_required_info(apply_required_info, img_set_path,
                                            model_path, output_path, model_name):
     actual = quickstart._apply_models_check_required_info(apply_required_info)
-    expected = (img_set_path, model_path,
-                output_path, model_name)
+    expected = (os.path.normpath(img_set_path),
+                os.path.normpath(model_path),
+                os.path.normpath(output_path),
+                model_name)
     assert_list_equal(actual, expected)
 
     required_info = pd.Series([img_set_path, model_path, None, None])
     actual = quickstart._apply_models_check_required_info(required_info)
-    expected = (img_set_path, model_path, img_set_path,
+    expected = (os.path.normpath(img_set_path),
+                os.path.normpath(model_path),
+                os.path.normpath(img_set_path),
                 datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
     assert_list_equal(actual, expected)
 
 
 def test_apply_model(img_set_path, model_path, output_path,
                      model_name, empty_filter, apply_model_df):
-    actual = quickstart.apply_model(img_set_path,
-                                    model_path,
-                                    output_path,
+    actual = quickstart.apply_model(os.path.normpath(img_set_path),
+                                    os.path.normpath(model_path),
+                                    os.path.normpath(output_path),
                                     model_name,
                                     empty_filter,
                                     write_csv=False,
