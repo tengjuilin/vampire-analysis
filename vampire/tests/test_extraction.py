@@ -25,12 +25,12 @@ def img_set(img1, img2):
 
 @pytest.fixture
 def img_set_path():
-    return r'data/img/'
+    return get_abs_path(r'data/img/')
 
 
 @pytest.fixture
 def real_img_set_path():
-    return r'data/real_img/'
+    return get_abs_path(r'data/real_img/')
 
 
 @pytest.fixture
