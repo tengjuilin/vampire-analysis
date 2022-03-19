@@ -232,7 +232,7 @@ def write_properties(properties_df, img_set_path, filter_info):
     """
     properties_csv_path = util.get_properties_csv_path(img_set_path, filter_info)
     properties_pickle_path = util.get_properties_pickle_path(img_set_path, filter_info)
-    properties_df.drop('raw_contour', axis=1).to_csv(properties_csv_path)
+    properties_df.drop('raw_contour', axis=1).to_csv(properties_csv_path, index=False)
     util.write_pickle(properties_pickle_path, properties_df)
     return
 

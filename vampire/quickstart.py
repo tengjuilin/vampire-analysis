@@ -515,7 +515,7 @@ def apply_model(img_set_path, model_path,
         apply_properties_df.drop(['raw_contour',
                                   'normalized_contour'],
                                  axis=1) \
-                           .to_csv(properties_csv_path)
+                           .to_csv(properties_csv_path, index=False)
     return apply_properties_df
 
 
