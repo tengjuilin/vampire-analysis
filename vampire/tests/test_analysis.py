@@ -139,6 +139,19 @@ def test_get_distribution(applied_contours_df):
     assert_allclose(actual, expected)
 
 
+def test_get_shannon_entropy(applied_contours_df):
+    distribution = analysis.get_distribution(applied_contours_df)
+    actual = analysis.get_shannon_entropy(distribution)
+    expected = 1.5502115624063837
+    assert actual == expected
+
+
+def test_get_inertia(applied_contours_df):
+    actual = analysis.get_inertia(applied_contours_df)
+    expected = 137.05016596251536
+    assert actual == expected
+
+
 def test_reorder_clusters(cluster_id_df, object_index):
     actual = analysis.reorder_clusters(cluster_id_df['cluster_id'],
                                        object_index)

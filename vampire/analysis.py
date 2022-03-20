@@ -278,6 +278,72 @@ def get_distribution(properties_df):
     return distribution
 
 
+def get_shannon_entropy(distribution):
+    r"""
+    Calculate Shannon entropy from distribution (probability)
+    of each shape mode.
+
+    Parameters
+    ----------
+    distribution : ndarray
+        Distribution of shape modes.
+
+    Returns
+    -------
+    entropy : float
+        Shannon entropy.
+
+    See Also
+    --------
+    vampire.analysis.get_distribution
+
+    Notes
+    -----
+    Shannon entropy here is defined as
+
+    .. math::
+
+        S = - \sum p_i \ln (p_i)
+
+    where :math:`p_i` is probability of cells in each
+    shape mode.
+
+    """
+    entropy = -np.sum(distribution * np.log(distribution))
+    return entropy
+
+
+def get_inertia(properties_df):
+    r"""
+    Calculate inertia of K-means clustering.
+
+    Parameters
+    ----------
+    properties_df : DataFrame
+        DataFrame containing column `distance_to_centroid`.
+
+    Returns
+    -------
+    inertia : float
+        Inertia of K-means clustering.
+
+    Notes
+    -----
+    Inertia :math:`I` is defined as the total squared distance of all
+    data points to its corresponding centroid
+
+    .. math::
+
+        I = \sum d_i^2
+
+    where :math:`d_i` is the distance of a contour to its
+    corresponding centroid.
+
+    """
+    inertia = np.sum(properties_df['distance_to_centroid'] ** 2)
+    return inertia
+
+
 def reorder_clusters(cluster_id, object_index):
     """
     Reorder cluster id according to dendrogram order.
