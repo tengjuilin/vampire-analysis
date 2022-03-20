@@ -218,7 +218,7 @@ def test_build_model(img_set_path, output_path, model_name,
                                     empty_filter,
                                     random_state=random_state,
                                     savefig=False)
-    actual_write = read_abs_pickle(r'data/quickstart/output/model_quickstart-test__.pickle')
+    actual_write = read_abs_pickle(r'data/quickstart/output/model_quickstart-test_(70_10_20)__.pickle')
     expected = built_model
     assert actual == actual_write
     assert actual == expected
@@ -230,7 +230,7 @@ def test_build_models(build_img_info_df, random_state,
     quickstart.build_models(build_img_info_df,
                             random_state=random_state,
                             savefig=False)
-    actual_write = read_abs_pickle(r'data/quickstart/output/model_quickstart-test__img.pickle')
+    actual_write = read_abs_pickle(r'data/quickstart/output/model_quickstart-test_(70_10_20)__img.pickle')
     expected = built_model
     assert actual_write == expected
 
@@ -269,7 +269,7 @@ def test_apply_model(img_set_path, model_path, output_path,
                                     empty_filter,
                                     write_csv=False,
                                     savefig=False)
-    actual_write = read_abs_pickle(r'data/quickstart/output/apply-properties_quickstart-test_on_quickstart-test__.pickle')
+    actual_write = read_abs_pickle(r'data/quickstart/output/apply-properties_quickstart-test_on_quickstart-test_(70_10_20)__.pickle')
     expected = apply_model_df
     assert_frame_equal(actual, expected)
     assert_frame_equal(actual, actual_write)
@@ -280,6 +280,6 @@ def test_apply_models(apply_img_info_df, apply_model_df):
     quickstart.apply_models(apply_img_info_df,
                             write_csv=False,
                             savefig=False)
-    actual_write = read_abs_pickle(r'data/quickstart/output/apply-properties_quickstart-test_on_quickstart-test__img.pickle')
+    actual_write = read_abs_pickle(r'data/quickstart/output/apply-properties_quickstart-test_on_quickstart-test_(70_10_20)__img.pickle')
     expected = apply_model_df
     assert_frame_equal(actual_write, expected)
