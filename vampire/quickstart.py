@@ -230,7 +230,7 @@ def build_model(img_set_path, output_path,
     # write model
     model_output_path = util.get_model_pickle_path(output_path,
                                                    filter_info,
-                                                   model)
+                                                   vampire_model)
     util.write_pickle(model_output_path, vampire_model)
     # plot result
     if savefig:
