@@ -84,8 +84,14 @@ def get_properties_csv_path(filepath, filter_info):
     return generate_file_paths(filepath, 'raw-properties', filter_info, '.csv')
 
 
-def get_model_pickle_path(filepath, filter_info, model_name):
-    return generate_file_paths(filepath, f'model_{model_name}', filter_info, '.pickle')
+def get_model_pickle_path(filepath, filter_info, model):
+    model_name = model.model_name
+    num_points = model.num_points
+    num_clusters = model.num_clusters
+    num_pc = model.num_pc
+    return generate_file_paths(filepath, f'model_{model_name}_{num_points}_{num_clusters}_{num_pc}',
+                               filter_info,
+                               '.pickle')
 
 
 def get_apply_properties_csv_path(filepath, filter_info, model_name, img_set_name):
