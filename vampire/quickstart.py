@@ -490,7 +490,7 @@ def apply_model(img_set_path, model_path,
     # write apply model data
     properties_pickle_path = util.get_apply_properties_pickle_path(output_path,
                                                                    filter_info,
-                                                                   vampire_model.model_name,
+                                                                   vampire_model,
                                                                    img_set_name)
     util.write_pickle(properties_pickle_path, apply_properties_df)
     # plot result
@@ -510,7 +510,7 @@ def apply_model(img_set_path, model_path,
     if write_csv:
         properties_csv_path = util.get_apply_properties_csv_path(output_path,
                                                                  filter_info,
-                                                                 vampire_model.model_name,
+                                                                 vampire_model,
                                                                  img_set_name)
         apply_properties_df.drop(['raw_contour',
                                   'normalized_contour'],
