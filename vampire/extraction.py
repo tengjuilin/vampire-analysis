@@ -113,7 +113,7 @@ def extract_contour_from_object(object_img):
                                cv2.CHAIN_APPROX_SIMPLE)[0][0]
     contour = contour.reshape(-1, 2).T
     contour = np.flip(contour, axis=1)
-    if contour.size <= 6:  # <= 3 coordinates, could not be sampled
+    if contour.size <= 6:  # contour has <= 3 points, could not be sampled
         return np.nan
     return contour
 
@@ -153,7 +153,7 @@ def extract_properties_from_img(img, filename=None, img_id=None):
     properties_df['circularity'] = 4 * np.pi * properties_df['area'] / properties_df['perimeter'] ** 2
     properties_df['aspect_ratio'] = np.nan_to_num(np.divide(properties_df['major_axis_length'],
                                                             properties_df['minor_axis_length']))
-    # discard contours with <= 3 coordinates that cannot be sampled
+    # discard contours with <= 3 points that cannot be sampled
     properties_df = properties_df[pd.notna(properties_df['raw_contour'])]
     # label each object
     if img_id is not None:
