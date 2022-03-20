@@ -43,12 +43,12 @@ def centroids(cluster_contours_info):
 
 
 @pytest.fixture
-def labeled_contours_df(cluster_contours_info):
+def labeled_contours_df():
     return read_abs_pickle('data/analysis/labeled_contours_df.pickle')
 
 
 @pytest.fixture
-def hierarchical_cluster_contour(cluster_contours_info):
+def hierarchical_cluster_contour():
     return read_abs_pickle('data/analysis/hierarchical_cluster_contour.pickle')
 
 
@@ -90,7 +90,8 @@ def test_cluster_contours(principal_components,
     actual = analysis.cluster_contours(principal_components,
                                        random_state=1)
     expected = cluster_contours_info
-    assert_list_allclose(actual, expected)
+    assert_list_allclose(actual[:-1], expected[:-1])
+    assert actual[-1] == expected[-1]
 
 
 def test_assign_clusters_id(principal_components,
@@ -143,12 +144,6 @@ def test_get_shannon_entropy(applied_contours_df):
     distribution = analysis.get_distribution(applied_contours_df)
     actual = analysis.get_shannon_entropy(distribution)
     expected = 1.5502115624063837
-    assert actual == expected
-
-
-def test_get_inertia(applied_contours_df):
-    actual = analysis.get_inertia(applied_contours_df)
-    expected = 137.05016596251536
     assert actual == expected
 
 

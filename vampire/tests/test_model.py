@@ -49,6 +49,7 @@ def test_Vampire__init__():
     assert vampire_model.cluster_id_df is None
     assert vampire_model.labeled_contours_df is None
     assert vampire_model.centroids is None
+    assert vampire_model.inertia is None
     assert vampire_model.mean_cluster_contours is None
     # hierarchical clustering info
     assert vampire_model.pair_distance is None

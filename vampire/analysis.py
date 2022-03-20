@@ -83,6 +83,8 @@ def cluster_contours(pc, num_clusters=5, num_pc=20, random_state=None):
         DataFrame of objects' cluster id and min distance to centroid.
     centroids : ndarray
         Coordinates of cluster centers of K-means clusters.
+    inertia : float
+        Sum of squared distances of samples to their closest cluster center.
 
     See Also
     --------
@@ -99,6 +101,7 @@ def cluster_contours(pc, num_clusters=5, num_pc=20, random_state=None):
                      n_init=3,
                      max_iter=300).fit(pc_truncated_normalized)
     centroids = k_means.cluster_centers_
+    inertia = k_means.inertia_
     distance = spatial.distance.cdist(pc_truncated_normalized, centroids)
     cluster_id = np.argmin(distance, axis=1)
     min_distance = np.min(distance, axis=1)
@@ -106,7 +109,7 @@ def cluster_contours(pc, num_clusters=5, num_pc=20, random_state=None):
     # tag each object with cluster id
     cluster_id_df = pd.DataFrame({'cluster_id': cluster_id,
                                   'distance_to_centroid': min_distance})
-    return cluster_id_df, centroids
+    return cluster_id_df, centroids, inertia
 
 
 def assign_clusters_id(pc, contours, centroids, num_pc=20):
@@ -311,37 +314,6 @@ def get_shannon_entropy(distribution):
     """
     entropy = -np.sum(distribution * np.log(distribution))
     return entropy
-
-
-def get_inertia(properties_df):
-    r"""
-    Calculate inertia of K-means clustering.
-
-    Parameters
-    ----------
-    properties_df : DataFrame
-        DataFrame containing column `distance_to_centroid`.
-
-    Returns
-    -------
-    inertia : float
-        Inertia of K-means clustering.
-
-    Notes
-    -----
-    Inertia :math:`I` is defined as the total squared distance of all
-    data points to its corresponding centroid
-
-    .. math::
-
-        I = \sum d_i^2
-
-    where :math:`d_i` is the distance of a contour to its
-    corresponding centroid.
-
-    """
-    inertia = np.sum(properties_df['distance_to_centroid'] ** 2)
-    return inertia
 
 
 def reorder_clusters(cluster_id, object_index):

@@ -91,6 +91,7 @@ class Vampire:
         self.cluster_id_df = None
         self.labeled_contours_df = None
         self.centroids = None
+        self.inertia = None
         self.mean_cluster_contours = None
         # hierarchical clustering info
         self.pair_distance = None
@@ -128,10 +129,11 @@ class Vampire:
         self.principal_directions, \
             principal_components = analysis.pca_contours(self.contours)
         self.cluster_id_df, \
-            centroids = analysis.cluster_contours(principal_components,
-                                                  num_clusters=self.num_clusters,
-                                                  num_pc=self.num_pc,
-                                                  random_state=self.random_state)
+            centroids,\
+            self.inertia = analysis.cluster_contours(principal_components,
+                                                     num_clusters=self.num_clusters,
+                                                     num_pc=self.num_pc,
+                                                     random_state=self.random_state)
         self.labeled_contours_df = analysis.get_labeled_contours_df(self.contours,
                                                                     self.cluster_id_df)
         self.pair_distance, \
@@ -215,6 +217,7 @@ class Vampire:
             and self.cluster_id_df.equals(other.cluster_id_df)
             and self.labeled_contours_df.equals(other.labeled_contours_df)
             and np.allclose(self.centroids, other.centroids)
+            and self.inertia == other.inertia
             and np.allclose(self.mean_cluster_contours, other.mean_cluster_contours)
             # hierarchical clustering info
             and np.allclose(self.pair_distance, other.pair_distance)
