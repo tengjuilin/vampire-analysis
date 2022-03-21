@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy import cluster, spatial
@@ -221,6 +222,7 @@ def hierarchical_cluster_contour(labeled_contours_df):
                                             truncate_mode='lastp',
                                             orientation='bottom',
                                             above_threshold_color='k')
+    plt.close()
     return pair_distance, linkage_matrix, branches
 
 
