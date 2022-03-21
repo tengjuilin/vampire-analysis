@@ -4,35 +4,22 @@ from scipy import cluster, spatial
 from sklearn import preprocessing
 from sklearn.cluster import KMeans
 
-from . import amath
+
+def get_explained_variance_ratio(explained_variance):
+    explained_variance_ratio = explained_variance / np.sum(explained_variance)
+    return explained_variance_ratio
 
 
-def pca_contours(contours):
-    """
-    Return the principal component of the contours.
+def get_cum_explained_variance_ratio(explained_variance_ratio):
+    cum_explained_variance_ratio = np.cumsum(explained_variance_ratio)
+    return cum_explained_variance_ratio
 
-    Parameters
-    ----------
-    contours : ndarray
-        Object contours, with shape (num_contour, 2*num_points).
 
-    Returns
-    -------
-    principal_directions : ndarray
-        Loadings, weights, principal directions, principal axes,
-        eigenvector of covariance matrix of mean-subtracted contours,
-        with shape (2*num_points, 2*num_points).
-    principal_components : ndarray
-        PC score, principal components, coordinates of mean-subtracted contours
-        in their principal directions, with shape (num_contours, 2*num_points).
-
-    See Also
-    --------
-    vampire.amath.pca : Implementation of principal component analysis.
-
-    """
-    principal_directions, principal_components, variance = amath.pca(contours, 'eig')
-    return principal_directions, principal_components
+def get_optimal_num_pc(cum_explained_variance_ratio, ratio=0.95):
+    num_pc = np.sum(cum_explained_variance_ratio < ratio) + 1  # add one to exceed the ratio
+    if num_pc > len(cum_explained_variance_ratio):  # prevent index out of range
+        num_pc = len(cum_explained_variance_ratio)
+    return num_pc
 
 
 def pca_transform_contours(contours, mean_contour, principal_directions):

@@ -183,32 +183,32 @@ def test_get_model_pickle_path(img_set_path,
                                cortex_or_hypothalamus_otsu_filter):
     vampire_model = model.Vampire('ogd')
     actual = util.get_model_pickle_path(img_set_path, empty_filter, vampire_model)
-    expected = r'data/img/model_ogd_(50_5_20)__.pickle'
+    expected = r'data/img/model_ogd_(50_5_None)__.pickle'
     assert actual == expected
 
     vampire_model = model.Vampire('MEF')
     actual = util.get_model_pickle_path(img_set_path, cortex_40x_filter, vampire_model)
-    expected = r'data/img/model_MEF_(50_5_20)__cortex_40x.pickle'
+    expected = r'data/img/model_MEF_(50_5_None)__cortex_40x.pickle'
     assert actual == expected
 
     vampire_model = model.Vampire('hypoxic_ischemic')
     actual = util.get_model_pickle_path(img_set_path, midbrain_40x_filter, vampire_model)
-    expected = r'data/img/model_hypoxic_ischemic_(50_5_20)__midbrain_40x.pickle'
+    expected = r'data/img/model_hypoxic_ischemic_(50_5_None)__midbrain_40x.pickle'
     assert actual == expected
 
     vampire_model = model.Vampire('lipo-mouse')
     actual = util.get_model_pickle_path(real_img_set_path, cortex_40x_2_filter, vampire_model)
-    expected = r'data/real_img/model_lipo-mouse_(50_5_20)__cortex_40x_2.pickle'
+    expected = r'data/real_img/model_lipo-mouse_(50_5_None)__cortex_40x_2.pickle'
     assert actual == expected
 
     vampire_model = model.Vampire('rat-eye')
     actual = util.get_model_pickle_path(real_img_set_path, cortex_yen_or_otsu_filter, vampire_model)
-    expected = r'data/real_img/model_rat-eye_(50_5_20)__cortex_yen-otsu.pickle'
+    expected = r'data/real_img/model_rat-eye_(50_5_None)__cortex_yen-otsu.pickle'
     assert actual == expected
 
     vampire_model = model.Vampire('regional')
     actual = util.get_model_pickle_path(real_img_set_path, cortex_or_hypothalamus_otsu_filter, vampire_model)
-    expected = r'data/real_img/model_regional_(50_5_20)__cortex-hypothalamus_otsu.pickle'
+    expected = r'data/real_img/model_regional_(50_5_None)__cortex-hypothalamus_otsu.pickle'
     assert actual == expected
 
 
@@ -222,32 +222,32 @@ def test_get_apply_properties_pickle_path(img_set_path,
                                           cortex_or_hypothalamus_otsu_filter):
     vampire_model = model.Vampire('ogd')
     actual = util.get_apply_properties_pickle_path(img_set_path, empty_filter, vampire_model, 'cortex')
-    expected = r'data/img/apply-properties_ogd_on_cortex_(50_5_20)__.pickle'
+    expected = r'data/img/apply-properties_ogd_on_cortex_(50_5_None)__.pickle'
     assert actual == expected
 
     vampire_model = model.Vampire('MEF')
     actual = util.get_apply_properties_pickle_path(img_set_path, cortex_40x_filter, vampire_model, 'neg')
-    expected = r'data/img/apply-properties_MEF_on_neg_(50_5_20)__cortex_40x.pickle'
+    expected = r'data/img/apply-properties_MEF_on_neg_(50_5_None)__cortex_40x.pickle'
     assert actual == expected
 
     vampire_model = model.Vampire('hypoxic_ischemic')
     actual = util.get_apply_properties_pickle_path(img_set_path, midbrain_40x_filter, vampire_model, 'treated')
-    expected = r'data/img/apply-properties_hypoxic_ischemic_on_treated_(50_5_20)__midbrain_40x.pickle'
+    expected = r'data/img/apply-properties_hypoxic_ischemic_on_treated_(50_5_None)__midbrain_40x.pickle'
     assert actual == expected
 
     vampire_model = model.Vampire('lipo-mouse')
     actual = util.get_apply_properties_pickle_path(real_img_set_path, cortex_40x_2_filter, vampire_model, 'lipo-rat')
-    expected = r'data/real_img/apply-properties_lipo-mouse_on_lipo-rat_(50_5_20)__cortex_40x_2.pickle'
+    expected = r'data/real_img/apply-properties_lipo-mouse_on_lipo-rat_(50_5_None)__cortex_40x_2.pickle'
     assert actual == expected
 
     vampire_model = model.Vampire('rat-eye')
     actual = util.get_apply_properties_pickle_path(real_img_set_path, cortex_yen_or_otsu_filter, vampire_model, 'mouse-eye')
-    expected = r'data/real_img/apply-properties_rat-eye_on_mouse-eye_(50_5_20)__cortex_yen-otsu.pickle'
+    expected = r'data/real_img/apply-properties_rat-eye_on_mouse-eye_(50_5_None)__cortex_yen-otsu.pickle'
     assert actual == expected
 
     vampire_model = model.Vampire('regional')
     actual = util.get_apply_properties_pickle_path(real_img_set_path, cortex_or_hypothalamus_otsu_filter, vampire_model, 'temporal')
-    expected = r'data/real_img/apply-properties_regional_on_temporal_(50_5_20)__cortex-hypothalamus_otsu.pickle'
+    expected = r'data/real_img/apply-properties_regional_on_temporal_(50_5_None)__cortex-hypothalamus_otsu.pickle'
     assert actual == expected
 
 
@@ -261,30 +261,30 @@ def test_get_apply_properties_csv_path(img_set_path,
                                        cortex_or_hypothalamus_otsu_filter):
     vampire_model = model.Vampire('ogd')
     actual = util.get_apply_properties_csv_path(img_set_path, empty_filter, vampire_model, 'cortex')
-    expected = r'data/img/apply-properties_ogd_on_cortex_(50_5_20)__.csv'
+    expected = r'data/img/apply-properties_ogd_on_cortex_(50_5_None)__.csv'
     assert actual == expected
 
     vampire_model = model.Vampire('MEF')
     actual = util.get_apply_properties_csv_path(img_set_path, cortex_40x_filter, vampire_model, 'neg')
-    expected = r'data/img/apply-properties_MEF_on_neg_(50_5_20)__cortex_40x.csv'
+    expected = r'data/img/apply-properties_MEF_on_neg_(50_5_None)__cortex_40x.csv'
     assert actual == expected
 
     vampire_model = model.Vampire('hypoxic_ischemic')
     actual = util.get_apply_properties_csv_path(img_set_path, midbrain_40x_filter, vampire_model, 'treated')
-    expected = r'data/img/apply-properties_hypoxic_ischemic_on_treated_(50_5_20)__midbrain_40x.csv'
+    expected = r'data/img/apply-properties_hypoxic_ischemic_on_treated_(50_5_None)__midbrain_40x.csv'
     assert actual == expected
 
     vampire_model = model.Vampire('lipo-mouse')
     actual = util.get_apply_properties_csv_path(real_img_set_path, cortex_40x_2_filter, vampire_model, 'lipo-rat')
-    expected = r'data/real_img/apply-properties_lipo-mouse_on_lipo-rat_(50_5_20)__cortex_40x_2.csv'
+    expected = r'data/real_img/apply-properties_lipo-mouse_on_lipo-rat_(50_5_None)__cortex_40x_2.csv'
     assert actual == expected
 
     vampire_model = model.Vampire('rat-eye')
     actual = util.get_apply_properties_csv_path(real_img_set_path, cortex_yen_or_otsu_filter, vampire_model, 'mouse-eye')
-    expected = r'data/real_img/apply-properties_rat-eye_on_mouse-eye_(50_5_20)__cortex_yen-otsu.csv'
+    expected = r'data/real_img/apply-properties_rat-eye_on_mouse-eye_(50_5_None)__cortex_yen-otsu.csv'
     assert actual == expected
 
     vampire_model = model.Vampire('regional')
     actual = util.get_apply_properties_csv_path(real_img_set_path, cortex_or_hypothalamus_otsu_filter, vampire_model, 'temporal')
-    expected = r'data/real_img/apply-properties_regional_on_temporal_(50_5_20)__cortex-hypothalamus_otsu.csv'
+    expected = r'data/real_img/apply-properties_regional_on_temporal_(50_5_None)__cortex-hypothalamus_otsu.csv'
     assert actual == expected

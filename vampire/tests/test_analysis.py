@@ -18,6 +18,25 @@ def mean_aligned_contour_flat():
 
 
 @pytest.fixture
+def explained_variance():
+    return np.array([2901, 529, 492, 301, 210, 200, 102, 92, 73])
+
+
+@pytest.fixture
+def explained_variance_ratio():
+    return np.array([0.5920408163265306, 0.1079591836734694, 0.1004081632653061,
+                     0.0614285714285714, 0.0428571428571429, 0.0408163265306122,
+                     0.0208163265306122, 0.0187755102040816, 0.0148979591836735])
+
+
+@pytest.fixture
+def cum_explained_variance_ratio():
+    return np.array([0.5920408163265306, 0.7, 0.8004081632653061,
+                     0.8618367346938774, 0.9046938775510203, 0.9455102040816326,
+                     0.9663265306122448, 0.9851020408163265, 0.9999999999999999])
+
+
+@pytest.fixture
 def pca_contour():
     return read_abs_pickle('data/analysis/pca_contours.pickle')
 
@@ -67,10 +86,34 @@ def applied_contours_df():
     return read_abs_pickle('data/analysis/assign_clusters_id.pickle')
 
 
-def test_pca_contours(aligned_contours_flat, pca_contour):
-    actual = analysis.pca_contours(aligned_contours_flat)
-    expected = pca_contour
-    assert_list_allclose(actual, expected)
+def test_get_explained_variance_ratio(explained_variance, explained_variance_ratio):
+    actual = analysis.get_explained_variance_ratio(explained_variance)
+    expected = explained_variance_ratio
+    assert_allclose(actual, expected)
+
+
+def test_get_cum_explained_variance_ratio(explained_variance_ratio, cum_explained_variance_ratio):
+    actual = analysis.get_cum_explained_variance_ratio(explained_variance_ratio)
+    expected = cum_explained_variance_ratio
+    assert_allclose(actual, expected)
+
+
+def test_get_optimal_num_pc(cum_explained_variance_ratio):
+    actual = analysis.get_optimal_num_pc(cum_explained_variance_ratio)
+    expected = 7
+    assert_allclose(actual, expected)
+
+    actual = analysis.get_optimal_num_pc(cum_explained_variance_ratio, 1)
+    expected = 9
+    assert_allclose(actual, expected)
+
+    actual = analysis.get_optimal_num_pc(cum_explained_variance_ratio, 0.9)
+    expected = 5
+    assert_allclose(actual, expected)
+
+    actual = analysis.get_optimal_num_pc(cum_explained_variance_ratio, 0)
+    expected = 1
+    assert_allclose(actual, expected)
 
 
 def test_pca_transform_contours(aligned_contours_flat,

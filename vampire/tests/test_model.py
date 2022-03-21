@@ -45,6 +45,8 @@ def test_Vampire__init__():
     assert vampire_model.contours is None
     # pca analysis info
     assert vampire_model.principal_directions is None
+    assert vampire_model.explained_variance is None
+    assert vampire_model.explained_variance_ratio is None
     # k-means clustering info
     assert vampire_model.cluster_id_df is None
     assert vampire_model.labeled_contours_df is None

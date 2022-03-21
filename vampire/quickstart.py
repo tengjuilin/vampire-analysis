@@ -102,10 +102,10 @@ def _build_models_check_df(img_info_df):
     num_img_sets, num_args = img_info_df.shape
     if num_img_sets == 0:
         raise ValueError('Input DataFrame is empty. Expect at least one row.')
-    if num_args < 5:  # 5 cols required by doc
+    if num_args < 6:  # 5 cols required by doc
         raise ValueError('Input DataFrame does not have enough number of columns. \n'
-                         'Expect required 5 columns in order: img_set_path, output_path, '
-                         'model_name, num_points, num_clusters.')
+                         'Expect required 6 columns in order: img_set_path, output_path, '
+                         'model_name, num_points, num_clusters, num_pc.')
 
 
 def _build_models_check_required_info(required_info):
@@ -133,6 +133,8 @@ def _build_models_check_required_info(required_info):
         Number of sample points of object contour. Defaults to 50.
     num_clusters : int
         Number of clusters of K-means clustering. Defaults to 5.
+    num_pc : int
+        Number of principal components kept for analysis. Defaults to None.
 
     Raises
     ------
@@ -141,7 +143,7 @@ def _build_models_check_required_info(required_info):
 
     """
     # unpack args
-    img_set_path, output_path, model_name, num_points, num_clusters = required_info
+    img_set_path, output_path, model_name, num_points, num_clusters, num_pc = required_info
 
     # img_set_path
     if os.path.isdir(img_set_path):
@@ -179,12 +181,18 @@ def _build_models_check_required_info(required_info):
     else:
         num_clusters = int(num_clusters)
 
-    return img_set_path, output_path, model_name, num_points, num_clusters
+    # num_pc
+    if pd.isna(num_pc):
+        num_pc = None
+    else:
+        num_pc = int(num_pc)
+
+    return img_set_path, output_path, model_name, num_points, num_clusters, num_pc
 
 
 def build_model(img_set_path, output_path,
                 model_name, num_points,
-                num_clusters, filter_info,
+                num_clusters, num_pc, filter_info,
                 random_state=None, savefig=True):
     """
     Builds VAMPIRE model to one image set.
@@ -203,6 +211,10 @@ def build_model(img_set_path, output_path,
     num_clusters : int
         Number of clusters of K-means clustering. Defaults to 5. Recommended
         range [2, 10].
+    num_pc : int or None
+        Number of principal components kept for analysis. Default to keeping
+        those that explains 95% of total variance. Recommended to adjust
+        after analyzing scree plot.
     filter_info : ndarray
         Regex filter(s) of image filenames to be analyzed.
         Empty if no filter needed.
@@ -224,7 +236,7 @@ def build_model(img_set_path, output_path,
     vampire_model = model.Vampire(model_name,
                                   num_points=num_points,
                                   num_clusters=num_clusters,
-                                  num_pc=20,
+                                  num_pc=num_pc,
                                   random_state=random_state)
     vampire_model.build(properties_df)
     # write model
@@ -263,9 +275,9 @@ def build_models(img_info_df, random_state=None, savefig=True):
     :ref:`advanced <build_advanced>` input requirement
     and examples. Below is a general description.
 
-    .. rubric:: **Required columns of** ``img_info_df`` **(col 1-5)**
+    .. rubric:: **Required columns of** ``img_info_df`` **(col 1-6)**
 
-    The input DataFrame ``img_info_df`` must contain, *in order*, the 5
+    The input DataFrame ``img_info_df`` must contain, *in order*, the 6
     required columns of
 
     img_set_path : str
@@ -280,6 +292,10 @@ def build_models(img_info_df, random_state=None, savefig=True):
     num_clusters : int, default
         Number of clusters of K-means clustering. Defaults to 5. Recommended
         range [2, 10].
+    num_pc : int, default
+        Number of principal components kept for analysis. Default to keeping
+        those that explains 95% of total variance. Recommended to adjust
+        after analyzing scree plot.
 
     in the first 5 columns.
     The default values are used in default columns when (1) the space is left
@@ -291,7 +307,7 @@ def build_models(img_info_df, random_state=None, savefig=True):
        even when defaults are used.
 
 
-    .. rubric:: **Optional columns of** ``img_info_df`` **(col 6-)**
+    .. rubric:: **Optional columns of** ``img_info_df`` **(col 7-)**
 
     The input DataFrame ``img_info_df`` could also contain any number (none
     to many) of optional columns at the right of the required columns.
@@ -321,13 +337,14 @@ def build_models(img_info_df, random_state=None, savefig=True):
     for row_i in range(num_img_set):
         # parse arguments
         img_info = img_info_df.iloc[row_i, :]
-        required_info = img_info[:5]  # 5 cols expected in doc
-        filter_info = img_info[5:].values.astype(str)
+        required_info = img_info[:6]  # 6 cols expected in doc
+        filter_info = img_info[6:].values.astype(str)
         img_set_path, \
             output_path, \
             model_name, \
             num_points, \
-            num_clusters = _build_models_check_required_info(required_info)
+            num_clusters, \
+            num_pc = _build_models_check_required_info(required_info)
         filter_info = _parse_filter_info(filter_info)
         # build model
         build_model(img_set_path,
@@ -335,6 +352,7 @@ def build_models(img_info_df, random_state=None, savefig=True):
                     model_name,
                     num_points,
                     num_clusters,
+                    num_pc,
                     filter_info,
                     random_state=random_state,
                     savefig=savefig)

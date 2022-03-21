@@ -1,7 +1,6 @@
 import numpy as np
 
-from . import analysis
-from . import processing
+from . import analysis, processing, amath
 
 
 class Vampire:
@@ -51,7 +50,7 @@ class Vampire:
                  model_name,
                  num_points=50,
                  num_clusters=5,
-                 num_pc=20,
+                 num_pc=None,
                  random_state=None):
         """
         Initialize VAMPIRE model wih hyperparameters.
@@ -87,6 +86,8 @@ class Vampire:
         self.contours = None
         # pca analysis info
         self.principal_directions = None
+        self.explained_variance = None
+        self.explained_variance_ratio = None
         # k-means clustering info
         self.cluster_id_df = None
         self.labeled_contours_df = None
@@ -127,9 +128,14 @@ class Vampire:
 
         # analyze contours
         self.principal_directions, \
-            principal_components = analysis.pca_contours(self.contours)
+            principal_components, \
+            self.explained_variance = amath.pca(self.contours, 'eig')
+        self.explained_variance_ratio = analysis.get_explained_variance_ratio(self.explained_variance)
+        self.cum_explained_variance_ratio = analysis.get_cum_explained_variance_ratio(self.explained_variance_ratio)
+        if self.num_pc is None:
+            self.num_pc = analysis.get_optimal_num_pc(self.cum_explained_variance_ratio)
         self.cluster_id_df, \
-            centroids,\
+            centroids, \
             self.inertia = analysis.cluster_contours(principal_components,
                                                      num_clusters=self.num_clusters,
                                                      num_pc=self.num_pc,
@@ -213,6 +219,8 @@ class Vampire:
             and np.allclose(self.contours, other.contours)
             # pca analysis info
             and np.allclose(self.principal_directions, other.principal_directions)
+            and np.allclose(self.explained_variance, other.explained_variance)
+            and np.allclose(self.explained_variance_ratio, other.explained_variance_ratio)
             # k-means clustering info
             and self.cluster_id_df.equals(other.cluster_id_df)
             and self.labeled_contours_df.equals(other.labeled_contours_df)

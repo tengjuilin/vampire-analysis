@@ -62,18 +62,24 @@ def num_clusters():
 
 
 @pytest.fixture
+def num_pc():
+    return None
+
+
+@pytest.fixture
 def random_state():
     return 1
 
 
 @pytest.fixture
-def build_img_info_df(img_set_path, output_path,
-                      model_name, num_points, num_clusters):
+def build_img_info_df(img_set_path, output_path, model_name,
+                      num_points, num_clusters, num_pc):
     img_info = {'img_set_path': img_set_path,
                 'output_path': output_path,
                 'model_name': model_name,
                 'num_points': num_points,
                 'num_clusters': num_clusters,
+                'num_pc': num_pc,
                 'filename': 'img'}
     img_info_df = pd.DataFrame(img_info, index=np.arange(1))
     return img_info_df
@@ -81,7 +87,7 @@ def build_img_info_df(img_set_path, output_path,
 
 @pytest.fixture
 def build_required_info(build_img_info_df):
-    return build_img_info_df.iloc[0, :5]
+    return build_img_info_df.iloc[0, :6]
 
 
 @pytest.fixture
@@ -190,24 +196,24 @@ def test__build_models_check_df(build_img_info_df):
 
 def test__build_models_check_required_info(build_required_info, img_set_path,
                                            output_path, model_name,
-                                           num_points, num_clusters):
+                                           num_points, num_clusters, num_pc):
     actual = quickstart._build_models_check_required_info(build_required_info)
     expected = (os.path.normpath(img_set_path),
                 os.path.normpath(output_path),
-                model_name, num_points, num_clusters)
+                model_name, num_points, num_clusters, num_pc)
     assert_list_equal(actual, expected)
 
-    required_info = pd.Series([img_set_path, None, None, None, None])
+    required_info = pd.Series([img_set_path, None, None, None, None, None])
     actual = quickstart._build_models_check_required_info(required_info)
     expected = (os.path.normpath(img_set_path),
                 os.path.normpath(img_set_path),
                 datetime.now().strftime('%Y-%m-%d_%H-%M-%S'),
-                50, 5)
+                50, 5, None)
     assert_list_equal(actual, expected)
 
 
 def test_build_model(img_set_path, output_path, model_name,
-                     num_points, num_clusters,
+                     num_points, num_clusters, num_pc,
                      empty_filter, random_state,
                      built_model):
     actual = quickstart.build_model(img_set_path,
@@ -215,10 +221,11 @@ def test_build_model(img_set_path, output_path, model_name,
                                     model_name,
                                     num_points,
                                     num_clusters,
+                                    num_pc,
                                     empty_filter,
                                     random_state=random_state,
                                     savefig=False)
-    actual_write = read_abs_pickle(r'data/quickstart/output/model_quickstart-test_(70_10_20)__.pickle')
+    actual_write = read_abs_pickle(r'data/quickstart/output/model_quickstart-test_(70_10_25)__.pickle')
     expected = built_model
     assert actual == actual_write
     assert actual == expected
@@ -230,7 +237,7 @@ def test_build_models(build_img_info_df, random_state,
     quickstart.build_models(build_img_info_df,
                             random_state=random_state,
                             savefig=False)
-    actual_write = read_abs_pickle(r'data/quickstart/output/model_quickstart-test_(70_10_20)__img.pickle')
+    actual_write = read_abs_pickle(r'data/quickstart/output/model_quickstart-test_(70_10_25)__img.pickle')
     expected = built_model
     assert actual_write == expected
 
@@ -269,7 +276,7 @@ def test_apply_model(img_set_path, model_path, output_path,
                                     empty_filter,
                                     write_csv=False,
                                     savefig=False)
-    actual_write = read_abs_pickle(r'data/quickstart/output/apply-properties_quickstart-test_on_quickstart-test_(70_10_20)__.pickle')
+    actual_write = read_abs_pickle(r'data/quickstart/output/apply-properties_quickstart-test_on_quickstart-test_(70_10_25)__.pickle')
     expected = apply_model_df
     assert_frame_equal(actual, expected)
     assert_frame_equal(actual, actual_write)
@@ -280,6 +287,6 @@ def test_apply_models(apply_img_info_df, apply_model_df):
     quickstart.apply_models(apply_img_info_df,
                             write_csv=False,
                             savefig=False)
-    actual_write = read_abs_pickle(r'data/quickstart/output/apply-properties_quickstart-test_on_quickstart-test_(70_10_20)__img.pickle')
+    actual_write = read_abs_pickle(r'data/quickstart/output/apply-properties_quickstart-test_on_quickstart-test_(70_10_25)__img.pickle')
     expected = apply_model_df
     assert_frame_equal(actual_write, expected)
