@@ -4,10 +4,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from . import extraction
-from . import model
-from . import plot
-from . import util
+from . import extraction, model, plot, util
 
 
 def _check_prohibited_char(text, input_type='path'):
