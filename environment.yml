@@ -22,3 +22,5 @@ dependencies:
   - sphinx
   - numpydoc
   - pydata-sphinx-theme
+  - nbsphinx
+  - myst-parser
