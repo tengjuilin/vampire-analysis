@@ -120,7 +120,7 @@ def plot_dendrogram(model, ax=None, fig_size=(6, 2)):
     cluster.hierarchy.dendrogram(model.linkage_matrix,
                                  ax=ax,
                                  p=0,
-                                 truncate_mode='mlab',
+                                 truncate_mode='lastp',
                                  orientation='bottom',
                                  above_threshold_color='k')
     ax.axis('off')
