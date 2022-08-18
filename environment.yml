@@ -1,0 +1,24 @@
+# To use:
+#
+#   $ conda env create -f environment.yml
+#   $ conda activate vampire-analysis-dev
+#
+name: vampire-analysis-dev
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - numpy
+  - pandas
+  - scipy
+  - matplotlib
+  - opencv
+  - scikit-image
+  - scikit-learn
+  - openpyxl  # for reading excel in pandas
+  # For testing
+  - pytest
+  # For building docs
+  - sphinx
+  - numpydoc
+  - pydata-sphinx-theme
