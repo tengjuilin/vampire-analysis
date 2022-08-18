@@ -226,8 +226,6 @@ def _pca_eig(A):
        University Press. doi:10.1017/9781108380690
 
     """
-    # A_bar = np.mean(A, axis=0)
-    # B = A - A_bar
     B = mean_center(A)
     C = B.T @ B / (B.shape[0] - 1)
     d, V = np.linalg.eigh(C)  # d is diagonal entries of D
@@ -343,8 +341,6 @@ def _pca_svd(A):
 
     """
     n = len(A)
-    # A_bar = np.mean(A, axis=0)
-    # B = A - A_bar
     B = mean_center(A)
     U, s, VT = np.linalg.svd(B, full_matrices=False)
     V = VT.T
