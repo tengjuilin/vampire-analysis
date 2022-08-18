@@ -88,6 +88,7 @@ class Vampire:
         self.principal_directions = None
         self.explained_variance = None
         self.explained_variance_ratio = None
+        self.cum_explained_variance_ratio = None
         # k-means clustering info
         self.cluster_id_df = None
         self.labeled_contours_df = None
@@ -221,6 +222,7 @@ class Vampire:
             and np.allclose(self.principal_directions, other.principal_directions)
             and np.allclose(self.explained_variance, other.explained_variance)
             and np.allclose(self.explained_variance_ratio, other.explained_variance_ratio)
+            and np.allclose(self.cum_explained_variance_ratio, other.cum_explained_variance_ratio)
             # k-means clustering info
             and self.cluster_id_df.equals(other.cluster_id_df)
             and self.labeled_contours_df.equals(other.labeled_contours_df)
