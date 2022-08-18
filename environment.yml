@@ -7,7 +7,7 @@ name: vampire-analysis-dev
 channels:
   - conda-forge
 dependencies:
-  - python=3.10
+  - python=3.9
   - numpy
   - pandas
   - scipy
