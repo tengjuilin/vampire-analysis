@@ -127,36 +127,35 @@ class Vampire:
         self.contours = processing.align_contours(contours, self.mean_registered_contour)
         self.mean_aligned_contour = processing.get_mean_aligned_contour(self.contours)
 
-        # analyze contours
-        self.principal_directions, \
-            principal_components, \
-            self.explained_variance = amath.pca(self.contours, 'eig')
+        # pca contours
+        (self.principal_directions,
+            principal_components,
+            self.explained_variance) = amath.pca(self.contours, 'eig')
         self.explained_variance_ratio = analysis.get_explained_variance_ratio(self.explained_variance)
         self.cum_explained_variance_ratio = analysis.get_cum_explained_variance_ratio(self.explained_variance_ratio)
         if self.num_pc is None:
             self.num_pc = analysis.get_optimal_num_pc(self.cum_explained_variance_ratio)
-        self.cluster_id_df, \
-            centroids, \
-            self.inertia = analysis.cluster_contours(principal_components,
-                                                     num_clusters=self.num_clusters,
-                                                     num_pc=self.num_pc,
-                                                     random_state=self.random_state)
-        self.labeled_contours_df = analysis.get_labeled_contours_df(self.contours,
-                                                                    self.cluster_id_df)
-        self.pair_distance, \
-            self.linkage_matrix, \
-            self.branches = analysis.hierarchical_cluster_contour(self.labeled_contours_df)
+
+        # cluster contours
+        (self.cluster_id_df,
+            centroids,
+            self.inertia) = analysis.cluster_contours(principal_components,
+                                                      num_clusters=self.num_clusters,
+                                                      num_pc=self.num_pc,
+                                                      random_state=self.random_state)
+        self.labeled_contours_df = analysis.get_labeled_contours_df(self.contours, self.cluster_id_df)
+        (self.pair_distance,
+            self.linkage_matrix,
+            self.branches) = analysis.hierarchical_cluster_contour(self.labeled_contours_df)
 
         # reorder clusters and centroid according to dendrogram
         # to be consistent with dendrogram visualization
         object_index = analysis.get_cluster_order(self.branches)
-        cluster_id_sorted = analysis.reorder_clusters(self.cluster_id_df['cluster_id'],
-                                                      object_index)
+        cluster_id_sorted = analysis.reorder_clusters(self.cluster_id_df['cluster_id'], object_index)
         self.cluster_id_df['cluster_id'] = cluster_id_sorted
         self.labeled_contours_df['cluster_id'] = cluster_id_sorted
         self.mean_cluster_contours = analysis.get_mean_cluster_contours(self.labeled_contours_df)
-        self.centroids = analysis.reorder_centroids(centroids,
-                                                    object_index)
+        self.centroids = analysis.reorder_centroids(centroids, object_index)
         return self
 
     def apply(self, properties_df):
