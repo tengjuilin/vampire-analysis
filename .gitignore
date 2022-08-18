@@ -1,3 +1,6 @@
+# macOS
+.DS_Store
+
 ######### Pycharm
 # all pycharm .idea and cache
 *.idea
