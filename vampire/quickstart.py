@@ -336,12 +336,12 @@ def build_models(img_info_df, random_state=None, savefig=True):
         img_info = img_info_df.iloc[row_i, :]
         required_info = img_info[:6]  # 6 cols expected in doc
         filter_info = img_info[6:].values.astype(str)
-        img_set_path, \
-            output_path, \
-            model_name, \
-            num_points, \
-            num_clusters, \
-            num_pc = _build_models_check_required_info(required_info)
+        (img_set_path,
+            output_path,
+            model_name,
+            num_points,
+            num_clusters,
+            num_pc) = _build_models_check_required_info(required_info)
         filter_info = _parse_filter_info(filter_info)
         # build model
         build_model(img_set_path,
@@ -485,7 +485,7 @@ def apply_model(img_set_path, model_path,
         Empty if no filter needed.
     write_csv : bool, optional
         Whether write apply model data to csv.
-        Could be time consuming if csv is large.
+        Could be time-consuming if csv is large.
     savefig : bool, optional
         Whether save distribution contour dendrogram.
 
@@ -521,7 +521,7 @@ def apply_model(img_set_path, model_path,
                       img_set_name)
 
     # write apply model data to csv
-    # time consuming if csv is large
+    # time-consuming if csv is large
     if write_csv:
         properties_csv_path = util.get_apply_properties_csv_path(output_path,
                                                                  filter_info,
@@ -544,7 +544,7 @@ def apply_models(img_info_df, write_csv=True, savefig=True):
         Contains all information about image sets to be analyzed. See notes.
     write_csv : bool, optional
         Whether write apply model data to csv.
-        Could be time consuming if csv is large.
+        Could be time-consuming if csv is large.
     savefig : bool, optional
         Whether save distribution contour dendrogram.
 
@@ -611,10 +611,10 @@ def apply_models(img_info_df, write_csv=True, savefig=True):
         img_info = img_info_df.iloc[row_i, :]
         required_info = img_info[:4]  # 4 cols expected in doc
         filter_info = img_info[4:].values.astype(str)
-        img_set_path, \
-            model_path, \
-            output_path, \
-            img_set_name = _apply_models_check_required_info(required_info)
+        (img_set_path,
+            model_path,
+            output_path,
+            img_set_name) = _apply_models_check_required_info(required_info)
         filter_info = _parse_filter_info(filter_info)
         # apply model
         apply_model(img_set_path,
