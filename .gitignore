@@ -26,5 +26,8 @@ doc/source/reference/api
 # documentation builds
 doc/build
 
-######### Testing Output
+######### Testing Outputs
 vampire/tests/data/quickstart/output
+
+######### Todos
+TODO.md
