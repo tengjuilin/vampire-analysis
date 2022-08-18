@@ -35,9 +35,7 @@ def sample_contour(contour, num_sample_points):
     # can be arbitrary since cumulative sum is taken, identical result
     distance = np.append([1], distance)
     cum_distance = np.cumsum(distance)
-    # TODO: testing, use truncated points, why??
-    sample_points = np.linspace(cum_distance[0], cum_distance[-1], num_sample_points+1)[:-1]
-    # sample_points = np.linspace(cum_distance[0], cum_distance[-1], num_sample_points)  # my soln
+    sample_points = np.linspace(cum_distance[0], cum_distance[-1], num_sample_points)
     # interpolate the data points using b-spline
     x_spliner = interpolate.splrep(cum_distance, x, s=0)
     y_spliner = interpolate.splrep(cum_distance, y, s=0)
