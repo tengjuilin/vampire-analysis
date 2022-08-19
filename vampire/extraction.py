@@ -34,7 +34,7 @@ def check_property_csv_existence(img_set_path, filter_info):
     return False
 
 
-def get_filtered_filenames(img_set_path, filter_info):
+def get_filtered_filenames(img_set_path, filter_info=None):
     """
     Get filenames filtered with keywords.
 
@@ -42,7 +42,7 @@ def get_filtered_filenames(img_set_path, filter_info):
     ----------
     img_set_path : str
         Path to the directory of images to be analyzed.
-    filter_info : ndarray
+    filter_info : ndarray, optional
         Regex filter(s) of image filenames to be analyzed.
         Empty if no filter needed.
 
@@ -52,6 +52,9 @@ def get_filtered_filenames(img_set_path, filter_info):
         Filtered filenames.
 
     """
+    if filter_info is None:
+        filter_info = np.array([], dtype=str)
+
     filenames = pd.Series(os.listdir(img_set_path))
 
     # filter by img extension
