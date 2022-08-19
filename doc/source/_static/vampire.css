@@ -13,11 +13,6 @@ body {
   color:#4A4A4A; /* numpy.org body color */
 }
 
-pre, code {
-  font-size: 100%;
-  line-height: 155%;
-}
-
 h1 {
   font-family: "Lato", sans-serif;
   color: #013243; /* warm black */
