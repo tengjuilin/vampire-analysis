@@ -24,3 +24,5 @@ dependencies:
   - pydata-sphinx-theme=0.8.0  # preserve bullet list styl
   - nbsphinx
   - myst-parser
+  # For packaging
+  - twine
