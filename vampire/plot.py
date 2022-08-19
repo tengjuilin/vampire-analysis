@@ -48,12 +48,14 @@ def set_plot_style():
     })
 
 
-def save_fig(fig,
-             output_path,
-             fig_type,
-             extension='.png',
-             model_name=None,
-             apply_name=None):
+def save_fig(
+        fig,
+        output_path,
+        fig_type,
+        extension='.png',
+        model_name=None,
+        apply_name=None
+):
     """
     Save figure to local directory.
 
@@ -117,20 +119,28 @@ def plot_dendrogram(model, ax=None, fig_size=(6, 2)):
         fig, ax = plt.subplots(figsize=fig_size)
 
     cluster.hierarchy.set_link_color_palette(['k'])
-    cluster.hierarchy.dendrogram(model.linkage_matrix,
-                                 ax=ax,
-                                 p=0,
-                                 truncate_mode='lastp',
-                                 orientation='bottom',
-                                 above_threshold_color='k')
+    cluster.hierarchy.dendrogram(
+        model.linkage_matrix,
+        ax=ax,
+        p=0,
+        truncate_mode='lastp',
+        orientation='bottom',
+        above_threshold_color='k'
+    )
     ax.axis('off')
     return ax
 
 
-def plot_contours(model, apply_properties_df=None,
-                  contour_scale=3,
-                  ax=None, fig_size=(6, 2),
-                  colors=None, alpha=1, lw=2):
+def plot_contours(
+        model,
+        apply_properties_df=None,
+        contour_scale=3,
+        ax=None,
+        fig_size=(6, 2),
+        colors=None,
+        alpha=1,
+        lw=2
+):
     """
     Plots mean contours.
 
@@ -194,10 +204,16 @@ def plot_contours(model, apply_properties_df=None,
     return ax
 
 
-def plot_representatives(model, apply_properties_df,
-                         num_sample=10, random_state=None,
-                         ax=None, fig_size=(17, 2),
-                         colors=None, alpha=None, lw=None):
+def plot_representatives(
+        model, apply_properties_df,
+        num_sample=10,
+        random_state=None,
+        ax=None,
+        fig_size=(17, 2),
+        colors=None,
+        alpha=None,
+        lw=None
+):
     """
     Plots representative object contours.
 
@@ -252,8 +268,10 @@ def plot_representatives(model, apply_properties_df,
     cluster_id_df = apply_properties_df['cluster_id']
     labeled_contours_df = analysis.get_labeled_contours_df(contours, cluster_id_df)
     all_cluster_samples_df = labeled_contours_df.groupby('cluster_id') \
-        .sample(n=num_sample,
-                random_state=random_state)
+        .sample(
+        n=num_sample,
+        random_state=random_state
+    )
 
     # plotting each sample contour
     for cluster_i in range(model.num_clusters):
@@ -305,14 +323,22 @@ def plot_distribution(properties_df, ax=None):
     x_first = 5  # offset of first contour
     x_offset = 10  # offset between contours
     width = x_offset / 2
-    x = np.arange(x_first,
-                  num_clusters * x_offset + x_offset / 2,
-                  x_offset)
-    colors = [plt.get_cmap('twilight')(cluster_i)
-              for cluster_i in np.linspace(0.1, 0.9, num_clusters)]
-    ax.bar(x=x, height=distribution,
-           color=colors,
-           align='center', width=width)
+    x = np.arange(
+        x_first,
+        num_clusters * x_offset + x_offset / 2,
+        x_offset
+    )
+    colors = [
+        plt.get_cmap('twilight')(cluster_i)
+        for cluster_i in np.linspace(0.1, 0.9, num_clusters)
+    ]
+    ax.bar(
+        x=x,
+        height=distribution,
+        color=colors,
+        align='center',
+        width=width
+    )
     ax.set_ylabel(f'Distribution [%]')
     ax.set_xticks([])  # clear x tick and tick labels
 
@@ -348,8 +374,12 @@ def plot_contour_dendrogram(model, fig_size=(6, 2)):
     return fig, axs
 
 
-def plot_distribution_contour(model, apply_properties_df=None,
-                              fig_size=(5, 5), height_ratio=(4, 1)):
+def plot_distribution_contour(
+        model,
+        apply_properties_df=None,
+        fig_size=(5, 5),
+        height_ratio=(4, 1)
+):
     """
     Plots the distribution of mean contours in a bar graph with labeling
     of mean contours.
@@ -380,8 +410,12 @@ def plot_distribution_contour(model, apply_properties_df=None,
     plot_contours, plot_distribution
 
     """
-    fig, axs = plt.subplots(2, 1, figsize=fig_size, sharex='all',
-                            gridspec_kw={'height_ratios': height_ratio})
+    fig, axs = plt.subplots(
+        2, 1,
+        figsize=fig_size,
+        sharex='all',
+        gridspec_kw={'height_ratios': height_ratio}
+    )
     plot_contours(model, ax=axs[1])
     if apply_properties_df is None:
         plot_distribution(model.cluster_id_df, ax=axs[0])
@@ -392,8 +426,12 @@ def plot_distribution_contour(model, apply_properties_df=None,
     return fig, axs
 
 
-def plot_distribution_contour_dendrogram(model, apply_properties_df=None,
-                                         fig_size=(5, 5), height_ratio=(4, 1, 1)):
+def plot_distribution_contour_dendrogram(
+        model,
+        apply_properties_df=None,
+        fig_size=(5, 5),
+        height_ratio=(4, 1, 1)
+):
     """
     Plots the distribution of mean contours in a bar graph with labeling
     of mean contours and their dendrogram.
@@ -426,8 +464,12 @@ def plot_distribution_contour_dendrogram(model, apply_properties_df=None,
     """
     # figure structure
     height_ratio = list(height_ratio)  # prevent mutable default argument
-    fig, axs = plt.subplots(3, 1, figsize=fig_size, sharex='all',
-                            gridspec_kw={'height_ratios': height_ratio})
+    fig, axs = plt.subplots(
+        3, 1,
+        figsize=fig_size,
+        sharex='all',
+        gridspec_kw={'height_ratios': height_ratio}
+    )
 
     if apply_properties_df is None:  # build model plot
         plot_dendrogram(model, ax=axs[2])
@@ -436,8 +478,12 @@ def plot_distribution_contour_dendrogram(model, apply_properties_df=None,
     else:  # apply model plot
         plot_dendrogram(model, ax=axs[2])
         plot_contours(model, ax=axs[1])
-        plot_contours(model, apply_properties_df, ax=axs[1],
-                      colors='black', alpha=0.3)
+        plot_contours(
+            model,
+            apply_properties_df, ax=axs[1],
+            colors='black',
+            alpha=0.3
+        )
         plot_distribution(apply_properties_df, ax=axs[0])
 
     # figure settings after plotting

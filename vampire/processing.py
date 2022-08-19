@@ -234,7 +234,10 @@ def register_contour(contour):
     # let data point start at the right close to the major axis
     theta = np.arctan2(T[:, 1], T[:, 0])
     starting_index = np.argmin(np.abs(theta))
-    reorder_index = np.hstack([np.arange(starting_index, N), np.arange(starting_index)])
+    reorder_index = np.hstack([
+        np.arange(starting_index, N),
+        np.arange(starting_index)
+    ])
     T = T[reorder_index, :]
     theta = theta[reorder_index]
     # make contour positively oriented
@@ -367,7 +370,10 @@ def align_contour(contour, mean_contour):
     best_index = 0
     for i in range(N):
         starting_index = i
-        reorder_index = np.hstack([np.arange(starting_index, N), np.arange(starting_index)])
+        reorder_index = np.hstack([
+            np.arange(starting_index, N),
+            np.arange(starting_index)]
+        )
         A_i = A[:, reorder_index]
         R = amath.get_rotation_matrix(A_i, A_bar)
         A_prime = R @ A_i
@@ -376,7 +382,10 @@ def align_contour(contour, mean_contour):
             best_index = i
             SSD_best = SSD_current
 
-    reorder_index = np.hstack([np.arange(best_index, N), np.arange(best_index)])
+    reorder_index = np.hstack([
+        np.arange(best_index, N),
+        np.arange(best_index)
+    ])
     A_i = A[:, reorder_index]
     R = amath.get_rotation_matrix(A_i, A_bar)
     A_prime = R @ A_i

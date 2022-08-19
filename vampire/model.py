@@ -128,25 +128,23 @@ class Vampire:
         self.mean_aligned_contour = processing.get_mean_aligned_contour(self.contours)
 
         # pca contours
-        (self.principal_directions,
-            principal_components,
-            self.explained_variance) = amath.pca(self.contours, 'eig')
+        self.principal_directions, principal_components, self.explained_variance = amath.pca(self.contours, 'eig')
         self.explained_variance_ratio = analysis.get_explained_variance_ratio(self.explained_variance)
         self.cum_explained_variance_ratio = analysis.get_cum_explained_variance_ratio(self.explained_variance_ratio)
         if self.num_pc is None:
             self.num_pc = analysis.get_optimal_num_pc(self.cum_explained_variance_ratio)
 
         # cluster contours
-        (self.cluster_id_df,
-            centroids,
-            self.inertia) = analysis.cluster_contours(principal_components,
-                                                      num_clusters=self.num_clusters,
-                                                      num_pc=self.num_pc,
-                                                      random_state=self.random_state)
+        self.cluster_id_df, centroids, self.inertia = analysis.cluster_contours(
+            principal_components,
+            num_clusters=self.num_clusters,
+            num_pc=self.num_pc,
+            random_state=self.random_state
+        )
         self.labeled_contours_df = analysis.get_labeled_contours_df(self.contours, self.cluster_id_df)
-        (self.pair_distance,
-            self.linkage_matrix,
-            self.branches) = analysis.hierarchical_cluster_contour(self.labeled_contours_df)
+        self.pair_distance, self.linkage_matrix, self.branches = analysis.hierarchical_cluster_contour(
+            self.labeled_contours_df
+        )
 
         # reorder clusters and centroid according to dendrogram
         # to be consistent with dendrogram visualization
@@ -176,18 +174,24 @@ class Vampire:
 
         """
         contours = list(properties_df['raw_contour'])
-        contours = processing.sample_contours(contours,
-                                              num_points=self.num_points)
+        contours = processing.sample_contours(
+            contours,
+            num_points=self.num_points
+        )
         contours = processing.register_contours(contours)
         contours = processing.align_contours(contours, self.mean_registered_contour)
 
-        principal_components = analysis.pca_transform_contours(contours,
-                                                               self.mean_aligned_contour,
-                                                               self.principal_directions)
-        apply_contours_df = analysis.assign_clusters_id(principal_components,
-                                                        contours,
-                                                        self.centroids,
-                                                        num_pc=self.num_pc)
+        principal_components = analysis.pca_transform_contours(
+            contours,
+            self.mean_aligned_contour,
+            self.principal_directions
+        )
+        apply_contours_df = analysis.assign_clusters_id(
+            principal_components,
+            contours,
+            self.centroids,
+            num_pc=self.num_pc
+        )
         properties_df = properties_df.join(apply_contours_df)
         return properties_df
 

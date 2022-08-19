@@ -111,13 +111,15 @@ def color_img(img, background=0, cmap=None, background_color=None):
     # plot cluster-labeled img
     fig, ax = plt.subplots(figsize=(5, 5))
     ax.imshow(img, cmap=cmap, vmax=1, vmin=0)
-    ax.tick_params(axis='both',
-                   which='both',
-                   bottom=False,
-                   top=False,
-                   left=False,
-                   labelbottom=False,
-                   labelleft=False)
+    ax.tick_params(
+        axis='both',
+        which='both',
+        bottom=False,
+        top=False,
+        left=False,
+        labelbottom=False,
+        labelleft=False
+    )
     plt.tight_layout(pad=0)
 
     # colors used for labeling

@@ -83,11 +83,13 @@ def cluster_contours(pc, num_clusters=5, num_pc=20, random_state=None):
     pc_truncated_normalized = preprocessing.normalize(pc_truncated)
 
     # k-means clustering of normalized principal coordinates
-    k_means = KMeans(n_clusters=num_clusters,
-                     random_state=random_state,
-                     init='k-means++',
-                     n_init=3,
-                     max_iter=300).fit(pc_truncated_normalized)
+    k_means = KMeans(
+        n_clusters=num_clusters,
+        random_state=random_state,
+        init='k-means++',
+        n_init=3,
+        max_iter=300
+    ).fit(pc_truncated_normalized)
     centroids = k_means.cluster_centers_
     inertia = k_means.inertia_
     distance = spatial.distance.cdist(pc_truncated_normalized, centroids)
@@ -95,8 +97,10 @@ def cluster_contours(pc, num_clusters=5, num_pc=20, random_state=None):
     min_distance = np.min(distance, axis=1)
 
     # tag each object with cluster id
-    cluster_id_df = pd.DataFrame({'cluster_id': cluster_id,
-                                  'distance_to_centroid': min_distance})
+    cluster_id_df = pd.DataFrame({
+        'cluster_id': cluster_id,
+        'distance_to_centroid': min_distance
+    })
     return cluster_id_df, centroids, inertia
 
 
@@ -122,7 +126,7 @@ def assign_clusters_id(pc, contours, centroids, num_pc=20):
         and min distance from centroid.
 
     """
-    # find closest centroid and get cluster id
+    # find the closest centroid and get cluster id
     pc_truncated = pc[:, :num_pc]
     # Original VAMPIRE GUI software did not normalize when
     # assigning clusters. However, it is logical to keep the
@@ -217,11 +221,13 @@ def hierarchical_cluster_contour(labeled_contours_df):
     mean_cluster_contours = get_mean_cluster_contours(labeled_contours_df)
     pair_distance = spatial.distance.pdist(mean_cluster_contours, 'euclidean')
     linkage_matrix = cluster.hierarchy.linkage(pair_distance, method='complete')
-    branches = cluster.hierarchy.dendrogram(linkage_matrix,
-                                            p=0,
-                                            truncate_mode='lastp',
-                                            orientation='bottom',
-                                            above_threshold_color='k')
+    branches = cluster.hierarchy.dendrogram(
+        linkage_matrix,
+        p=0,
+        truncate_mode='lastp',
+        orientation='bottom',
+        above_threshold_color='k'
+    )
     plt.close()
     return pair_distance, linkage_matrix, branches
 

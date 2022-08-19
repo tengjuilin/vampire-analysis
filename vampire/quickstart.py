@@ -37,14 +37,20 @@ def _check_prohibited_char(text, input_type='path'):
     elif input_type == 'file':
         prohibited_chars = ['\\', '/', ',', ':', '*', '"', '<', '>', '|']
     else:
-        raise ValueError('Unrecognized input_type: {input_type}'
-                         'Expect one in {"path", "file"}')
-    have_prohibited_char = any(prohibited_char in text
-                               for prohibited_char in prohibited_chars)
+        raise ValueError(
+            'Unrecognized input_type: {input_type}'
+            'Expect one in {"path", "file"}'
+        )
+    have_prohibited_char = any(
+        prohibited_char in text
+        for prohibited_char in prohibited_chars
+    )
     if have_prohibited_char:
-        raise ValueError(f'Filename-related entry of {text} contains prohibited character(s). \n'
-                         'Expect a model name without any of the following characters: \n'
-                         '\\  /  ,  :  *  "  <  >  |')
+        raise ValueError(
+            f'Filename-related entry of {text} contains prohibited character(s). \n'
+            'Expect a model name without any of the following characters: \n'
+            '\\  /  ,  :  *  "  <  >  |'
+        )
 
 
 def _parse_filter_info(filter_info):
@@ -100,9 +106,11 @@ def _build_models_check_df(img_info_df):
     if num_img_sets == 0:
         raise ValueError('Input DataFrame is empty. Expect at least one row.')
     if num_args < 6:  # 5 cols required by doc
-        raise ValueError('Input DataFrame does not have enough number of columns. \n'
-                         'Expect required 6 columns in order: img_set_path, output_path, '
-                         'model_name, num_points, num_clusters, num_pc.')
+        raise ValueError(
+            'Input DataFrame does not have enough number of columns. \n'
+            'Expect required 6 columns in order: img_set_path, output_path, '
+            'model_name, num_points, num_clusters, num_pc.'
+        )
 
 
 def _build_models_check_required_info(required_info):
@@ -146,9 +154,11 @@ def _build_models_check_required_info(required_info):
     if os.path.isdir(img_set_path):
         img_set_path = os.path.normpath(img_set_path)
     else:
-        raise FileNotFoundError(f'Input DataFrame column 1 gives non-existing directory: \n'
-                                f'{img_set_path} \n'
-                                'Expect an existing directory with images used to build model.')
+        raise FileNotFoundError(
+            f'Input DataFrame column 1 gives non-existing directory: \n'
+            f'{img_set_path} \n'
+            'Expect an existing directory with images used to build model.'
+        )
 
     # output_path
     if pd.isna(output_path):
@@ -187,10 +197,17 @@ def _build_models_check_required_info(required_info):
     return img_set_path, output_path, model_name, num_points, num_clusters, num_pc
 
 
-def build_model(img_set_path, output_path,
-                model_name, num_points,
-                num_clusters, num_pc, filter_info,
-                random_state=None, savefig=True):
+def build_model(
+        img_set_path,
+        output_path,
+        model_name,
+        num_points,
+        num_clusters,
+        num_pc,
+        filter_info,
+        random_state=None,
+        savefig=True
+):
     """
     Builds VAMPIRE model to one image set.
 
@@ -226,30 +243,38 @@ def build_model(img_set_path, output_path,
 
     """
     # get data
-    properties_df = extraction.extract_properties(img_set_path,
-                                                  filter_info,
-                                                  write=True)
+    properties_df = extraction.extract_properties(
+        img_set_path,
+        filter_info,
+        write=True
+    )
     # build model
-    vampire_model = model.Vampire(model_name,
-                                  num_points=num_points,
-                                  num_clusters=num_clusters,
-                                  num_pc=num_pc,
-                                  random_state=random_state)
+    vampire_model = model.Vampire(
+        model_name,
+        num_points=num_points,
+        num_clusters=num_clusters,
+        num_pc=num_pc,
+        random_state=random_state
+    )
     vampire_model.build(properties_df)
     # write model
-    model_output_path = util.get_model_pickle_path(output_path,
-                                                   filter_info,
-                                                   vampire_model)
+    model_output_path = util.get_model_pickle_path(
+        output_path,
+        filter_info,
+        vampire_model
+    )
     util.write_pickle(model_output_path, vampire_model)
     # plot result
     if savefig:
         plot.set_plot_style()
         fig, axs = plot.plot_distribution_contour_dendrogram(vampire_model)
-        plot.save_fig(fig,
-                      output_path,
-                      'shape_mode',
-                      '.png',
-                      model_name)
+        plot.save_fig(
+            fig,
+            output_path,
+            'shape_mode',
+            '.png',
+            model_name
+        )
     return vampire_model
 
 
@@ -344,15 +369,17 @@ def build_models(img_info_df, random_state=None, savefig=True):
             num_pc) = _build_models_check_required_info(required_info)
         filter_info = _parse_filter_info(filter_info)
         # build model
-        build_model(img_set_path,
-                    output_path,
-                    model_name,
-                    num_points,
-                    num_clusters,
-                    num_pc,
-                    filter_info,
-                    random_state=random_state,
-                    savefig=savefig)
+        build_model(
+            img_set_path,
+            output_path,
+            model_name,
+            num_points,
+            num_clusters,
+            num_pc,
+            filter_info,
+            random_state=random_state,
+            savefig=savefig
+        )
     return
 
 
@@ -378,9 +405,11 @@ def _apply_models_check_df(img_info_df):
     if num_img_set == 0:
         raise ValueError('Input DataFrame is empty. Expect at least one row.')
     if num_args < 4:  # 4 cols required by doc
-        raise ValueError('Input DataFrame does not have enough number of columns. \n'
-                         'Expect required 3 columns in order: img_set_path, model_path, '
-                         'output_path.')
+        raise ValueError(
+            'Input DataFrame does not have enough number of columns. \n'
+            'Expect required 3 columns in order: img_set_path, model_path, '
+            'output_path.'
+        )
     return
 
 
@@ -424,9 +453,11 @@ def _apply_models_check_required_info(required_info):
     if os.path.isdir(img_set_path):
         img_set_path = os.path.normpath(img_set_path)
     else:
-        raise FileNotFoundError(f'Input DataFrame column 1 gives non-existing directory: \n'
-                                f'{img_set_path} \n'
-                                'Expect an existing directory with images used to apply model.')
+        raise FileNotFoundError(
+            f'Input DataFrame column 1 gives non-existing directory: \n'
+            f'{img_set_path} \n'
+            'Expect an existing directory with images used to apply model.'
+        )
 
     # model_path
     if os.path.isfile(model_path):
@@ -434,13 +465,17 @@ def _apply_models_check_required_info(required_info):
         if extension == '.pickle':
             model_path = os.path.normpath(model_path)
         else:
-            raise ValueError(f'Input DataFrame column 2 gives non-pickle file: \n'
-                             f'{model_path} \n'
-                             'Expect an existing pickle file for model information.')
+            raise ValueError(
+                f'Input DataFrame column 2 gives non-pickle file: \n'
+                f'{model_path} \n'
+                'Expect an existing pickle file for model information.'
+            )
     else:
-        raise FileNotFoundError(f'Input DataFrame column 2 gives non-existing file: \n'
-                                f'{model_path} \n'
-                                'Expect an existing pickle file for model information.')
+        raise FileNotFoundError(
+            f'Input DataFrame column 2 gives non-existing file: \n'
+            f'{model_path} \n'
+            'Expect an existing pickle file for model information.'
+        )
 
     # output_path
     if pd.isna(output_path):
@@ -461,10 +496,15 @@ def _apply_models_check_required_info(required_info):
     return img_set_path, model_path, output_path, img_set_name
 
 
-def apply_model(img_set_path, model_path,
-                output_path, img_set_name,
-                filter_info, write_csv=True,
-                savefig=True):
+def apply_model(
+        img_set_path,
+        model_path,
+        output_path,
+        img_set_name,
+        filter_info,
+        write_csv=True,
+        savefig=True
+):
     """
      Apply VAMPIRE model to one image set.
 
@@ -497,40 +537,53 @@ def apply_model(img_set_path, model_path,
     # get model
     vampire_model = util.read_pickle(model_path)
     # get data
-    properties_df = extraction.extract_properties(img_set_path,
-                                                  filter_info,
-                                                  write=True)
+    properties_df = extraction.extract_properties(
+        img_set_path,
+        filter_info,
+        write=True
+    )
     # apply model
     apply_properties_df = vampire_model.apply(properties_df)
     # write apply model data
-    properties_pickle_path = util.get_apply_properties_pickle_path(output_path,
-                                                                   filter_info,
-                                                                   vampire_model,
-                                                                   img_set_name)
+    properties_pickle_path = util.get_apply_properties_pickle_path(
+        output_path,
+        filter_info,
+        vampire_model,
+        img_set_name
+    )
     util.write_pickle(properties_pickle_path, apply_properties_df)
     # plot result
     if savefig:
         plot.set_plot_style()
-        fig, axs = plot.plot_distribution_contour_dendrogram(vampire_model,
-                                                             apply_properties_df)
-        plot.save_fig(fig,
-                      output_path,
-                      'shape_mode',
-                      '.png',
-                      vampire_model.model_name,
-                      img_set_name)
+        fig, axs = plot.plot_distribution_contour_dendrogram(
+            vampire_model,
+            apply_properties_df
+        )
+        plot.save_fig(
+            fig,
+            output_path,
+            'shape_mode',
+            '.png',
+            vampire_model.model_name,
+            img_set_name
+        )
 
     # write apply model data to csv
     # time-consuming if csv is large
     if write_csv:
-        properties_csv_path = util.get_apply_properties_csv_path(output_path,
-                                                                 filter_info,
-                                                                 vampire_model,
-                                                                 img_set_name)
-        apply_properties_df.drop(['raw_contour',
-                                  'normalized_contour'],
-                                 axis=1) \
-                           .to_csv(properties_csv_path, index=False)
+        properties_csv_path = util.get_apply_properties_csv_path(
+            output_path,
+            filter_info,
+            vampire_model,
+            img_set_name
+        )
+        apply_properties_df.drop(
+            ['raw_contour', 'normalized_contour'],
+            axis=1
+        ).to_csv(
+            properties_csv_path,
+            index=False
+        )
     return apply_properties_df
 
 
@@ -617,11 +670,13 @@ def apply_models(img_info_df, write_csv=True, savefig=True):
             img_set_name) = _apply_models_check_required_info(required_info)
         filter_info = _parse_filter_info(filter_info)
         # apply model
-        apply_model(img_set_path,
-                    model_path,
-                    output_path,
-                    img_set_name,
-                    filter_info,
-                    write_csv=write_csv,
-                    savefig=savefig)
+        apply_model(
+            img_set_path,
+            model_path,
+            output_path,
+            img_set_name,
+            filter_info,
+            write_csv=write_csv,
+            savefig=savefig
+        )
     return
