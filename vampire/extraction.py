@@ -111,9 +111,11 @@ def extract_contour_from_object(object_img):
         x and y coordinates of n contour sample points, with shape (2, n)
 
     """
-    contour = cv2.findContours(object_img.astype('uint8'),
-                               cv2.RETR_TREE,
-                               cv2.CHAIN_APPROX_SIMPLE)[0][0]
+    contour = cv2.findContours(
+        object_img.astype('uint8'),
+        cv2.RETR_TREE,
+        cv2.CHAIN_APPROX_NONE
+    )[0][0]
     contour = contour.reshape(-1, 2).T
     contour = np.flip(contour, axis=1)
     if contour.size <= 6:  # contour has <= 3 points, could not be sampled
