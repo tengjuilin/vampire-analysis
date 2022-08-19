@@ -138,21 +138,43 @@ def extract_properties_from_img(img, filename=None, img_id=None):
 
     """
     # get properties of objects
-    properties = ('label', 'centroid', 'area',
-                  'perimeter', 'major_axis_length', 'minor_axis_length',
-                  'eccentricity', 'solidity', 'extent')
-    properties_dict = regionprops_table(img,
-                                        properties=properties,
-                                        extra_properties=(extract_contour_from_object,))
+    properties = (
+        'label',
+        'centroid',
+        'area',
+        'bbox_area',
+        'convex_area',
+        'filled_area',
+        'perimeter',
+        'equivalent_diameter',
+        'major_axis_length',
+        'minor_axis_length',
+        'orientation',
+        'euler_number',
+        'eccentricity',
+        'solidity',
+        'extent'
+    )
+    properties_dict = regionprops_table(
+        img,
+        properties=properties,
+        extra_properties=(extract_contour_from_object,)
+    )
     properties_df = pd.DataFrame(properties_dict)
-    properties_df.rename(columns={'centroid-0': 'y',
-                                  'centroid-1': 'x',
-                                  'extract_contour_from_object': 'raw_contour'},
-                         inplace=True)
+    properties_df.rename(
+        columns={
+            'centroid-0': 'centroid-y',
+            'centroid-1': 'centroid-x',
+            'extract_contour_from_object': 'raw_contour'
+        },
+        inplace=True
+    )
     # additional properties
     properties_df['circularity'] = 4 * np.pi * properties_df['area'] / properties_df['perimeter'] ** 2
-    properties_df['aspect_ratio'] = np.nan_to_num(np.divide(properties_df['major_axis_length'],
-                                                            properties_df['minor_axis_length']))
+    properties_df['aspect_ratio'] = np.nan_to_num(np.divide(
+        properties_df['major_axis_length'],
+        properties_df['minor_axis_length']
+    ))
     # discard contours with <= 3 points that cannot be sampled
     properties_df = properties_df[pd.notna(properties_df['raw_contour'])]
     # label each object
@@ -188,12 +210,16 @@ def extract_properties_from_img_set(img_set, filenames=None):
             filename = filenames[img_i]
         else:
             filename = None
-        properties_from_img = extract_properties_from_img(img,
-                                                          filename=filename,
-                                                          img_id=img_i)
+        properties_from_img = extract_properties_from_img(
+            img,
+            filename=filename,
+            img_id=img_i
+        )
         properties_from_img_set.append(properties_from_img)
-    properties_from_img_set_df = pd.concat(properties_from_img_set,
-                                           ignore_index=True)
+    properties_from_img_set_df = pd.concat(
+        properties_from_img_set,
+        ignore_index=True
+    )
     return properties_from_img_set_df
 
 
@@ -281,8 +307,10 @@ def extract_properties(img_set_path, filter_info=None, write=True):
     else:
         filenames = get_filtered_filenames(img_set_path, filter_info)
         img_set = get_img_set(img_set_path, filenames)
-        properties_df = extract_properties_from_img_set(img_set,
-                                                        filenames=filenames)
+        properties_df = extract_properties_from_img_set(
+            img_set,
+            filenames=filenames
+        )
         if write:
             write_properties(properties_df, img_set_path, filter_info)
     return properties_df
