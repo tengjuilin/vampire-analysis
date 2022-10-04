@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="vampire-analysis",
-    version="0.1.0",
+    version="0.1.0.dev9",
     author="Teng-Jui Lin",
     author_email="lintengjui@outlook.com",
     description="VAMPIRE (Visually Aided Morpho-Phenotyping Image Recognition) analysis quantifies and visualizes heterogeneity of cell and nucleus morphology.",
@@ -21,10 +21,6 @@ setuptools.setup(
         'opencv-python',
         'scikit-image',
         'scikit-learn',
-        'Sphinx',
-        'numpydoc',
-        'pydata-sphinx-theme',
-        'pytest'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
