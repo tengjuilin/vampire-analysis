@@ -143,6 +143,7 @@ def assign_clusters_id(pc, contours, centroids, num_pc=20):
     normalized_contours = {'normalized_contour': list(contours)}
     contours_df = pd.DataFrame(normalized_contours)
     contours_df['cluster_id'] = cluster_id
+    contours_df['plot_cluster_id'] = cluster_id + 1  # avoid zero-indexing for plotting
     contours_df['distance_to_centroid'] = min_distance
     return contours_df
 
