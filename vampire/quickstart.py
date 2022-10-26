@@ -205,8 +205,9 @@ def build_model(
         num_clusters,
         num_pc,
         filter_info,
+        write_contour=False,
         random_state=None,
-        savefig=True
+        savefig=True,
 ):
     """
     Builds VAMPIRE model to one image set.
@@ -229,6 +230,8 @@ def build_model(
         Number of principal components kept for analysis. Default to keeping
         those that explains 95% of total variance. Recommended to adjust
         after analyzing scree plot.
+    write_contour : bool, optional
+        Whether write and save raw contour coordinates.
     filter_info : ndarray
         Regex filter(s) of image filenames to be analyzed.
         Empty if no filter needed.
@@ -246,7 +249,8 @@ def build_model(
     properties_df = extraction.extract_properties(
         img_set_path,
         filter_info,
-        write=True
+        write=True,
+        write_contour=write_contour,
     )
     # build model
     vampire_model = model.Vampire(
@@ -503,7 +507,8 @@ def apply_model(
         img_set_name,
         filter_info,
         write_csv=True,
-        savefig=True
+        write_contour=False,
+        savefig=True,
 ):
     """
      Apply VAMPIRE model to one image set.
@@ -526,6 +531,8 @@ def apply_model(
     write_csv : bool, optional
         Whether write apply model data to csv.
         Could be time-consuming if csv is large.
+    write_contour : bool, optional
+        Whether write and save raw contour coordinates.
     savefig : bool, optional
         Whether save distribution contour dendrogram.
 
@@ -540,7 +547,8 @@ def apply_model(
     properties_df = extraction.extract_properties(
         img_set_path,
         filter_info,
-        write=True
+        write=True,
+        write_contour=write_contour,
     )
     # apply model
     apply_properties_df = vampire_model.apply(properties_df)

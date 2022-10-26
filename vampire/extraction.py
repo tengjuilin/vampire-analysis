@@ -251,7 +251,7 @@ def read_properties(img_set_path, filter_info):
     return properties_df
 
 
-def write_properties(properties_df, img_set_path, filter_info):
+def write_properties(properties_df, img_set_path, filter_info, write_contour=False):
     """
     Writes contour coordinates and properties to given paths.
 
@@ -264,16 +264,21 @@ def write_properties(properties_df, img_set_path, filter_info):
     filter_info : ndarray
         Regex filter(s) of image filenames to be analyzed.
         Empty if no filter needed.
+    write_contour : bool, optional
+        Whether write and save raw contour coordinates.
 
     """
     properties_csv_path = util.get_properties_csv_path(img_set_path, filter_info)
     properties_pickle_path = util.get_properties_pickle_path(img_set_path, filter_info)
-    properties_df.drop('raw_contour', axis=1).to_csv(properties_csv_path, index=False)
+    if write_contour:
+        properties_df.to_csv(properties_csv_path, index=False)
+    else:
+        properties_df.drop('raw_contour', axis=1).to_csv(properties_csv_path, index=False)
     util.write_pickle(properties_pickle_path, properties_df)
     return
 
 
-def extract_properties(img_set_path, filter_info=None, write=True):
+def extract_properties(img_set_path, filter_info=None, write=True, write_contour=False):
     """
     Extracts object properties from image set path.
 
@@ -284,8 +289,10 @@ def extract_properties(img_set_path, filter_info=None, write=True):
     filter_info : ndarray, optional
         Regex filter(s) of image filenames to be analyzed.
         Empty if no filter needed.
-    write : bool
+    write : bool, optional
         Write properties into ``csv`` and ``pickle`` file.
+    write_contour : bool, optional
+        Whether write and save raw contour coordinates.
 
     Returns
     -------
@@ -308,7 +315,7 @@ def extract_properties(img_set_path, filter_info=None, write=True):
         filename_filter = np.isin(full_properties_df['filename'], filenames)
         properties_df = full_properties_df[filename_filter].reset_index(drop=True)
         if write:
-            write_properties(properties_df, img_set_path, filter_info)
+            write_properties(properties_df, img_set_path, filter_info, write_contour=write_contour)
     else:
         filenames = get_filtered_filenames(img_set_path, filter_info)
         img_set = get_img_set(img_set_path, filenames)
@@ -317,5 +324,5 @@ def extract_properties(img_set_path, filter_info=None, write=True):
             filenames=filenames
         )
         if write:
-            write_properties(properties_df, img_set_path, filter_info)
+            write_properties(properties_df, img_set_path, filter_info, write_contour=write_contour)
     return properties_df
