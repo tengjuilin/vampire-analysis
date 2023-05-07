@@ -7,7 +7,10 @@ name: vampire-analysis-dev
 channels:
   - conda-forge
 dependencies:
-  - python=3.9
+  - python=3.10
+  - pip
+  - libgfortran==5.0.0.dev0  # pin version to avoid numpy ImportError
+  # basic data science
   - numpy
   - pandas
   - scipy
@@ -16,13 +19,27 @@ dependencies:
   - scikit-image
   - scikit-learn
   - openpyxl  # for reading excel in pandas
-  # For testing
-  - pytest
-  # For building docs
+  # editor
+  - jupyter
+  - jupyterlab
+  - jupyterlab-spellchecker
+  - jupyterlab_code_formatter
+  - jupyterlab_widgets
+  - ipywidgets
+  # documentation
   - sphinx
-  - numpydoc
-  - pydata-sphinx-theme=0.8.0  # preserve bullet list styl
   - nbsphinx
+  - pydata-sphinx-theme==0.13.3
+  - numpydoc
   - myst-parser
-  # For packaging
+  # packaging
   - twine
+  # testing
+  - pytest
+  - pip:
+    # jupyter lab code formatter
+    - black
+    - isort
+    # documentation
+    - sphinx-autodoc2
+    - linkify
