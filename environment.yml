@@ -32,7 +32,7 @@ dependencies:
   - pydata-sphinx-theme==0.13.3
   - numpydoc
   - myst-parser
-  - openssl>3  # readthedocs uses this
+  - urllib3==1.26.15  # readthedocs uses this
   # packaging
   - twine
   # testing
