@@ -1,46 +1,29 @@
-# To use:
-#
-#   $ conda env create -f environment.yml
-#   $ conda activate vampire-analysis-dev
-#
-name: vampire-analysis-dev
-channels:
-  - conda-forge
-dependencies:
-  - python=3.10
-  - pip
-  - libgfortran==5.0.0.dev0  # pin version to avoid numpy ImportError
-  # basic data science
-  - numpy
-  - pandas
-  - scipy
-  - matplotlib
-  - opencv
-  - scikit-image
-  - scikit-learn
-  - openpyxl  # for reading excel in pandas
-  # editor
-  - jupyter
-  - jupyterlab
-  - jupyterlab-spellchecker
-  - jupyterlab_code_formatter
-  - jupyterlab_widgets
-  - ipywidgets
-  # documentation
-  - sphinx
-  - nbsphinx
-  - pydata-sphinx-theme==0.13.3
-  - numpydoc
-  - myst-parser
-  - urllib3==1.26.15  # readthedocs uses this
-  # packaging
-  - twine
-  # testing
-  - pytest
-  - pip:
-    # jupyter lab code formatter
-    - black
-    - isort
-    # documentation
-    - sphinx-autodoc2
-    - linkify
+# .readthedocs.yaml
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+
+# Required
+version: 2
+
+# Set the version of Python and other tools you might need
+build:
+  os: ubuntu-22.04
+  tools:
+    python: "3.10"
+    # You can also specify other tool versions:
+    # nodejs: "19"
+    # rust: "1.64"
+    # golang: "1.19"
+
+# Build documentation in the docs/ directory with Sphinx
+sphinx:
+   configuration: docs/conf.py
+
+# If using Sphinx, optionally build your docs in additional formats such as PDF
+# formats:
+#    - pdf
+
+# Optionally declare the Python requirements required to build your docs
+python:
+   install:
+   - requirements: environment.yml
