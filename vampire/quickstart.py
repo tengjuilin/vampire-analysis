@@ -7,7 +7,7 @@ import pandas as pd
 from . import extraction, model, plot, util
 
 
-def _check_prohibited_char(text, input_type='path'):
+def _check_char(text, input_type='path'):
     r"""
     Checks if path contains characters prohibited by the operating system.
 
@@ -55,7 +55,7 @@ def _check_prohibited_char(text, input_type='path'):
 
 def _parse_filter_info(filter_info):
     """
-    Parse optional column(s) of input DataFrame to `build_models` and
+    Parse optional column(s) of input DataFrame to `fit_models` and
     `apply_models`.
 
     Checks argument requirements.
@@ -84,149 +84,36 @@ def _parse_filter_info(filter_info):
         return filter_info[filter_info != 'nan']
 
 
-def _build_models_check_df(img_info_df):
-    """
-    Checks if input DataFrame to `build_models` has the appropriate shape.
-
-    Parameters
-    ----------
-    img_info_df : DataFrame
-        Input to `build_models`. Contains all information about image sets
-        to be analyzed.
-
-    Raises
-    ------
-    ValueError
-        Empty DataFrame without information in rows.
-    ValueError
-        DataFrame does not contain required columns specified in the doc.
-
-    """
-    num_img_sets, num_args = img_info_df.shape
-    if num_img_sets == 0:
-        raise ValueError('Input DataFrame is empty. Expect at least one row.')
-    if num_args < 6:  # 5 cols required by doc
-        raise ValueError(
-            'Input DataFrame does not have enough number of columns. \n'
-            'Expect required 6 columns in order: img_set_path, output_path, '
-            'model_name, num_points, num_clusters, num_pc.'
-        )
-
-
-def _build_models_check_required_info(required_info):
-    """
-    Parse required columns of input DataFrame to `build_models`.
-
-    Checks argument requirements and sets default arguments.
-
-    Parameters
-    ----------
-    required_info : Series
-        One row of required columns (1-5) of input DataFrame
-        ``img_info_df``.
-
-    Returns
-    -------
-    img_set_path : str
-        Path to the directory containing the image set(s) used to build model.
-    output_path : str
-        Path of the directory used to output model and figures. Defaults to
-        ``img_set_path``.
-    model_name : str
-        Name of the model. Defaults to time of function call.
-    num_points : int
-        Number of sample points of object contour. Defaults to 50.
-    num_clusters : int
-        Number of clusters of K-means clustering. Defaults to 5.
-    num_pc : int
-        Number of principal components kept for analysis. Defaults to None.
-
-    Raises
-    ------
-    FileNotFoundError
-        If ``img_set_path`` does not exist.
-
-    """
-    # unpack args
-    img_set_path, output_path, model_name, num_points, num_clusters, num_pc = required_info
-
-    # img_set_path
-    if os.path.isdir(img_set_path):
-        img_set_path = os.path.normpath(img_set_path)
-    else:
-        raise FileNotFoundError(
-            f'Input DataFrame column 1 gives non-existing directory: \n'
-            f'{img_set_path} \n'
-            'Expect an existing directory with images used to build model.'
-        )
-
-    # output_path
-    if pd.isna(output_path):
-        output_path = os.path.normpath(img_set_path)  # default
-    else:
-        _check_prohibited_char(output_path)
-        output_path = os.path.normpath(output_path)
-        if not os.path.isdir(output_path):
-            os.mkdir(output_path)
-
-    # model_name
-    if pd.isna(model_name):
-        time_stamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        model_name = time_stamp
-    else:
-        _check_prohibited_char(model_name, 'file')
-
-    # num_points
-    if pd.isna(num_points):
-        num_points = 50
-    else:
-        num_points = int(num_points)
-
-    # num_clusters
-    if pd.isna(num_clusters):
-        num_clusters = 5
-    else:
-        num_clusters = int(num_clusters)
-
-    # num_pc
-    if pd.isna(num_pc):
-        num_pc = None
-    else:
-        num_pc = int(num_pc)
-
-    return img_set_path, output_path, model_name, num_points, num_clusters, num_pc
-
-
-def build_model(
-        img_set_path,
-        output_path,
-        model_name,
-        num_points,
-        num_clusters,
-        num_pc,
-        filter_info,
-        write_contour=False,
-        random_state=None,
-        savefig=True,
+def fit_model(
+    img_set_path,
+    output_path,
+    model_name,
+    n_points,
+    n_clusters,
+    n_pcs,
+    filter_info,
+    write_contour=False,
+    random_state=None,
+    savefig=True,
 ):
     """
-    Builds VAMPIRE model to one image set.
+    Fits VAMPIRE model to one image set.
 
     Parameters
     ----------
     img_set_path : str
-        Path to the directory containing the image set(s) used to build model.
+        Path to the directory containing the image set(s) used to fit model.
     output_path : str
         Path of the directory used to output model and figures. Defaults to
         ``img_set_path``.
     model_name : str
         Name of the model. Defaults to time of function call.
-    num_points : int
+    n_points : int
         Number of sample points of object contour. Defaults to 50.
-    num_clusters : int
+    n_clusters : int
         Number of clusters of K-means clustering. Defaults to 5. Recommended
         range [2, 10].
-    num_pc : int or None
+    n_pcs : int or None
         Number of principal components kept for analysis. Default to keeping
         those that explains 95% of total variance. Recommended to adjust
         after analyzing scree plot.
@@ -242,7 +129,7 @@ def build_model(
 
     See Also
     --------
-    build_models : Building multiple models using different images/conditions.
+    fit_models : Fitting multiple models using different images/conditions.
 
     """
     # get data
@@ -252,20 +139,20 @@ def build_model(
         write=True,
         write_contour=write_contour,
     )
-    # build model
+    # fit model
     vampire_model = model.Vampire(
         model_name,
-        num_points=num_points,
-        num_clusters=num_clusters,
-        num_pc=num_pc,
-        random_state=random_state
+        n_points=n_points,
+        n_clusters=n_clusters,
+        n_pcs=n_pcs,
+        random_state=random_state,
     )
-    vampire_model.build(properties_df)
+    vampire_model.fit(properties_df)
     # write model
     model_output_path = util.get_model_pickle_path(
         output_path,
         filter_info,
-        vampire_model
+        vampire_model,
     )
     util.write_pickle(model_output_path, vampire_model)
     # plot result
@@ -282,9 +169,9 @@ def build_model(
     return vampire_model
 
 
-def build_models(img_info_df, random_state=None, savefig=True):
+def fit_models(img_info_df, random_state=None, savefig=True):
     """
-    Builds all models from the input info of image sets.
+    Fits all models from the input info of image sets.
 
     Parameters
     ----------
@@ -297,8 +184,8 @@ def build_models(img_info_df, random_state=None, savefig=True):
 
     Notes
     -----
-    Learn more about :ref:`basics <build_basics>` and
-    :ref:`advanced <build_advanced>` input requirement
+    Learn more about :ref:`basics <fit_basics>` and
+    :ref:`advanced <fit_advanced>` input requirement
     and examples. Below is a general description.
 
     .. rubric:: **Required columns of** ``img_info_df`` **(col 1-6)**
@@ -307,18 +194,18 @@ def build_models(img_info_df, random_state=None, savefig=True):
     required columns of
 
     img_set_path : str
-        Path to the directory containing the image set(s) used to build model.
+        Path to the directory containing the image set(s) used to fit model.
     output_path : str
         Path of the directory used to output model and figures. Defaults to
         ``img_set_path``.
     model_name : str, default
         Name of the model. Defaults to time of function call.
-    num_points : int, default
+    n_points : int, default
         Number of sample points of object contour. Defaults to 50.
-    num_clusters : int, default
+    n_clusters : int, default
         Number of clusters of K-means clustering. Defaults to 5. Recommended
         range [2, 10].
-    num_pc : int, default
+    n_pcs : int, default
         Number of principal components kept for analysis. Default to keeping
         those that explains 95% of total variance. Recommended to adjust
         after analyzing scree plot.
@@ -357,10 +244,95 @@ def build_models(img_info_df, random_state=None, savefig=True):
        analyzed.
 
     """
-    _build_models_check_df(img_info_df)
-    num_img_set, num_args = img_info_df.shape
 
-    for row_i in range(num_img_set):
+    def check_info_df(img_info_df):
+        """
+        Checks if input DataFrame to `fit_models` has the appropriate shape.
+
+        Raises
+        ------
+        ValueError
+            Empty DataFrame without information in rows.
+        ValueError
+            DataFrame does not contain required columns specified in the doc.
+
+        """
+        n_img_sets, n_args = img_info_df.shape
+        if n_img_sets == 0:
+            raise ValueError('Input DataFrame is empty. Expect at least one row.')
+        if n_args < 6:  # 5 cols required by doc
+            raise ValueError(
+                'Input DataFrame does not have enough number of columns. \n'
+                'Expect required 6 columns in order: img_set_path, output_path, '
+                'model_name, n_points, n_clusters, n_pcs.'
+            )
+
+    def check_required_info(required_info):
+        """
+        Parse required columns of input DataFrame to `fit_models`.
+
+        Checks argument requirements and sets default arguments.
+
+        Raises
+        ------
+        FileNotFoundError
+            If ``img_set_path`` does not exist.
+
+        """
+        # unpack args
+        img_set_path, output_path, model_name, n_points, n_clusters, n_pcs = required_info
+
+        # img_set_path
+        if os.path.isdir(img_set_path):
+            img_set_path = os.path.normpath(img_set_path)
+        else:
+            raise FileNotFoundError(
+                f'Input DataFrame column 1 gives non-existing directory: \n'
+                f'{img_set_path} \n'
+                'Expect an existing directory with images used to fit model.'
+            )
+
+        # output_path
+        if pd.isna(output_path):
+            output_path = os.path.normpath(img_set_path)  # default
+        else:
+            _check_char(output_path)
+            output_path = os.path.normpath(output_path)
+            if not os.path.isdir(output_path):
+                os.mkdir(output_path)
+
+        # model_name
+        if pd.isna(model_name):
+            time_stamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            model_name = time_stamp
+        else:
+            _check_char(model_name, 'file')
+
+        # n_points
+        if pd.isna(n_points):
+            n_points = 50
+        else:
+            n_points = int(n_points)
+
+        # n_clusters
+        if pd.isna(n_clusters):
+            n_clusters = 5
+        else:
+            n_clusters = int(n_clusters)
+
+        # n_pcs
+        if pd.isna(n_pcs):
+            n_pcs = None
+        else:
+            n_pcs = int(n_pcs)
+
+        return img_set_path, output_path, model_name, n_points, n_clusters, n_pcs
+
+    # start of main function
+    check_info_df(img_info_df)
+    n_img_set, n_args = img_info_df.shape
+
+    for row_i in range(n_img_set):
         # parse arguments
         img_info = img_info_df.iloc[row_i, :]
         required_info = img_info[:6]  # 6 cols expected in doc
@@ -368,18 +340,18 @@ def build_models(img_info_df, random_state=None, savefig=True):
         (img_set_path,
             output_path,
             model_name,
-            num_points,
-            num_clusters,
-            num_pc) = _build_models_check_required_info(required_info)
+            n_points,
+            n_clusters,
+            n_pcs) = check_required_info(required_info)
         filter_info = _parse_filter_info(filter_info)
-        # build model
-        build_model(
+        # fit model
+        fit_model(
             img_set_path,
             output_path,
             model_name,
-            num_points,
-            num_clusters,
-            num_pc,
+            n_points,
+            n_clusters,
+            n_pcs,
             filter_info,
             random_state=random_state,
             savefig=savefig
@@ -387,131 +359,18 @@ def build_models(img_info_df, random_state=None, savefig=True):
     return
 
 
-def _apply_models_check_df(img_info_df):
-    """
-    Checks if input DataFrame to `apply_models` has the appropriate shape.
-
-    Parameters
-    ----------
-    img_info_df : DataFrame
-        Input to `apply_models`. Contains all information about image sets
-        to be analyzed.
-
-    Raises
-    ------
-    ValueError
-        Empty DataFrame without information in rows.
-    ValueError
-        DataFrame does not contain required columns specified in the doc.
-
-    """
-    num_img_set, num_args = img_info_df.shape
-    if num_img_set == 0:
-        raise ValueError('Input DataFrame is empty. Expect at least one row.')
-    if num_args < 4:  # 4 cols required by doc
-        raise ValueError(
-            'Input DataFrame does not have enough number of columns. \n'
-            'Expect required 3 columns in order: img_set_path, model_path, '
-            'output_path.'
-        )
-    return
-
-
-def _apply_models_check_required_info(required_info):
-    """
-    Parse required columns of input DataFrame to `apply_models`.
-
-    Parameters
-    ----------
-    required_info : Series
-        One row of required columns (1-4) of input DataFrame
-        ``img_info_df``.
-
-    Returns
-    -------
-    img_set_path : str
-        Path to the directory containing the image set(s) used to apply model.
-    model_path : str
-        Path to the pickle file that stores model information.
-    output_path : str
-        Path of the directory used to output model and figures. Defaults to
-        ``img_set_path``.
-    img_set_name : str
-        Name of the image set being applied to.
-        Defaults to time of function call.
-
-    Raises
-    ------
-    FileNotFoundError
-        If ``img_set_path`` does not exist.
-    FileNotFoundError
-        If ``model_path`` does not exist.
-    ValueError
-        If ``model_path`` is not a ``pickle`` file.
-
-    """
-    # unpack args
-    img_set_path, model_path, output_path, img_set_name = required_info
-
-    # img_set_path
-    if os.path.isdir(img_set_path):
-        img_set_path = os.path.normpath(img_set_path)
-    else:
-        raise FileNotFoundError(
-            f'Input DataFrame column 1 gives non-existing directory: \n'
-            f'{img_set_path} \n'
-            'Expect an existing directory with images used to apply model.'
-        )
-
-    # model_path
-    if os.path.isfile(model_path):
-        filename, extension = os.path.splitext(model_path)
-        if extension == '.pickle':
-            model_path = os.path.normpath(model_path)
-        else:
-            raise ValueError(
-                f'Input DataFrame column 2 gives non-pickle file: \n'
-                f'{model_path} \n'
-                'Expect an existing pickle file for model information.'
-            )
-    else:
-        raise FileNotFoundError(
-            f'Input DataFrame column 2 gives non-existing file: \n'
-            f'{model_path} \n'
-            'Expect an existing pickle file for model information.'
-        )
-
-    # output_path
-    if pd.isna(output_path):
-        output_path = os.path.normpath(img_set_path)
-    else:
-        _check_prohibited_char(output_path)
-        output_path = os.path.normpath(output_path)
-        if not os.path.isdir(output_path):
-            os.mkdir(output_path)
-
-    # img_set_name
-    if pd.isna(img_set_name):
-        time_stamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        img_set_name = time_stamp
-    else:
-        _check_prohibited_char(img_set_name, 'file')
-
-    return img_set_path, model_path, output_path, img_set_name
-
-
-def apply_model(
-        img_set_path,
-        model_path,
-        output_path,
-        img_set_name,
-        filter_info,
-        write_csv=True,
-        write_contour=False,
-        savefig=True,
+def transform_dataset(
+    img_set_path,
+    model_path,
+    output_path,
+    img_set_name,
+    filter_info,
+    write_csv=True,
+    write_contour=False,
+    savefig=True,
 ):
     """
-     Apply VAMPIRE model to one image set.
+    Apply VAMPIRE model to one image set.
 
     Parameters
     ----------
@@ -551,7 +410,7 @@ def apply_model(
         write_contour=write_contour,
     )
     # apply model
-    apply_properties_df = vampire_model.apply(properties_df)
+    apply_properties_df = vampire_model.transform(properties_df)
     # write apply model data
     properties_pickle_path = util.get_apply_properties_pickle_path(
         output_path,
@@ -595,7 +454,7 @@ def apply_model(
     return apply_properties_df
 
 
-def apply_models(img_info_df, write_csv=True, savefig=True):
+def transform_datasets(img_info_df, write_csv=True, savefig=True):
     """
     Applies all models from the input info of image sets.
 
@@ -604,15 +463,15 @@ def apply_models(img_info_df, write_csv=True, savefig=True):
     img_info_df : DataFrame
         Contains all information about image sets to be analyzed. See notes.
     write_csv : bool, optional
-        Whether write apply model data to csv.
+        Whether write transformed data to csv.
         Could be time-consuming if csv is large.
     savefig : bool, optional
         Whether save distribution contour dendrogram.
 
     Notes
     -----
-    Learn more about :ref:`basics <apply_basics>` and
-    :ref:`advanced <apply_advanced>` input requirement
+    Learn more about :ref:`basics <transform_basics>` and
+    :ref:`advanced <transform_advanced>` input requirement
     and examples. Below is a general description.
 
     .. rubric:: **Required columns of** ``img_info_df`` **(col 1-4)**
@@ -621,7 +480,7 @@ def apply_models(img_info_df, write_csv=True, savefig=True):
     required columns of
 
     img_set_path : str
-        Path to the directory containing the image set(s) used to apply model.
+        Path to the directory containing the image set(s) used to transform data.
     model_path : str
         Path to the pickle file that stores model information.
     output_path : str
@@ -665,9 +524,97 @@ def apply_models(img_info_df, write_csv=True, savefig=True):
        analyzed.
 
     """
-    _apply_models_check_df(img_info_df)
-    num_img_set, num_args = img_info_df.shape
-    for row_i in range(num_img_set):
+
+    def check_info_df(img_info_df):
+        """
+        Checks if input DataFrame to `apply_models` has the appropriate shape.
+
+        Raises
+        ------
+        ValueError
+            Empty DataFrame without information in rows.
+        ValueError
+            DataFrame does not contain required columns specified in the doc.
+
+        """
+        n_img_set, n_args = img_info_df.shape
+        if n_img_set == 0:
+            raise ValueError('Input DataFrame is empty. Expect at least one row.')
+        if n_args < 4:  # 4 cols required by doc
+            raise ValueError(
+                'Input DataFrame does not have enough number of columns. \n'
+                'Expect required 3 columns in order: img_set_path, model_path, '
+                'output_path.'
+            )
+        return
+
+    def check_required_info(required_info):
+        """
+        Parse required columns of input DataFrame to `apply_models`.
+
+        Raises
+        ------
+        FileNotFoundError
+            If ``img_set_path`` does not exist.
+        FileNotFoundError
+            If ``model_path`` does not exist.
+        ValueError
+            If ``model_path`` is not a ``pickle`` file.
+
+        """
+        # unpack args
+        img_set_path, model_path, output_path, img_set_name = required_info
+
+        # img_set_path
+        if os.path.isdir(img_set_path):
+            img_set_path = os.path.normpath(img_set_path)
+        else:
+            raise FileNotFoundError(
+                f'Input DataFrame column 1 gives non-existing directory: \n'
+                f'{img_set_path} \n'
+                'Expect an existing directory with images used to apply model.'
+            )
+
+        # model_path
+        if os.path.isfile(model_path):
+            filename, extension = os.path.splitext(model_path)
+            if extension == '.pickle':
+                model_path = os.path.normpath(model_path)
+            else:
+                raise ValueError(
+                    f'Input DataFrame column 2 gives non-pickle file: \n'
+                    f'{model_path} \n'
+                    'Expect an existing pickle file for model information.'
+                )
+        else:
+            raise FileNotFoundError(
+                f'Input DataFrame column 2 gives non-existing file: \n'
+                f'{model_path} \n'
+                'Expect an existing pickle file for model information.'
+            )
+
+        # output_path
+        if pd.isna(output_path):
+            output_path = os.path.normpath(img_set_path)
+        else:
+            _check_char(output_path)
+            output_path = os.path.normpath(output_path)
+            if not os.path.isdir(output_path):
+                os.mkdir(output_path)
+
+        # img_set_name
+        if pd.isna(img_set_name):
+            time_stamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            img_set_name = time_stamp
+        else:
+            _check_char(img_set_name, 'file')
+
+        return img_set_path, model_path, output_path, img_set_name
+
+    # start of main function
+    check_info_df(img_info_df)
+    n_img_set, n_args = img_info_df.shape
+    for row_i in range(n_img_set):
         # parse arguments
         img_info = img_info_df.iloc[row_i, :]
         required_info = img_info[:4]  # 4 cols expected in doc
@@ -675,10 +622,10 @@ def apply_models(img_info_df, write_csv=True, savefig=True):
         (img_set_path,
             model_path,
             output_path,
-            img_set_name) = _apply_models_check_required_info(required_info)
+            img_set_name) = check_required_info(required_info)
         filter_info = _parse_filter_info(filter_info)
-        # apply model
-        apply_model(
+        # transform data
+        transform_dataset(
             img_set_path,
             model_path,
             output_path,

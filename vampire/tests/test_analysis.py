@@ -99,19 +99,19 @@ def test_get_cum_explained_variance_ratio(explained_variance_ratio, cum_explaine
 
 
 def test_get_optimal_num_pc(cum_explained_variance_ratio):
-    actual = analysis.get_optimal_num_pc(cum_explained_variance_ratio)
+    actual = analysis.get_optimal_n_pcs(cum_explained_variance_ratio)
     expected = 7
     assert_allclose(actual, expected)
 
-    actual = analysis.get_optimal_num_pc(cum_explained_variance_ratio, 1)
+    actual = analysis.get_optimal_n_pcs(cum_explained_variance_ratio, 1)
     expected = 9
     assert_allclose(actual, expected)
 
-    actual = analysis.get_optimal_num_pc(cum_explained_variance_ratio, 0.9)
+    actual = analysis.get_optimal_n_pcs(cum_explained_variance_ratio, 0.9)
     expected = 5
     assert_allclose(actual, expected)
 
-    actual = analysis.get_optimal_num_pc(cum_explained_variance_ratio, 0)
+    actual = analysis.get_optimal_n_pcs(cum_explained_variance_ratio, 0)
     expected = 1
     assert_allclose(actual, expected)
 

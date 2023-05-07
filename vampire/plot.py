@@ -49,12 +49,12 @@ def set_plot_style():
 
 
 def save_fig(
-        fig,
-        output_path,
-        fig_type,
-        extension='.png',
-        model_name=None,
-        apply_name=None
+    fig,
+    output_path,
+    fig_type,
+    extension='.png',
+    model_name=None,
+    apply_name=None
 ):
     """
     Save figure to local directory.
@@ -132,14 +132,14 @@ def plot_dendrogram(model, ax=None, fig_size=(6, 2)):
 
 
 def plot_contours(
-        model,
-        apply_properties_df=None,
-        contour_scale=3,
-        ax=None,
-        fig_size=(6, 2),
-        colors=None,
-        alpha=1,
-        lw=2
+    model,
+    apply_properties_df=None,
+    contour_scale=3,
+    ax=None,
+    fig_size=(6, 2),
+    colors=None,
+    alpha=1,
+    lw=2
 ):
     """
     Plots mean contours.
@@ -180,17 +180,17 @@ def plot_contours(
         fig, ax = plt.subplots(figsize=fig_size)
     if colors is None:
         colors = [plt.get_cmap('twilight')(cluster_i)
-                  for cluster_i in np.linspace(0.1, 0.9, model.num_clusters)]
+                  for cluster_i in np.linspace(0.1, 0.9, model.n_clusters)]
     elif type(colors) == str:
-        colors = [colors] * model.num_clusters
+        colors = [colors] * model.n_clusters
 
     x_first = 5  # offset of first contour
     x_offset = 10  # offset between contours
 
-    for i in range(model.num_clusters):
+    for i in range(model.n_clusters):
         # read in contour coordinates
-        x = mean_cluster_contours[i, :model.num_points]
-        y = mean_cluster_contours[i, model.num_points:]
+        x = mean_cluster_contours[i, :model.n_points]
+        y = mean_cluster_contours[i, model.n_points:]
         # form close shape when plotting
         x = np.append(x, x[0])
         y = np.append(y, y[0])
@@ -205,14 +205,14 @@ def plot_contours(
 
 
 def plot_representatives(
-        model, apply_properties_df,
-        num_sample=10,
-        random_state=None,
-        ax=None,
-        fig_size=(17, 2),
-        colors=None,
-        alpha=None,
-        lw=None
+    model, apply_properties_df,
+    n_samples=10,
+    random_state=None,
+    ax=None,
+    fig_size=(17, 2),
+    colors=None,
+    alpha=None,
+    lw=None
 ):
     """
     Plots representative object contours.
@@ -223,8 +223,8 @@ def plot_representatives(
         Built VAMPIRE model.
     apply_properties_df : DataFrame, optional
         Properties output of VAMPIRE model applied to data.
-    num_sample : int, optional
-        Number of sample drawn from each cluster. Default 10. If num_sample >
+    n_samples : int, optional
+        Number of sample drawn from each cluster. Default 10. If n_samples >
         number of total available samples in the smallest cluster, it is
         set to the that number.
     random_state : int, optional
@@ -250,18 +250,18 @@ def plot_representatives(
         fig, ax = plt.subplots(figsize=fig_size)
     if colors is None:
         colors = [plt.get_cmap('twilight')(cluster_i)
-                  for cluster_i in np.linspace(0.1, 0.9, model.num_clusters)]
+                  for cluster_i in np.linspace(0.1, 0.9, model.n_clusters)]
     elif type(colors) == str:
-        colors = [colors] * model.num_clusters
+        colors = [colors] * model.n_clusters
 
     x_offset = 5  # move center of another cluster to new location
 
     # determine sample size
     cluster_id = apply_properties_df['cluster_id'].values
     unique, counts = np.unique(cluster_id, return_counts=True)
-    max_num_sample = np.min(counts)
-    if num_sample > max_num_sample:
-        num_sample = max_num_sample
+    max_n_samples = np.min(counts)
+    if n_samples > max_n_samples:
+        n_samples = max_n_samples
 
     # sample contours from all clusters
     contours = np.vstack(apply_properties_df['normalized_contour'].to_numpy())
@@ -269,20 +269,20 @@ def plot_representatives(
     labeled_contours_df = analysis.get_labeled_contours_df(contours, cluster_id_df)
     all_cluster_samples_df = labeled_contours_df.groupby('cluster_id') \
         .sample(
-        n=num_sample,
+        n=n_samples,
         random_state=random_state
     )
 
     # plotting each sample contour
-    for cluster_i in range(model.num_clusters):
+    for cluster_i in range(model.n_clusters):
         # sample contour in current cluster
         cluster_samples_df = all_cluster_samples_df[all_cluster_samples_df['cluster_id'] == cluster_i]
         cluster_samples = cluster_samples_df.drop(columns='cluster_id').values
-        for sample_i in range(num_sample):
+        for sample_i in range(n_samples):
             # plot each sample contour by...
             # read in sample contour coordinates
-            x = cluster_samples[sample_i, :model.num_points]
-            y = cluster_samples[sample_i, model.num_points:]
+            x = cluster_samples[sample_i, :model.n_points]
+            y = cluster_samples[sample_i, model.n_points:]
             # form close shape when plotting
             x = np.append(x, x[0])
             y = np.append(y, y[0])
@@ -318,19 +318,19 @@ def plot_distribution(properties_df, ax=None):
         fig, ax = plt.subplots()
 
     distribution = analysis.get_distribution(properties_df) * 100  # unit: percent
-    num_clusters = len(distribution)
+    n_clusters = len(distribution)
 
     x_first = 5  # offset of first contour
     x_offset = 10  # offset between contours
     width = x_offset / 2
     x = np.arange(
         x_first,
-        num_clusters * x_offset + x_offset / 2,
+        n_clusters * x_offset + x_offset / 2,
         x_offset
     )
     colors = [
         plt.get_cmap('twilight')(cluster_i)
-        for cluster_i in np.linspace(0.1, 0.9, num_clusters)
+        for cluster_i in np.linspace(0.1, 0.9, n_clusters)
     ]
     ax.bar(
         x=x,
@@ -375,10 +375,10 @@ def plot_contour_dendrogram(model, fig_size=(6, 2)):
 
 
 def plot_distribution_contour(
-        model,
-        apply_properties_df=None,
-        fig_size=(5, 5),
-        height_ratio=(4, 1)
+    model,
+    apply_properties_df=None,
+    fig_size=(5, 5),
+    height_ratio=(4, 1)
 ):
     """
     Plots the distribution of mean contours in a bar graph with labeling
@@ -427,10 +427,10 @@ def plot_distribution_contour(
 
 
 def plot_distribution_contour_dendrogram(
-        model,
-        apply_properties_df=None,
-        fig_size=(5, 5),
-        height_ratio=(4, 1, 1)
+    model,
+    apply_properties_df=None,
+    fig_size=(5, 5),
+    height_ratio=(4, 1, 1)
 ):
     """
     Plots the distribution of mean contours in a bar graph with labeling

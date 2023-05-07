@@ -34,10 +34,10 @@ def test_Vampire__init__():
                                   random_state)
     # model hyperparameters
     assert vampire_model.model_name == model_name
-    assert vampire_model.num_points == num_points
-    assert vampire_model.num_coord == num_coord
-    assert vampire_model.num_clusters == num_clusters
-    assert vampire_model.num_pc == num_pc
+    assert vampire_model.n_points == num_points
+    assert vampire_model.n_coords == num_coord
+    assert vampire_model.n_clusters == num_clusters
+    assert vampire_model.n_pcs == num_pc
     assert vampire_model.random_state == random_state
     # contour info
     assert vampire_model.mean_registered_contour is None
@@ -70,7 +70,7 @@ def test_Vampire_build(properties_df, built_model):
                                   num_clusters,
                                   num_pc,
                                   random_state)
-    vampire_model.build(properties_df)
+    vampire_model.fit(properties_df)
     actual = vampire_model
     expected = built_model
     assert actual == expected
@@ -78,7 +78,7 @@ def test_Vampire_build(properties_df, built_model):
 
 def test_Vampire_apply(properties_df, built_model, apply_properties_df):
     vampire_model = built_model
-    actual = vampire_model.apply(properties_df)
+    actual = vampire_model.transform(properties_df)
     expected = apply_properties_df
     assert_frame_equal(actual, expected)
 
@@ -86,13 +86,13 @@ def test_Vampire_apply(properties_df, built_model, apply_properties_df):
 def test_Vampire___eq__(properties_df):
     vampire_model_1_1 = model.Vampire('model_name1',
                                       50, 5, 20, 1)
-    vampire_model_1_1.build(properties_df)
+    vampire_model_1_1.fit(properties_df)
     vampire_model_1_2 = model.Vampire('model_name1',
                                       50, 5, 20, 1)
-    vampire_model_1_2.build(properties_df)
+    vampire_model_1_2.fit(properties_df)
     vampire_model_2 = model.Vampire('model_name2',
                                     50, 5, 20, 2)
-    vampire_model_2.build(properties_df)
+    vampire_model_2.fit(properties_df)
     assert vampire_model_1_1 == vampire_model_1_2
     assert vampire_model_1_1 != vampire_model_2
     assert vampire_model_1_2 != vampire_model_2

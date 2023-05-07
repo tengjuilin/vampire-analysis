@@ -86,12 +86,12 @@ def get_properties_csv_path(filepath, filter_info):
 
 def get_model_pickle_path(filepath, filter_info, model):
     model_name = model.model_name
-    num_points = model.num_points
-    num_clusters = model.num_clusters
-    num_pc = model.num_pc
+    n_points = model.n_points
+    n_clusters = model.n_clusters
+    n_pcs = model.n_pcs
     return generate_file_paths(
         filepath,
-        f'model_{model_name}_({num_points}_{num_clusters}_{num_pc})',
+        f'model_{model_name}_({n_points}_{n_clusters}_{n_pcs})',
         filter_info,
         '.pickle'
     )
@@ -99,12 +99,12 @@ def get_model_pickle_path(filepath, filter_info, model):
 
 def get_apply_properties_csv_path(filepath, filter_info, model, img_set_name):
     model_name = model.model_name
-    num_points = model.num_points
-    num_clusters = model.num_clusters
-    num_pc = model.num_pc
+    n_points = model.n_points
+    n_clusters = model.n_clusters
+    n_pcs = model.n_pcs
     return generate_file_paths(
         filepath,
-        f'apply-properties_{model_name}_on_{img_set_name}_({num_points}_{num_clusters}_{num_pc})',
+        f'apply-properties_{model_name}_on_{img_set_name}_({n_points}_{n_clusters}_{n_pcs})',
         filter_info,
         '.csv'
     )
@@ -112,12 +112,12 @@ def get_apply_properties_csv_path(filepath, filter_info, model, img_set_name):
 
 def get_apply_properties_pickle_path(filepath, filter_info, model, img_set_name):
     model_name = model.model_name
-    num_points = model.num_points
-    num_clusters = model.num_clusters
-    num_pc = model.num_pc
+    n_points = model.n_points
+    n_clusters = model.n_clusters
+    n_pcs = model.n_pcs
     return generate_file_paths(
         filepath,
-        f'apply-properties_{model_name}_on_{img_set_name}_({num_points}_{num_clusters}_{num_pc})',
+        f'apply-properties_{model_name}_on_{img_set_name}_({n_points}_{n_clusters}_{n_pcs})',
         filter_info,
         '.pickle'
     )

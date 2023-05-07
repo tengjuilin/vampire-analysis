@@ -100,8 +100,8 @@ def color_img(img, background=0, cmap=None, background_color=None):
     cluster_ids = np.unique(img)
     cluster_ids = np.delete(cluster_ids,
                             np.where(cluster_ids == background))
-    num_clusters = len(cluster_ids)
-    replaced_labels = np.linspace(0.1, 0.9, num_clusters)
+    n_clusters = len(cluster_ids)
+    replaced_labels = np.linspace(0.1, 0.9, n_clusters)
     for i, replaced_label in enumerate(replaced_labels):
         img[img == cluster_ids[i]] = replaced_label
 

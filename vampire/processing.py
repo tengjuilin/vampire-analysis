@@ -4,25 +4,25 @@ from scipy import interpolate
 from . import amath
 
 
-def sample_contour(contour, num_sample_points):
+def sample_contour(contour, n_sample_pts):
     """
     Returns sample points of contour using B-spline.
 
     Interpolate given coordinates of an object contour using B-spline,
-    then fit `num_sample_points` equidistant points to the B-spline.
+    then fit `n_sample_pts` equidistant points to the B-spline.
 
     Parameters
     ----------
     contour : ndarray
         x and y coordinates of object contour, with shape (2, n).
-    num_sample_points : int
+    n_sample_pts : int
         Number of sample points after resample.
 
     Returns
     -------
     sampled_contour : ndarray
-        `num_sample_points` equidistant contour sample points,
-        with shape (2, num_sample_points).
+        `n_sample_pts` equidistant contour sample points,
+        with shape (2, n_sample_pts).
 
     """
     x, y = contour
@@ -35,7 +35,7 @@ def sample_contour(contour, num_sample_points):
     # can be arbitrary since cumulative sum is taken, identical result
     distance = np.append([1], distance)
     cum_distance = np.cumsum(distance)
-    sample_points = np.linspace(cum_distance[0], cum_distance[-1], num_sample_points)
+    sample_points = np.linspace(cum_distance[0], cum_distance[-1], n_sample_pts)
     # interpolate the data points using b-spline
     x_spliner = interpolate.splrep(cum_distance, x, s=0)
     y_spliner = interpolate.splrep(cum_distance, y, s=0)
@@ -46,33 +46,33 @@ def sample_contour(contour, num_sample_points):
     return sampled_contour
 
 
-def sample_contours(contours, num_points=50):
+def sample_contours(contours, n_points=50):
     """
     Returns sampled contours using B-spline.
 
     Parameters
     ----------
     contours : list[ndarray]
-        List of contour coordinates, list with length num_contours,
-        ndarray with shape (2, num_points).
-    num_points : int, optional
+        List of contour coordinates, list with length n_contours,
+        ndarray with shape (2, n_points).
+    n_points : int, optional
         Number of sample points of object contour. Defaults to 50.
 
     Returns
     -------
     sampled_contours : list[ndarray]
-        Sampled contours, list with length num_contours, ndarray with
-        shape (2, num_points).
+        Sampled contours, list with length n_contours, ndarray with
+        shape (2, n_points).
 
     See Also
     --------
     sample_contour
 
     """
-    num_contours = len(contours)
+    n_contours = len(contours)
     sampled_contours = []
-    for i in range(num_contours):
-        sampled_contour = sample_contour(contours[i], num_points)
+    for i in range(n_contours):
+        sampled_contour = sample_contour(contours[i], n_points)
         sampled_contours.append(sampled_contour)
     return sampled_contours
 
@@ -178,14 +178,14 @@ def register_contour(contour):
     at random location of the shape and proceed in either clockwise or
     counterclockwise directions. Here, we reorient the data points so that
     the contour has *positive orientation*. Meaning, the data points starts
-    at the point that makes the smallest angle with the major axis at the
+    at the point that makes the smallest angle with the major axis on the
     right side of the shape, and the data points goes in counterclockwise
     direction.
 
     We first reorder the data points by finding the appropriate starting
     point. The major axis in this case is :math:`x = 0` since the data is
     mean-subtracted. The starting data point that makes the smallest angle
-    with the major axis at the right side will have minimum absolute angle
+    with the major axis on the right side will have minimum absolute angle
     defined by polar coordinates. The angles of points with respect to the
     origin is given by
 
@@ -193,7 +193,7 @@ def register_contour(contour):
 
         \theta_i = \arctan\left(\dfrac{y_i}{x_i}\right),
 
-    and the index of point with smallest angle is
+    and the index of point with the smallest angle is
 
     .. math::
 
@@ -254,23 +254,23 @@ def register_contours(contours):
     Parameters
     ----------
     contours : list[ndarray]
-        List of contour coordinates, list with length num_contours,
-        ndarray with shape (2, num_points).
+        List of contour coordinates, list with length n_contours,
+        ndarray with shape (2, n_points).
 
     Returns
     -------
     registered_contours : list[ndarray]
-        Registered contours, list with length num_contours, ndarray with
-        shape (2, num_points).
+        Registered contours, list with length n_contours, ndarray with
+        shape (2, n_points).
 
     See Also
     --------
     register_contour
 
     """
-    num_contours = len(contours)
+    n_contours = len(contours)
     registered_contours = []
-    for i in range(num_contours):
+    for i in range(n_contours):
         registered_contour = register_contour(contours[i])
         registered_contours.append(registered_contour)
     return registered_contours
@@ -283,13 +283,13 @@ def get_mean_registered_contour(registered_contours):
     Parameters
     ----------
     registered_contours : list[ndarray]
-        Registered contours, list with length num_contours, ndarray with
-        shape (2, num_points).
+        Registered contours, list with length n_contours, ndarray with
+        shape (2, n_points).
 
     Returns
     -------
     mean_registered_contour : ndarray
-        Mean of registered contours, with shape (2, num_points).
+        Mean of registered contours, with shape (2, n_points).
 
     """
     registered_contours_flat = np.asarray(registered_contours)
@@ -400,24 +400,24 @@ def align_contours(contours, mean_contour):
     Parameters
     ----------
     contours : list[ndarray]
-        List of contour coordinates. List with length num_contours;
-        ndarray with shape (2, num_points).
+        List of contour coordinates. List with length n_contours;
+        ndarray with shape (2, n_points).
     mean_contour : ndarray
-        Mean of registered contours, with shape (2, num_points).
+        Mean of registered contours, with shape (2, n_points).
 
     Returns
     -------
     aligned_contours_flat : ndarray
-        Flattened aligned contours, with shape (num_contours, 2*num_points).
+        Flattened aligned contours, with shape (n_contours, 2*n_points).
 
     See Also
     --------
     align_contour
 
     """
-    num_contours = len(contours)
+    n_contours = len(contours)
     aligned_contours_flat = []
-    for j in range(num_contours):
+    for j in range(n_contours):
         aligned_contour = align_contour(contours[j], mean_contour)
         aligned_contours_flat.append(aligned_contour.reshape(-1))
     return aligned_contours_flat
@@ -430,12 +430,12 @@ def get_mean_aligned_contour(aligned_contours_flat):
     Parameters
     ----------
     aligned_contours_flat : ndarray
-        Flattened aligned contours, with shape (num_contours, 2*num_points).
+        Flattened aligned contours, with shape (n_contours, 2*n_points).
 
     Returns
     -------
     mean_contour_flat : ndarray
-        Flattened mean contours, with size 2*num_points.
+        Flattened mean contours, with size 2*n_points.
 
     """
     aligned_contours_flat = np.asarray(aligned_contours_flat)

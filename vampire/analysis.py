@@ -16,11 +16,11 @@ def get_cum_explained_variance_ratio(explained_variance_ratio):
     return cum_explained_variance_ratio
 
 
-def get_optimal_num_pc(cum_explained_variance_ratio, ratio=0.95):
-    num_pc = np.sum(cum_explained_variance_ratio < ratio) + 1  # add one to exceed the ratio
-    if num_pc > len(cum_explained_variance_ratio):  # prevent index out of range
-        num_pc = len(cum_explained_variance_ratio)
-    return num_pc
+def get_optimal_n_pcs(cum_explained_variance_ratio, ratio=0.95):
+    n_pcs = np.sum(cum_explained_variance_ratio < ratio) + 1  # add one to exceed the ratio
+    if n_pcs > len(cum_explained_variance_ratio):  # prevent index out of range
+        n_pcs = len(cum_explained_variance_ratio)
+    return n_pcs
 
 
 def pca_transform_contours(contours, mean_contour, principal_directions):
@@ -30,19 +30,19 @@ def pca_transform_contours(contours, mean_contour, principal_directions):
     Parameters
     ----------
     contours : ndarray
-        Object contours, with shape (num_contour, 2*num_points).
+        Object contours, with shape (n_contours, 2*n_points).
     mean_contour : ndarray
         Mean contour used to mean-center object contours.
     principal_directions : ndarray
         Loadings, weights, principal directions, principal axes,
         eigenvector of covariance matrix of mean-subtracted contours,
-        with shape (2*num_points, 2*num_points).
+        with shape (2*n_points, 2*n_points).
 
     Returns
     -------
     principal_components : ndarray
         PC score, principal components, coordinates of mean-subtracted contours
-        in their principal directions, with shape (num_contours, 2*num_points).
+        in their principal directions, with shape (n_contours, 2*n_points).
 
     """
     mean_centered_contours = contours - mean_contour
@@ -50,7 +50,7 @@ def pca_transform_contours(contours, mean_contour, principal_directions):
     return principal_components
 
 
-def cluster_contours(pc, num_clusters=5, num_pc=20, random_state=None):
+def cluster_contours(pc, n_clusters=5, n_pcs=20, random_state=None):
     """
     K-means clustering of contour principal components.
 
@@ -58,9 +58,9 @@ def cluster_contours(pc, num_clusters=5, num_pc=20, random_state=None):
     ----------
     pc : ndarray
         Principal components of contours.
-    num_clusters : int, optional
+    n_clusters : int, optional
         Number of clusters.
-    num_pc : int, optional
+    n_pcs : int, optional
         Number of principal components used for approximation.
     random_state : None or int, optional
         Random state for K-means clustering.
@@ -79,12 +79,12 @@ def cluster_contours(pc, num_clusters=5, num_pc=20, random_state=None):
     sklearn.cluster.KMeans : Implementation of K-means clustering.
 
     """
-    pc_truncated = pc[:, :num_pc]
+    pc_truncated = pc[:, :n_pcs]
     pc_truncated_normalized = preprocessing.normalize(pc_truncated)
 
     # k-means clustering of normalized principal coordinates
     k_means = KMeans(
-        n_clusters=num_clusters,
+        n_clusters=n_clusters,
         random_state=random_state,
         init='k-means++',
         n_init=3,
@@ -104,7 +104,7 @@ def cluster_contours(pc, num_clusters=5, num_pc=20, random_state=None):
     return cluster_id_df, centroids, inertia
 
 
-def assign_clusters_id(pc, contours, centroids, num_pc=20):
+def assign_clusters_id(pc, contours, centroids, n_pcs=20):
     """
     Assign the contours with id of the closest centroid.
 
@@ -113,10 +113,10 @@ def assign_clusters_id(pc, contours, centroids, num_pc=20):
     pc : ndarray
         Principal components of contours.
     contours : ndarray
-        Object contours, with shape (num_contour, 2*num_points).
+        Object contours, with shape (n_contours, 2*n_points).
     centroids : ndarray
         Coordinates of cluster centers of K-means clusters.
-    num_pc : int, optional
+    n_pcs : int, optional
         Number of principal components used for approximation.
 
     Returns
@@ -127,7 +127,7 @@ def assign_clusters_id(pc, contours, centroids, num_pc=20):
 
     """
     # find the closest centroid and get cluster id
-    pc_truncated = pc[:, :num_pc]
+    pc_truncated = pc[:, :n_pcs]
     # Original VAMPIRE GUI software did not normalize when
     # assigning clusters. However, it is logical to keep the
     # input of clustering and classifying consistent, so that
@@ -155,7 +155,7 @@ def get_labeled_contours_df(contours, cluster_id_df):
     Parameters
     ----------
     contours : ndarray
-        Object contours, with shape (num_contour, 2*num_points).
+        Object contours, with shape (n_contours, 2*n_points).
     cluster_id_df : DataFrame
         DataFrame of objects' cluster id and min distance to centroid.
 
