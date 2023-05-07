@@ -36,8 +36,8 @@ See documentation for detailed guide for basics of [building](https://vampire.re
 If you have `apply.xlsx` under `C:\vampire` containing the apply image set information, you can apply the model with
 
 ```python
->>> apply_df = pd.read_excel(r'C:\vampire\apply.xlsx')
->>> vp.model.apply_models(apply_df)
+>> > apply_df = pd.read_excel(r'C:\vampire\apply.xlsx')
+>> > vp.model.transform_datasets(apply_df)
 ```
 
 Flexible options are provided for [building](https://vampire.readthedocs.io/en/latest/user/build_advanced.html) and [applying](https://vampire.readthedocs.io/en/latest/user/apply_advanced.html) models in the advanced section in the documentation.

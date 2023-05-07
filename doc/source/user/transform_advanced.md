@@ -1,22 +1,19 @@
-.. _apply_advanced:
+(transform_advanced)=
 
-Apply Models: Advanced
-======================
+# Apply Models: Advanced
 
 In this section, we discuss the flexibility of input format, the
 defaults of required information, and the use of filter information
 for applying models.
 
-Input format
-------------
+## Input format
 
 Like building models, applying models is also compatible with  ``.xlsx``,
 ``.csv``, or ``DataFrame`` image set information input. Please refer to
 :ref:`build models input format <build_advanced_input_format>`, and use
 ``vampire.model.apply_models()``
 
-Input file structure
---------------------
+## Input file structure
 
 The input file for applying models consists of required information in the
 first 4 columns and optional filter information in additional columns,
@@ -26,8 +23,7 @@ if needed.
 
     :func:`vampire.model.apply_models`
 
-Defaults of required information
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+### Defaults of required information
 
 The input DataFrame ``img_info_df`` must contain, *in order*, the 4
 required columns of
@@ -53,8 +49,7 @@ The default values are used in default columns when
 For examples for defaults, please refer to
 :ref:`build models required information <build_advanced_required_info>`.
 
-Use of filter information
-~~~~~~~~~~~~~~~~~~~~~~~~~
+### Use of filter information
 
 Like building models, applying models has the same guidelines for filter
 information. Please refer to

@@ -8,5 +8,6 @@ Model
    :toctree: api/
 
    Vampire
-   Vampire.build
-   Vampire.apply
+   Vampire.fit
+   Vampire.transform
+   Vampire.fit_transform

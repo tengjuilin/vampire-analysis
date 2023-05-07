@@ -1,14 +1,12 @@
-.. _the_vampire_model:
+(the_vampire_model)=
 
-The VAMPIRE Model
-=================
+# The VAMPIRE Model
 
-.. seealso::
-    :func:`vampire.model.initialize_model`
+```{seealso}
+:func:`vampire.model.initialize_model`
+```
 
-The VAMPIRE model is contained the dict ``model``, which is stored
-in a ``.pickle`` file named by the model name. The following can
-properties can be accessed as attributes or keys.
+The VAMPIRE model is contained the dict ``model``, which is stored in a ``.pickle`` file named by the model name. The following can properties can be accessed as attributes or keys.
 
 model_name : str
     Name of the model (build image set).

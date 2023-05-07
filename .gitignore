@@ -23,6 +23,7 @@ venv/
 ######### Sphinx documentation
 # automatically generated api rst by autosummary
 doc/source/reference/api
+doc/source/apidocs/api
 # documentation builds
 doc/build
 
