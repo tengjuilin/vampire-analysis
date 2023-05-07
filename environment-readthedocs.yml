@@ -1,46 +1,17 @@
 # To use:
 #
 #   $ conda env create -f environment.yml
-#   $ conda activate vampire-analysis-dev
+#   $ conda activate vampire-analysis-dev-doc
 #
-name: vampire-analysis-dev
+name: vampire-analysis-dev-doc
 channels:
   - conda-forge
 dependencies:
   - python=3.10
   - pip
-  - libgfortran==3.0.0  # pin version to avoid numpy ImportError
-  # basic data science
-  - numpy
-  - pandas
-  - scipy
-  - matplotlib
-  - opencv
-  - scikit-image
-  - scikit-learn
-  - openpyxl  # for reading excel in pandas
-  # editor
-  - jupyter
-  - jupyterlab
-  - jupyterlab-spellchecker
-  - jupyterlab_code_formatter
-  - jupyterlab_widgets
-  - ipywidgets
   # documentation
   - sphinx
   - nbsphinx
   - pydata-sphinx-theme==0.13.3
   - numpydoc
   - myst-parser
-  - urllib3==1.26.15  # readthedocs uses this
-  # packaging
-  - twine
-  # testing
-  - pytest
-  - pip:
-    # jupyter lab code formatter
-    - black
-    - isort
-    # documentation
-    - sphinx-autodoc2
-    - linkify
