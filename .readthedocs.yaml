@@ -23,6 +23,5 @@ sphinx:
 # formats:
 #    - pdf
 
-# Optionally declare the Python requirements required to build your docs
 conda:
    environment: environment.yml
