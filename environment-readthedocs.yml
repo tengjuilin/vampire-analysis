@@ -12,13 +12,12 @@ dependencies:
   # packages imported by vampire
   # version pinned for resolving env faster
   - numpy==1.24
-  - pandas==1.5
+  - pandas==2.0
   - scipy==1.10
   - matplotlib==3.7
-  - opencv==4.6
+  - opencv==4.7
   - scikit-image==0.20
   - scikit-learn==1.2
-  - openpyxl==3.0  # for reading excel in pandas
   # documentation
   - sphinx
   - nbsphinx
