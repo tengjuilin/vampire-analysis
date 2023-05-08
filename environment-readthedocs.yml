@@ -8,16 +8,16 @@ channels:
   - conda-forge
 dependencies:
   - python=3.10
-  - pip==23.1.2
+  - pip>=22
   # packages imported by vampire
   # version pinned for resolving env faster
-  - numpy==1.24
-  - pandas
-  - scipy==1.10
-  - matplotlib==3.7
-  - opencv==4.6
-  - scikit-image
-  - scikit-learn
+  - numpy>=1.22
+  - pandas>=1.4
+  - scipy>=1.0
+  - matplotlib>=3.5
+  - opencv>=4.5
+  - scikit-image>=0.18
+  - scikit-learn>=1.0
   # documentation
   - nbsphinx
   - pydata-sphinx-theme==0.13.3
