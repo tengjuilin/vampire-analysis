@@ -1,0 +1,14 @@
+# packages imported by vampire
+# version pinned for resolving env faster
+numpy
+pandas
+scipy
+matplotlib
+opencv
+scikit-image
+scikit-learn
+# documentation
+nbsphinx
+pydata-sphinx-theme==0.13.3
+numpydoc==1.5.0
+myst-parser==1.0.0
