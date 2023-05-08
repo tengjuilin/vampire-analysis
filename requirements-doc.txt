@@ -4,7 +4,7 @@ numpy
 pandas
 scipy
 matplotlib
-opencv
+opencv-python
 scikit-image
 scikit-learn
 # documentation
