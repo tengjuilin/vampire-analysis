@@ -12,7 +12,7 @@
 #
 import os
 import sys
-import numpy
+import vampire
 from datetime import date
 
 sys.path.insert(0, os.path.abspath('../..'))
@@ -44,7 +44,6 @@ extensions = [
     # 'autodoc2',  # allow markdown docstring, but competes with numpydoc
 ]
 
-autodoc_mock_imports = ["numpy"]
 autosummary_generate = True
 # numpydoc interferes with autosummary to generate two method sections
 # for each class.
