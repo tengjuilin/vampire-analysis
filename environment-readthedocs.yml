@@ -9,6 +9,16 @@ channels:
 dependencies:
   - python=3.10
   - pip
+  - libgfortran==5.0.0.dev0  # pin version to avoid numpy ImportError
+  # basic data science
+  - numpy
+  - pandas
+  - scipy
+  - matplotlib
+  - opencv
+  - scikit-image
+  - scikit-learn
+  - openpyxl  # for reading excel in pandas
   # documentation
   - sphinx
   - nbsphinx
