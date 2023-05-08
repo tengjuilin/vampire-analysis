@@ -38,7 +38,7 @@ extensions = [
     'myst_parser',  # parse markdown
     'numpydoc',  # format autodoc like numpy
     'nbsphinx',  # parse Jupyter Notebook
-    'sphinx.ext.autosummary',
+    # 'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     'sphinx.ext.viewcode',
     # 'autodoc2',  # allow markdown docstring, but competes with numpydoc
