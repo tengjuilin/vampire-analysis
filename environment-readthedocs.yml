@@ -9,18 +9,19 @@ channels:
 dependencies:
   - python=3.10
   - pip
-  # basic data science
-  - numpy
-  - pandas
-  - scipy
-  - matplotlib
-  - opencv
-  - scikit-image
-  - scikit-learn
-  - openpyxl  # for reading excel in pandas
+  # packages imported by vampire
+  # version pinned for resolving env faster
+  - numpy==1.24
+  - pandas==1.5
+  - scipy==1.10
+  - matplotlib==3.7
+  - opencv==4.6
+  - scikit-image==0.20
+  - scikit-learn==1.2
+  - openpyxl==3.0  # for reading excel in pandas
   # documentation
   - sphinx
   - nbsphinx
   - pydata-sphinx-theme==0.13.3
-  - numpydoc
-  - myst-parser
+  - numpydoc==1.5
+  - myst-parser==1.0
