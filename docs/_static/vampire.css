@@ -6,6 +6,27 @@
   --pst-header-height: 3rem;
 }
 
+/* Smaller headings and tighter spacing than the theme defaults
+   (42/34/28/24/20/16 px with 44 px above every heading). */
+:root {
+  --pst-font-size-h1: 2rem;
+  --pst-font-size-h2: 1.5rem;
+  --pst-font-size-h3: 1.25rem;
+  --pst-font-size-h4: 1.1rem;
+  --pst-font-size-h5: 1rem;
+  --pst-font-size-h6: 0.9rem;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.2;
+}
+
+h1 { margin-bottom: 0.75rem; }
+h2 { margin: 2rem 0 0.6rem; }
+h3 { margin: 1.5rem 0 0.5rem; }
+h4 { margin: 1.25rem 0 0.4rem; }
+h5, h6 { margin: 1rem 0 0.35rem; }
+
 .bd-header .bd-header__inner {
   padding-top: 0;
   padding-bottom: 0;
