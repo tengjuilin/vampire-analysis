@@ -37,6 +37,20 @@ def test_read_images_str_path(image_dir):
     assert len(read_images(str(image_dir))[0]) == 4
 
 
+def test_read_images_skips_hidden_files(image_dir):
+    # macOS AppleDouble sidecar: an image extension but not an image.
+    (image_dir / "._a_ctrl_1.png").write_bytes(b"\x00\x05\x16\x07junk")
+    (image_dir / ".hidden.png").write_bytes(b"junk")
+    _, names = read_images(image_dir)
+    assert names == ["a_ctrl_1.png", "b_ctrl_2.png", "c_ogd_1.PNG", "d_ogd_2.png"]
+
+
+def test_read_images_names_unreadable_file(image_dir):
+    (image_dir / "e_broken.png").write_bytes(b"not a png")
+    with pytest.raises(OSError, match=r"e_broken\.png"):
+        read_images(image_dir)
+
+
 def test_read_images_errors(tmp_path, image_dir):
     with pytest.raises(FileNotFoundError):
         read_images(tmp_path / "missing")

@@ -108,10 +108,61 @@ def test_registrar_rejects_ragged(contours):
 # --- ContourAligner --------------------------------------------------------
 
 
+def test_aligner_single_pass_uses_registered_mean(registered):
+    aligner = vp.ContourAligner(flatten=False, max_iter=1).fit(registered)
+    assert aligner.n_iter_ == 1
+    np.testing.assert_allclose(aligner.reference_contour_, registered.mean(axis=0))
+
+
+def _mean_ssd(aligned):
+    return np.mean(np.sum((aligned - aligned.mean(axis=0)) ** 2, axis=(1, 2)))
+
+
+@pytest.fixture
+def triangles():
+    X = vp.datasets.make_shapes(80, kinds=("triangle",), noise=0.02, random_state=0)
+    return vp.ContourRegistrar().transform(vp.ContourResampler(40).transform(X))
+
+
+def test_aligner_iterates_to_a_fixed_point(triangles):
+    aligner = vp.ContourAligner(flatten=False)
+    aligned = aligner.fit_transform(triangles)
+    assert 1 < aligner.n_iter_ < aligner.max_iter
+    reference = aligner.reference_contour_
+    # Fixed point: the mean of the aligned contours is the reference.
+    np.testing.assert_allclose(aligned.mean(axis=0), reference, atol=1e-5)
+    np.testing.assert_allclose(aligner.mean_contour_, aligned.mean(axis=0))
+    # Training contours are aligned to the final reference, like new ones.
+    np.testing.assert_array_equal(aligned, aligner.transform(triangles))
+
+
+def test_aligner_iterations_reduce_spread(triangles):
+    once = vp.ContourAligner(flatten=False, max_iter=1).fit_transform(triangles)
+    iterated = vp.ContourAligner(flatten=False).fit_transform(triangles)
+    assert _mean_ssd(iterated) < 0.9 * _mean_ssd(once)
+
+
+def test_aligner_reference_does_not_drift(triangles):
+    aligner = vp.ContourAligner(flatten=False).fit(triangles)
+    reference = aligner.reference_contour_
+    # The reference stays in the frame of the registered mean: aligning it
+    # to that mean (rotation and shift) barely moves it (< 0.1 degree here).
+    np.testing.assert_allclose(
+        align_contour(reference, triangles.mean(axis=0)), reference, atol=1e-2
+    )
+
+
+@pytest.mark.parametrize(
+    "params", [{"max_iter": 0}, {"max_iter": 2.0}, {"max_iter": True}, {"tol": -1}]
+)
+def test_aligner_rejects_bad_params(registered, params):
+    with pytest.raises(ValueError, match=r"max_iter|tol"):
+        vp.ContourAligner(**params).fit(registered)
+
+
 def test_aligner_learns_reference_and_mean(registered):
     aligner = vp.ContourAligner(flatten=False).fit(registered)
     assert aligner.n_points_ == 30
-    np.testing.assert_allclose(aligner.reference_contour_, registered.mean(axis=0))
     aligned = aligner.transform(registered)
     assert aligned.shape == (6, 2, 30)
     np.testing.assert_allclose(aligner.mean_contour_, aligned.mean(axis=0))

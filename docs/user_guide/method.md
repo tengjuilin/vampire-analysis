@@ -157,10 +157,10 @@ point after registration are still essentially random; alignment fixes that.
 ## 3. Alignment
 
 Registration treats every contour on its own. Alignment makes them comparable
-point by point. {class}`~vampire.ContourAligner` computes the **reference**
-contour $\mathbf{M}$ = the mean of the registered training contours
-(`reference_contour_`). Each registered contour $\mathbf{A}$ is then rotated
-and cyclically shifted to best match $\mathbf{M}$:
+point by point. {class}`~vampire.ContourAligner` aligns every registered
+contour to a **reference** contour $\mathbf{M}$ (`reference_contour_`): each
+registered contour $\mathbf{A}$ is rotated and cyclically shifted to best
+match $\mathbf{M}$:
 
 $$
 \min_{k \in \{0,\dots,N-1\}} \; \min_{\mathbf{R} \in SO(2)}
@@ -184,10 +184,21 @@ $s_k = \sum_i (a_{x,i} m_{y,i} - a_{y,i} m_{x,i})$, the residual is
 $\lVert \mathbf{A} \rVert_F^2 + \lVert \mathbf{M} \rVert_F^2 - 2\sqrt{c_k^2 + s_k^2}$,
 minimized by the shift with the largest $\sqrt{c_k^2 + s_k^2}$.
 
+The reference is found by **generalized Procrustes analysis**. It starts as the
+mean of the registered contours. That mean is blurred: registration leaves
+some contours rotated or started differently from the rest, and averaging
+them smears out corners. So `fit` aligns every contour to $\mathbf{M}$,
+replaces $\mathbf{M}$ by the mean of the aligned contours (itself aligned to
+the old $\mathbf{M}$, so the reference cannot rotate away), and repeats until
+$\mathbf{M}$ stops changing (`max_iter=30`, `tol=1e-6`; the number of passes
+is `n_iter_`, typically 10-20). Each pass can only lower the total squared
+distance of the contours to their mean. `max_iter=1` reproduces the single
+pass of earlier versions.
+
 ```{code-cell} ipython3
 aligner = vp.ContourAligner(flatten=False)
 aligned = aligner.fit_transform(registered)  # (200, 2, 50)
-print(aligned.shape, aligner.reference_contour_.shape)
+print(aligned.shape, aligner.reference_contour_.shape, "passes:", aligner.n_iter_)
 
 fig, axes = plt.subplots(1, 4, figsize=(10, 2.8), sharex=True, sharey=True)
 for k, ax in enumerate(axes):
@@ -195,7 +206,7 @@ for k, ax in enumerate(axes):
         draw(ax, c, color=f"C{k}", lw=1, alpha=0.8)
     draw(ax, aligner.reference_contour_, start=False, color="k", ls="--", lw=1.5)
     ax.set_title(kinds[k])
-fig.suptitle("Aligned contours; dashed = reference (mean registered contour)");
+fig.suptitle("Aligned contours; dashed = reference (mean aligned contour)");
 ```
 
 After alignment, the first points coincide and point $i$ of every contour sits
@@ -218,9 +229,10 @@ $$
 \in \mathbb{R}^{n \times q}.
 $$
 
-`n_components` sets $q$: an integer keeps that many components; a float in
-$(0, 1)$ (default `0.95`) keeps the fewest components that explain at least
-that fraction of the variance. The fitted value is `model.n_components_`.
+`n_components` sets $q$: an integer (at least 2) keeps that many components;
+a float in $(0, 1)$ (default `0.95`) keeps the fewest components that explain
+at least that fraction of the variance, but never fewer than 2 (see the next
+section). The fitted value is `model.n_components_`.
 
 ```{code-cell} ipython3
 from sklearn.decomposition import PCA
@@ -275,12 +287,13 @@ for ax, data, title in [(axes[0], Z, "PC scores"), (axes[1], Z_hat, "normalized"
     ax.set(xlabel="PC1", ylabel="PC2", title=title, aspect="equal")
 ```
 
-```{warning}
-If only **one** component is kept, every normalized score is exactly $+1$ or
-$-1$, so K-means can find at most two distinct groups. This happens on very
-simple data (for example two shape kinds only). Check `model.n_components_`
-and set `n_components` to an integer of at least 2 if needed; see
-{doc}`/examples/n_shape_modes`.
+```{note}
+With only **one** component, every normalized score would be exactly $+1$ or
+$-1$, so K-means could find at most two distinct groups. `Vampire` therefore
+keeps at least 2 components: an integer `n_components` below 2 raises, and a
+variance fraction reached by the first component alone keeps 2. If K-means
+still leaves a shape mode empty (the data have fewer distinct shapes than
+`n_clusters`), `fit` raises instead of returning an empty mode.
 ```
 
 ## 6. K-means clustering
@@ -294,7 +307,11 @@ $$
 
 using k-means++ initialization, `n_init` restarts (default 3), and at most
 `max_iter` iterations (default 300). Pass `random_state` for reproducible
-results. `model.score(X)` returns minus this inertia for `X`.
+results. The inertia is stored as `model.inertia_`. It depends on the number
+of components, so it cannot compare models with different `n_components`;
+`model.score(X)` instead measures the fit in contour space: minus the mean
+squared distance between corresponding points of each normalized contour and
+its shape mode's mean contour.
 
 ## 7. Ordering shape modes by a dendrogram
 

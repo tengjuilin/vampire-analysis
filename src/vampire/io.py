@@ -41,11 +41,16 @@ def read_images(
         If ``directory`` does not exist.
     NotADirectoryError
         If ``directory`` is not a directory.
+    OSError
+        If a matching file cannot be read as an image; the message names the
+        file.
 
     Notes
     -----
     Only files whose extension is in :data:`IMAGE_EXTENSIONS` (compared
-    case-insensitively) are considered.
+    case-insensitively) are considered. Hidden files (names starting with
+    ``.``, such as the ``._name.tif`` metadata files macOS writes on external
+    and network drives) are skipped.
 
     Examples
     --------
@@ -74,10 +79,17 @@ def read_images(
         f.name
         for f in path.iterdir()
         if f.is_file()
+        and not f.name.startswith(".")
         and f.suffix.lower() in IMAGE_EXTENSIONS
         and all(rx.search(f.name) for rx in compiled)
     )
-    return [imread(path / name) for name in files], files
+    images = []
+    for name in files:
+        try:
+            images.append(imread(path / name))
+        except Exception as err:
+            raise OSError(f"Could not read image {path / name}: {err}") from err
+    return images, files
 
 
 def label_by_regex(

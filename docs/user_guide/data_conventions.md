@@ -62,8 +62,10 @@ A **contour** is a `float64` array of shape `(2, n)`:
   **not** repeated at the end;
 - `n >= 3`. Every non-empty object yields a contour with at least 4 points
   (even a single pixel), so {func}`~vampire.extract_properties` keeps all
-  objects; the single-contour functions in {mod}`vampire.contours` need at
-  least 3 distinct points.
+  objects unless you pass `min_area` (drop objects smaller than that many
+  pixels) or `exclude_border=True` (drop objects touching the image edge);
+  the single-contour functions in {mod}`vampire.contours` need at least 3
+  distinct points.
 
 ```{code-cell} ipython3
 mask = np.zeros((7, 7), dtype=bool)
@@ -140,7 +142,7 @@ props.dtypes.to_frame("dtype").T
 | `orientation` | angle between the row axis and the major axis, radians |
 | `euler_number` | 1 minus the number of holes |
 | `eccentricity`, `solidity`, `extent` | standard regionprops shape descriptors |
-| `circularity` | `4 * pi * area / perimeter**2` |
+| `circularity` | `4 * pi * area / perimeter**2` (`NaN` if the perimeter is 0; can exceed 1 for small objects) |
 | `aspect_ratio` | `major_axis_length / minor_axis_length` (`inf` for zero-width objects) |
 | `contour` | the object's contour, `(2, n)` array in image pixel coordinates (object dtype column) |
 

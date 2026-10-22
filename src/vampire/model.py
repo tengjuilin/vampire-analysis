@@ -44,8 +44,11 @@ class Vampire(ClusterMixin, TransformerMixin, BaseEstimator):
     n_clusters : int, default=5
         Number of shape modes, at least 2.
     n_components : int or float, default=0.95
-        Number of principal components kept. A float in (0, 1) keeps the
-        fewest components explaining at least that fraction of variance.
+        Number of principal components kept, at least 2. A float in (0, 1)
+        keeps the fewest components explaining at least that fraction of
+        variance, but never fewer than 2: after the row normalization, one
+        component would leave only the values +1 and -1, i.e. at most two
+        distinct shape modes.
     n_init : int, default=3
         Number of K-means initializations.
     max_iter : int, default=300
@@ -76,9 +79,7 @@ class Vampire(ClusterMixin, TransformerMixin, BaseEstimator):
         K-means inertia on the training data.
     mean_cluster_contours_ : ndarray of shape (n_clusters, 2, n_points)
         Mean aligned contour of each shape mode (the shape-mode "picture");
-        ``mean_cluster_contours_[m - 1]`` is shape mode ``m``. A mode with
-        no training contours (possible only with heavily duplicated data)
-        gets ``mean_contour_``.
+        ``mean_cluster_contours_[m - 1]`` is shape mode ``m``.
     linkage_matrix_ : ndarray of shape (n_clusters - 1, 4)
         SciPy linkage matrix over shape modes in dendrogram order. SciPy
         requires 0-based leaf ids, so leaf id ``m - 1`` is shape mode ``m``.
@@ -97,6 +98,10 @@ class Vampire(ClusterMixin, TransformerMixin, BaseEstimator):
 
     Notes
     -----
+    :meth:`fit` raises ``ValueError`` if K-means leaves a shape mode without
+    training contours (the data have fewer distinct shapes than
+    ``n_clusters``), instead of returning an empty mode.
+
     Renumbering. Let ``order = dendrogram(linkage(...))["leaves"]`` for the
     K-means clusters in their original numbering; original cluster
     ``order[j]`` becomes shape mode ``j + 1``. The fitted KMeans step's
@@ -189,6 +194,16 @@ class Vampire(ClusterMixin, TransformerMixin, BaseEstimator):
                 "n_clusters must be an integer >= 2 (shape modes are ordered by a "
                 f"dendrogram); got {self.n_clusters!r}."
             )
+        if (
+            isinstance(self.n_components, int | np.integer)
+            and not isinstance(self.n_components, bool)
+            and self.n_components < 2
+        ):
+            raise ValueError(
+                "n_components must be at least 2: with one principal component "
+                "the normalized scores are only +1 or -1, so K-means can find at "
+                f"most two shape modes; got {self.n_components!r}."
+            )
         return Pipeline(
             [
                 ("resample", ContourResampler(n_points=self.n_points)),
@@ -222,16 +237,26 @@ class Vampire(ClusterMixin, TransformerMixin, BaseEstimator):
         # Fit step by step so contours are aligned only once.
         aligned = contour_steps.fit_transform(X)  # (n_samples, 2 * n_points)
         features = feature_steps.fit_transform(aligned)
+        pca = pipeline.named_steps["pca"]
+        if pca.n_components_ < 2:
+            # A variance fraction reached by one component: keep two anyway.
+            pca.set_params(n_components=2)
+            features = feature_steps.fit_transform(aligned)
         kmeans.fit(features)
 
         n_clusters = self.n_clusters
+        n_found = np.unique(kmeans.labels_).size
+        if n_found < n_clusters:
+            raise ValueError(
+                f"K-means found only {n_found} distinct shape modes for "
+                f"n_clusters={n_clusters}: the contours have too few distinct "
+                "shapes (e.g. duplicates). Reduce n_clusters."
+            )
         aligned_contours = aligned.reshape(len(aligned), 2, -1)
         mean_contour = pipeline.named_steps["align"].mean_contour_
         mean_cluster_contours = np.stack(
             [
                 aligned_contours[kmeans.labels_ == k].mean(axis=0)
-                if np.any(kmeans.labels_ == k)
-                else mean_contour
                 for k in range(n_clusters)
             ]
         )
@@ -248,7 +273,6 @@ class Vampire(ClusterMixin, TransformerMixin, BaseEstimator):
 
         self.pipeline_ = pipeline
         self.mean_contour_ = mean_contour
-        pca = pipeline.named_steps["pca"]
         self.n_components_ = int(pca.n_components_)
         self.explained_variance_ratio_ = pca.explained_variance_ratio_
         self.cluster_centers_ = kmeans.cluster_centers_
@@ -368,7 +392,11 @@ class Vampire(ClusterMixin, TransformerMixin, BaseEstimator):
         return aligned.reshape(len(aligned), 2, -1)
 
     def score(self, X: ContourSet, y=None) -> float:
-        """Return the negative K-means inertia of ``X`` (higher is better).
+        """Return how well the shape modes describe ``X`` (higher is better).
+
+        Each contour is normalized (:meth:`normalize`), assigned a shape mode
+        (:meth:`predict`), and compared point by point with that mode's mean
+        contour (``mean_cluster_contours_``).
 
         Parameters
         ----------
@@ -379,8 +407,28 @@ class Vampire(ClusterMixin, TransformerMixin, BaseEstimator):
         Returns
         -------
         score : float
-            Minus the sum of squared distances of ``X`` to their closest
-            shape-mode center in normalized PC space.
+            Minus the mean squared distance between corresponding points of
+            each normalized contour and its shape mode's mean contour, in
+            units of the characteristic length squared (registered contours
+            have unit root-mean-square radius). It does not depend on
+            ``n_components`` or the number of contours, so it can compare
+            models fitted with different ``n_components``. Like any
+            within-cluster error it improves with more shape modes; choose
+            ``n_clusters`` with a criterion such as the silhouette score (see
+            the "Choosing the number of shape modes" example).
+
+        Examples
+        --------
+        >>> import vampire as vp
+        >>> X = vp.datasets.make_shapes(n_samples=60, random_state=0)
+        >>> model = vp.Vampire(n_clusters=2, random_state=0).fit(X)
+        >>> -0.01 < model.score(X) <= 0
+        True
         """
         check_is_fitted(self)
-        return float(self.pipeline_.score(X))
+        aligned = self.pipeline_[:_N_CONTOUR_STEPS].transform(X)
+        features = self.pipeline_[_N_CONTOUR_STEPS:-1].transform(aligned)
+        labels = self.pipeline_[-1].predict(features)
+        contours = aligned.reshape(len(aligned), 2, -1)
+        residuals = contours - self.mean_cluster_contours_[labels]
+        return -float(np.mean(np.sum(residuals**2, axis=1)))

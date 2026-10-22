@@ -53,35 +53,24 @@ ax.set(xlabel="principal component", ylabel="explained variance ratio")
 ax.legend();
 ```
 
-````{warning}
-**The one-component pitfall.** On very simple data the first component alone
-can explain 95% of the variance. After the row normalization step every
-one-dimensional score becomes exactly `+1` or `-1`, so K-means sees only two
-distinct points, whatever `n_clusters` is:
-
-```python
-X2 = vp.datasets.make_shapes(n_samples=100, kinds=("circle", "ellipse"), random_state=0)
-vp.Vampire(n_clusters=3).fit(X2).n_components_  # 1 -> at most 2 non-empty modes
-```
-
-If `model.n_components_ == 1`, pass an integer `n_components >= 2`. Real cell
-outlines are far more variable (the bundled microglia images need 20
-components for 95% of the variance), so this mainly affects synthetic or very
-homogeneous data.
-````
-
-The pitfall, demonstrated (note the scikit-learn warning and the empty mode):
+`Vampire` keeps **at least 2** components. After the row normalization step
+a single component would leave only the values `+1` and `-1`, so K-means could
+find at most two shape modes whatever `n_clusters` is. On very simple data the
+first component alone explains 95% of the variance; a second one is then kept
+anyway:
 
 ```{code-cell} ipython3
 X2 = vp.datasets.make_shapes(n_samples=100, kinds=("circle", "ellipse"), random_state=0)
-trivial = vp.Vampire(n_clusters=3, random_state=0).fit(X2)
-print("n_components_:", trivial.n_components_)
-print("distinct feature values:", np.unique(trivial.pipeline_[:-1].transform(X2)))
-print("objects per mode 1..3:", np.bincount(trivial.labels_ - 1, minlength=3))
-
-fixed = vp.Vampire(n_clusters=3, n_components=5, random_state=0).fit(X2)
-print("with n_components=5, objects per mode 1..3:", np.bincount(fixed.labels_ - 1, minlength=3))
+simple = vp.Vampire(n_clusters=3, random_state=0).fit(X2)
+print("first component explains:", PCA().fit(simple.pipeline_[:3].transform(X2)).explained_variance_ratio_[0].round(3))
+print("n_components_:", simple.n_components_)
+print("objects per mode 1..3:", np.bincount(simple.labels_ - 1, minlength=3))
 ```
+
+Real cell outlines are far more variable (the bundled microglia images need
+about 20 components for 95% of the variance). An integer `n_components` below
+2 raises `ValueError`, and so does a fit in which K-means leaves a shape mode
+empty because the data have fewer distinct shapes than `n_clusters`.
 
 ## Number of shape modes (`n_clusters`)
 
@@ -90,11 +79,14 @@ print("with n_components=5, objects per mode 1..3:", np.bincount(fixed.labels_ -
 number that gives interpretable, reproducible modes is often more useful than
 a statistically "optimal" one. Still, scikit-learn's tools help.
 
-### Do not grid-search on `score` alone
+### Do not grid-search `n_clusters` on `score` alone
 
-`Vampire.score` returns minus the K-means inertia. Inertia always decreases
-when clusters are added, so a grid search on the default score simply picks
-the **largest** `n_clusters` in the grid:
+`Vampire.score` is minus the mean squared distance between each normalized
+contour and its shape mode's mean contour. It does not depend on
+`n_components`, so it can compare models that differ only there. Like any
+within-cluster error, though, it improves when shape modes are added, so a
+grid search over `n_clusters` on the default score tends to pick the
+**largest** value in the grid:
 
 ```{code-cell} ipython3
 from sklearn.model_selection import GridSearchCV
