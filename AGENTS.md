@@ -10,7 +10,8 @@ segmented microscopy images into **shape modes** (VAMPIRE; Phillip et al.,
 uv sync                                   # create .venv with all dev groups
 uv run pytest                             # unit tests + doctests (src/ and tests/)
 uv run ruff check . && uv run ruff format --check .
-uv run sphinx-build -W --keep-going -b html docs docs/_build/html
+uv run sphinx-build -W --keep-going -b html docs docs/_build/html   # zero warnings required
+NB_EXECUTION_MODE=cache uv run sphinx-build -b html docs docs/_build/html  # faster local rebuilds
 ```
 
 Python 3.13+. Dependencies live in `pyproject.toml`; never edit `uv.lock` by hand
@@ -20,7 +21,7 @@ Python 3.13+. Dependencies live in `pyproject.toml`; never edit `uv.lock` by han
 
 | Path | Purpose |
 |-|-|
-| `src/vampire/contours.py` | Pure functions on one contour: `resample_contour`, `register_contour`, `align_contour` |
+| `src/vampire/contours.py` | Pure functions on one contour: `signed_area`, `resample_contour`, `register_contour`, `align_contour` |
 | `src/vampire/preprocessing.py` | sklearn transformers: `ContourResampler`, `ContourRegistrar`, `ContourAligner` |
 | `src/vampire/model.py` | `Vampire` estimator (resample → register → align → PCA → Normalizer → KMeans → dendrogram ordering) |
 | `src/vampire/extraction.py` | `extract_contour`, `extract_properties` (scikit-image regionprops) |
@@ -31,7 +32,9 @@ Python 3.13+. Dependencies live in `pyproject.toml`; never edit `uv.lock` by han
 | `src/vampire/_validation.py` | Shared input checks (`check_contours`, `check_dense_contours`) |
 | `src/vampire/_linalg.py` | `kabsch_rotation` |
 | `tests/` | pytest suite, one `test_<module>.py` per module, `tests/data/` for fixtures |
-| `docs/` | Sphinx (MyST markdown, executed tutorials via myst-nb) |
+| `docs/` | Sphinx (MyST markdown, executed tutorials via myst-nb); see "Documentation" below |
+| `docs/api/index.md` | API reference (autosummary; stubs generated into `docs/api/generated/`, gitignored) |
+| `docs/for_agents.md` | Compact API/invariants/pitfalls summary; keep in sync with the public API |
 
 ## Data conventions (invariants — do not break)
 
@@ -42,6 +45,11 @@ Python 3.13+. Dependencies live in `pyproject.toml`; never edit `uv.lock` by han
   or a DataFrame with a `"contour"` column (the output of `extract_properties`).
   Always normalize input via `vampire._validation.check_contours` /
   `check_dense_contours`.
+- Contours stay in image pixel coordinates: x = column, y = row (y points
+  down), traced by `find_contours` at level 0.5 (between pixel centers).
+  Plotting code inverts the y axis; never flip coordinates in the data.
+- A single `(2, n)` array is not a contour set; transformers and the model
+  raise on it (wrap as `[contour]`).
 - Flattened contours are `(n_samples, 2 * n_points)` with all x first, then all y
   (i.e. `contours.reshape(n_samples, -1)` of a `(n_samples, 2, n_points)` array).
 - Shape-mode labels are 0-based ints ordered by dendrogram leaf order.
@@ -62,8 +70,20 @@ Python 3.13+. Dependencies live in `pyproject.toml`; never edit `uv.lock` by han
 - Tests: deterministic (`random_state`), fast (whole suite < ~1 min), prefer
   property checks on synthetic data (`datasets.make_shapes`) over golden files.
 
-## Reference implementation
+## Documentation
 
-`_legacy/` holds the pre-1.0 package (OpenCV, pickled fixtures) for reference
-while porting. It is not importable as `vampire` and will be deleted before
-release; do not import from it.
+- Sources in `docs/`, MyST markdown only. Pages with `file_format: mystnb`
+  front matter are executed at build time (`nb_execution_raise_on_error`), so
+  every code cell must run top to bottom with only `vampire` and its
+  dependencies, use bundled/synthetic data (`datasets.load_example_images`,
+  `datasets.make_shapes`), write only to a temp directory, and stay fast.
+- Structure: `index.md`, `installation.md`, `quickstart.md`,
+  `user_guide/{method,data_conventions,your_images,custom_pipelines,plotting,differences_from_gui}.md`,
+  `api/index.md`, `for_agents.md`, `changelog.md`, `references.md`, `license.md`.
+- New public function/class: add it to the autosummary list in
+  `docs/api/index.md` and to `docs/for_agents.md`; add a changelog entry.
+- Docstrings are rendered by numpydoc: avoid bare `name_` (trailing
+  underscore) in type fields -- RST reads it as a link; write ``name_``.
+- `sphinx-llms-txt` emits `llms.txt` and `llms-full.txt` at the HTML root.
+- The build must pass with `-W` (CI: `.github/workflows/docs.yml`, Read the
+  Docs: `.readthedocs.yaml`). Intersphinx needs network access.

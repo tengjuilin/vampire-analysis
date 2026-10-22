@@ -35,12 +35,6 @@ jupyter_execute/
 # Sphinx
 docs/_build/
 docs/api/generated/
-doc/source/reference/api
-doc/source/apidocs/api
-doc/build
-
-# Testing outputs
-vampire/tests/data/quickstart/output
 
 # Todos
 TODO.md

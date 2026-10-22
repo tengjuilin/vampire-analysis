@@ -3,7 +3,7 @@ name = "vampire-analysis"
 version = "1.0.0"
 description = "VAMPIRE (Visually Aided Morpho-Phenotyping Image Recognition): quantify and visualize heterogeneity of cell and nucleus morphology with a scikit-learn-style API."
 readme = "README.md"
-license = "MIT"
+license = "GPL-3.0-only"
 license-files = ["LICENSE"]
 authors = [{ name = "Teng-Jui Lin", email = "lintengjui@outlook.com" }]
 requires-python = ">=3.13"
