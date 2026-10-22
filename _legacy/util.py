@@ -1,6 +1,7 @@
 import os
 import pickle
 
+import numpy as np
 import pandas as pd
 
 
@@ -121,3 +122,29 @@ def get_apply_properties_pickle_path(filepath, filter_info, model, img_set_name)
         filter_info,
         '.pickle'
     )
+
+
+def label_df(properties_df, id_df, target_props, search_prop="filename"):
+    """
+
+    Parameters
+    ----------
+    properties_df : DataFrame
+        Contains "filename" column
+    id_df : DataFrame
+        Contains columns listed in `properties` and "regex" column.
+    target_props : list
+        List of property(s) to be added. Must match column name in `id_df`.
+    search_prop : str, optional
+
+
+    Returns
+    -------
+
+    """
+    properties_df = properties_df.copy()
+    properties_df[target_props] = np.nan
+    for i in range(id_df["regex"].size):
+        mask = properties_df[search_prop].astype(str).str.contains(id_df["regex"][i])
+        properties_df.loc[mask, target_props] = id_df.iloc[i, :][target_props].values
+    return properties_df
