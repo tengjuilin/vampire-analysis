@@ -116,9 +116,9 @@ def test_fit_on_one_condition_predict_on_another(fitted):
     labels = model.predict(new)
 
     assert labels.shape == (len(new),)
-    assert labels.min() >= 0
-    assert labels.max() < model.n_clusters
-    np.testing.assert_array_equal(labels, np.argmin(model.transform(new), axis=1))
+    assert labels.min() >= 1
+    assert labels.max() <= model.n_clusters
+    np.testing.assert_array_equal(labels, np.argmin(model.transform(new), axis=1) + 1)
     np.testing.assert_array_equal(model.predict(train), model.labels_)
     assert np.isfinite(model.score(new))
     distribution = vp.shape_mode_distribution(labels, n_clusters=model.n_clusters)

@@ -14,35 +14,38 @@ def shape_mode_distribution(
     Parameters
     ----------
     labels : array-like of shape (n_samples,)
-        Integer shape-mode labels in ``[0, n_clusters)``, e.g. from
-        :meth:`vampire.Vampire.predict`.
+        Integer shape-mode labels in ``1..n_clusters`` (shape modes are
+        1-based), e.g. from :meth:`vampire.Vampire.predict`.
     n_clusters : int, optional
-        Total number of shape modes. Defaults to ``max(labels) + 1``. Modes with
+        Total number of shape modes. Defaults to ``max(labels)``. Modes with
         no objects get a fraction of 0. Pass ``model.n_clusters`` so that
         distributions of different groups have the same length.
 
     Returns
     -------
     distribution : ndarray of shape (n_clusters,)
-        ``float64`` fractions summing to 1.
+        ``float64`` fractions summing to 1. Entry ``i`` is the fraction of
+        objects in shape mode ``i + 1`` (``distribution[m - 1]`` is mode
+        ``m``).
 
     Raises
     ------
     ValueError
         If ``labels`` is empty, not 1-D, not integer-valued (whole-number
-        floats are accepted), negative, or not below ``n_clusters``; or if
-        ``n_clusters`` is not an integer >= 1.
+        floats are accepted), below 1 (0 is rejected because shape modes are
+        1-based), or above ``n_clusters``; or if ``n_clusters`` is not an
+        integer >= 1.
 
     Examples
     --------
     >>> from vampire.metrics import shape_mode_distribution
-    >>> shape_mode_distribution([0, 0, 1, 3])
+    >>> shape_mode_distribution([1, 1, 2, 4])
     array([0.5 , 0.25, 0.  , 0.25])
-    >>> shape_mode_distribution([0, 1], n_clusters=4)
+    >>> shape_mode_distribution([1, 2], n_clusters=4)
     array([0.5, 0.5, 0. , 0. ])
     """
     values, n_clusters = check_labels(labels, n_clusters)
-    counts = np.bincount(values, minlength=n_clusters)
+    counts = np.bincount(values - 1, minlength=n_clusters)
     return counts / counts.sum()
 
 

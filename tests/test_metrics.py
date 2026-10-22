@@ -8,19 +8,19 @@ import vampire as vp
 
 @pytest.mark.parametrize("wrap", [list, np.array, pd.Series])
 def test_distribution(wrap):
-    distribution = vp.shape_mode_distribution(wrap([2, 0, 2, 1, 2, 0]))
+    distribution = vp.shape_mode_distribution(wrap([3, 1, 3, 2, 3, 1]))
     np.testing.assert_allclose(distribution, [2 / 6, 1 / 6, 3 / 6])
     assert distribution.dtype == np.float64
 
 
 def test_distribution_pads_empty_modes():
-    distribution = vp.shape_mode_distribution([1, 1, 3], n_clusters=5)
+    distribution = vp.shape_mode_distribution([2, 2, 4], n_clusters=5)
     np.testing.assert_allclose(distribution, [0, 2 / 3, 0, 1 / 3, 0])
     assert distribution.sum() == pytest.approx(1.0)
 
 
 def test_distribution_accepts_integral_floats():
-    np.testing.assert_allclose(vp.shape_mode_distribution([0.0, 1.0]), [0.5, 0.5])
+    np.testing.assert_allclose(vp.shape_mode_distribution([1.0, 2.0]), [0.5, 0.5])
 
 
 def test_distribution_of_model_labels(shapes):
@@ -29,17 +29,22 @@ def test_distribution_of_model_labels(shapes):
     distribution = vp.shape_mode_distribution(model.labels_, n_clusters=3)
     assert distribution.shape == (3,)
     assert distribution.sum() == pytest.approx(1.0)
+    np.testing.assert_allclose(
+        distribution, [np.mean(model.labels_ == m) for m in (1, 2, 3)]
+    )
 
 
 @pytest.mark.parametrize(
     ("labels", "kwargs", "match"),
     [
         ([], {}, "non-empty"),
-        ([[0, 1]], {}, "1-D"),
-        ([0, -1], {}, "non-negative"),
-        ([0, 1.5], {}, "integers"),
+        ([[1, 2]], {}, "1-D"),
+        ([1, -1], {}, "non-negative"),
+        ([1, 1.5], {}, "integers"),
         (["a"], {}, "integers"),
-        ([0, 3], {"n_clusters": 3}, "below n_clusters"),
+        ([1, 4], {"n_clusters": 3}, "at most n_clusters"),
+        ([0, 1], {}, "1-based"),
+        ([0, 2], {"n_clusters": 3}, "1-based"),
     ],
 )
 def test_distribution_rejects_bad_labels(labels, kwargs, match):
@@ -79,7 +84,7 @@ def test_entropy_rejects_bad_distribution(distribution, match):
 @pytest.mark.parametrize("n_clusters", [0, -2, 2.5, 3.0, True, "3"])
 def test_distribution_rejects_bad_n_clusters(n_clusters):
     with pytest.raises(ValueError, match="n_clusters"):
-        vp.shape_mode_distribution([0], n_clusters=n_clusters)
+        vp.shape_mode_distribution([1], n_clusters=n_clusters)
 
 
 @pytest.mark.parametrize("base", [1, 1.0, 0, -2, np.inf, np.nan, True, "2"])

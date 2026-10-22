@@ -134,9 +134,10 @@ def test_check_dense_contours_rejects_single_2d_contour():
 
 
 def test_check_labels():
-    values, k = check_labels([0.0, 2.0, 1.0])
-    assert values.dtype == np.intp and values.tolist() == [0, 2, 1] and k == 3
-    assert check_labels([0], n_clusters=4)[1] == 4
+    values, k = check_labels([1.0, 3.0, 2.0])
+    assert values.dtype == np.intp and values.tolist() == [1, 3, 2] and k == 3
+    assert check_labels([1], n_clusters=4)[1] == 4
+    assert check_labels([3], n_clusters=3)[1] == 3
     values, k = check_labels([], allow_empty=True)
     assert values.size == 0 and k == 0
     for bad, match in [
@@ -145,11 +146,23 @@ def test_check_labels():
         ([0.5], "integers"),
         ([np.nan], "integers"),
         ([-1], "non-negative"),
+        ([0, 1], "1-based"),
     ]:
         with pytest.raises(ValueError, match=match):
             check_labels(bad)
-    with pytest.raises(ValueError, match="below n_clusters"):
-        check_labels([3], n_clusters=3)
+    with pytest.raises(ValueError, match="at most n_clusters=3"):
+        check_labels([4], n_clusters=3)
+
+
+def test_check_labels_zero_based():
+    values, k = check_labels([0.0, 2.0, 1.0], one_based=False)
+    assert values.tolist() == [0, 2, 1] and k == 3
+    values, k = check_labels([], allow_empty=True, one_based=False)
+    assert values.size == 0 and k == 0
+    with pytest.raises(ValueError, match="non-negative"):
+        check_labels([-1], one_based=False)
+    with pytest.raises(ValueError, match="below n_clusters=3"):
+        check_labels([3], n_clusters=3, one_based=False)
 
 
 @pytest.mark.parametrize("bad", [0, -1, 2.5, 2.0, True, "3", None])
