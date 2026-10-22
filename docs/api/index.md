@@ -116,6 +116,7 @@ shape `(n_samples, 2, n)`, a Series of contours, or a DataFrame with a
    resample_contour
    register_contour
    align_contour
+   lowpass_contour
 ```
 
 ## Metrics

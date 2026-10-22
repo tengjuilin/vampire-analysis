@@ -98,6 +98,22 @@ vp.plotting.plot_shape_modes(model, ax=axes[0], colors="viridis")
 vp.plotting.plot_shape_modes(model, ax=axes[1], colors="black", linewidth=1)
 ```
 
+Mean contours of segmented cells keep some pixel-level wiggle. Pass
+`n_harmonics` to low-pass filter the contours before drawing (keeping only
+their first `n_harmonics` Fourier harmonics, see
+{func}`vampire.contours.lowpass_contour`). Lower values are smoother; around 8
+removes the staircase while keeping each mode's dents and waists. Only the
+drawing changes, not the model. {func}`~vampire.plotting.plot_summary` and
+{func}`~vampire.plotting.plot_representatives` accept the same option.
+
+```{code-cell} ipython3
+fig, axes = plt.subplots(3, 1, figsize=(6, 4.5), layout="constrained")
+for ax, n_harmonics in zip(axes, [None, 12, 8]):
+    vp.plotting.plot_shape_modes(model, ax=ax, n_harmonics=n_harmonics)
+    ax.set_title(f"n_harmonics={n_harmonics}", fontsize=9)
+    ax.tick_params(labelbottom=ax is axes[-1])  # mode numbers on the last row
+```
+
 ## Dendrogram
 
 By default the root is at the bottom and the leaves point up, so the

@@ -43,6 +43,20 @@ def _link_y_extent(ax):
     return ys.min(), ys.max()
 
 
+def _max_turn(curve):
+    """Largest turning angle (radians) between consecutive segments."""
+    seg = np.diff(curve, axis=1)
+    angle = np.arctan2(seg[1], seg[0])
+    return np.abs(np.angle(np.exp(1j * np.diff(angle)))).max()
+
+
+def _total_turn(curve):
+    """Sum of absolute turning angles along the curve (2*pi for convex)."""
+    seg = np.diff(curve, axis=1)
+    angle = np.arctan2(seg[1], seg[0])
+    return np.abs(np.angle(np.exp(1j * np.diff(angle)))).sum()
+
+
 def test_dendrogram(fitted):
     model, _ = fitted
     ax = plotting.plot_dendrogram(model)
@@ -122,11 +136,55 @@ def test_shape_modes(fitted):
     assert [t.get_text() for t in ax.get_xticklabels()] == MODES
     for i, line in enumerate(ax.lines):
         x, y = line.get_data()
-        assert len(x) == model.mean_cluster_contours_.shape[2] + 1
+        assert len(x) == plotting._SMOOTH_POINTS + 1
         assert (x[0], y[0]) == (x[-1], y[-1])  # closed
         assert abs(np.mean(x) - (5 + 10 * i)) < 3  # near its leaf position
     np.testing.assert_allclose(_leaf_x(ax), 5 + 10 * np.arange(K))
     assert ax.get_aspect() == 1.0
+
+
+def test_shape_modes_smooth_curve_passes_through_points(fitted):
+    model, _ = fitted
+    ax = plotting.plot_shape_modes(model, scale=1.0)
+    for i, line in enumerate(ax.lines):
+        curve = np.vstack(line.get_data()) - [[5 + 10 * i], [0]]
+        points = model.mean_cluster_contours_[i]
+        # Every stored point lies on the drawn curve (spline interpolates).
+        gaps = np.hypot(*(points[:, :, None] - curve[:, None, :])).min(axis=1)
+        assert gaps.max() < 1e-2 * np.ptp(points[0])
+        # Much smoother than the polygon: the sharpest turn between consecutive
+        # drawn segments is far below the polygon's sharpest corner.
+        polygon = np.hstack([points, points[:, :1], points[:, 1:2]])
+        assert _max_turn(curve) < 0.5 * _max_turn(polygon)
+
+
+def test_shape_modes_unsmoothed_draws_polygon(fitted):
+    model, _ = fitted
+    ax = plotting.plot_shape_modes(model, smooth=False)
+    n = model.mean_cluster_contours_.shape[2]
+    assert all(len(line.get_xdata()) == n + 1 for line in ax.lines)
+
+
+def test_closed_curve_handles_repeated_and_tiny_contours():
+    square = np.array([[0.0, 1.0, 1.0, 1.0, 0.0], [0.0, 0.0, 1.0, 1.0, 1.0]])
+    curve = plotting._closed_curve(square)
+    assert curve.shape == (2, plotting._SMOOTH_POINTS + 1)
+    np.testing.assert_allclose(curve[:, 0], curve[:, -1])
+    triangle = np.array([[0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+    assert plotting._closed_curve(triangle).shape == (2, 4)  # too few to spline
+
+
+def test_representatives_smooth_option(fitted):
+    model, X = fitted
+    _, axes = plotting.plot_representatives(model, X, n_per_mode=2)
+    assert all(
+        len(line.get_xdata()) == plotting._SMOOTH_POINTS + 1
+        for ax in axes
+        for line in ax.lines
+    )
+    n = model.n_points
+    _, axes = plotting.plot_representatives(model, X, n_per_mode=2, smooth=False)
+    assert all(len(line.get_xdata()) == n + 1 for ax in axes for line in ax.lines)
 
 
 def test_shape_modes_colors_and_errors(fitted):
@@ -246,7 +304,9 @@ def test_representatives(fitted):
 
 def test_representatives_are_closest(fitted):
     model, X = fitted
-    _, axes = plotting.plot_representatives(model, X, n_per_mode=1, show_mean=False)
+    _, axes = plotting.plot_representatives(
+        model, X, n_per_mode=1, show_mean=False, smooth=False
+    )
     labels = model.predict(X)
     dist = model.transform(X)
     normalized = model.normalize(X)
@@ -375,3 +435,28 @@ def test_mode_colors():
         plotting._mode_colors(0)
     with pytest.raises(ValueError):
         plotting._mode_colors(3, "notacolor")
+
+
+def test_shape_modes_lowpass_smooths_but_keeps_shape(fitted):
+    model, _ = fitted
+    raw = plotting.plot_shape_modes(model, scale=1.0)
+    plt.close("all")
+    filtered = plotting.plot_shape_modes(model, scale=1.0, n_harmonics=4)
+    for raw_line, line in zip(raw.lines, filtered.lines, strict=True):
+        a, b = np.vstack(raw_line.get_data()), np.vstack(line.get_data())
+        assert a.shape == b.shape
+        assert not np.allclose(a, b)  # filtering changed the drawing
+        # ... but only slightly: same overall size and position.
+        np.testing.assert_allclose(np.ptp(a, axis=1), np.ptp(b, axis=1), rtol=0.25)
+        # Fewer wiggles: less total turning along the outline (>= 2*pi).
+        assert _total_turn(b) < _total_turn(a)
+
+
+def test_lowpass_option_threads_through(fitted):
+    model, X = fitted
+    _, axes = plotting.plot_summary(model, n_harmonics=6)
+    assert len(axes[1].lines) == K
+    _, axes = plotting.plot_representatives(model, X, n_per_mode=2, n_harmonics=6)
+    assert all(len(ax.lines) >= 1 for ax in axes)
+    with pytest.raises(ValueError, match="n_harmonics"):
+        plotting.plot_shape_modes(model, n_harmonics=0)

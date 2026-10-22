@@ -31,7 +31,13 @@ files from earlier versions do not work with 1.0. See
   `orientation="bottom"` (root at the bottom, leaves pointing up to the shape
   modes) without axis spines; {func}`~vampire.plotting.plot_summary` shows the
   mode numbers once, under the distribution bars, with the dendrogram under
-  the shape modes.
+  the shape modes. Contours are drawn as smooth periodic splines through
+  their points (`smooth=True` in {func}`~vampire.plotting.plot_shape_modes`
+  and {func}`~vampire.plotting.plot_representatives`). An optional
+  `n_harmonics` Fourier low-pass (also in
+  {func}`~vampire.plotting.plot_summary`) removes pixel-level wiggle before
+  drawing; the filter is available as {func}`vampire.contours.lowpass_contour`.
+- Documentation figures are rendered at 300 dpi.
 - {mod}`vampire.datasets`: bundled example images and a synthetic shape
   generator.
 - Method fixes: equidistant resampling without a duplicated endpoint, proper
