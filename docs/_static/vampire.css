@@ -1,0 +1,54 @@
+/* vampire-analysis docs: small tweaks on top of pydata-sphinx-theme.
+   Colors use theme variables so light and dark mode both work. */
+
+.navbar-brand img {
+  height: 48px;
+}
+
+html[data-theme="light"] {
+  --pst-color-primary: #0a5173;
+}
+
+html[data-theme="dark"] {
+  --pst-color-primary: #5fb3d9;
+}
+
+/* Wider content for API tables and code. */
+.bd-page-width {
+  max-width: 100rem;
+}
+
+/* Wide tables scroll instead of squeezing their columns. */
+.bd-content table {
+  display: block;
+  overflow-x: auto;
+}
+
+/* Landing-page link cards (plain HTML grid, no extra extensions). */
+.vp-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.vp-card {
+  border: 1px solid var(--pst-color-border);
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  background: var(--pst-color-surface);
+}
+
+.vp-card h3 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+
+.vp-card p {
+  margin-bottom: 0;
+}
+
+/* Executed-cell outputs: keep wide DataFrames scrollable. */
+div.cell_output table.dataframe {
+  font-size: 0.8rem;
+}
