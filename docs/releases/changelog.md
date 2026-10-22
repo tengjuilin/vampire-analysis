@@ -37,7 +37,8 @@ files from earlier versions do not work with 1.0. See
   `n_harmonics` Fourier low-pass (also in
   {func}`~vampire.plotting.plot_summary`) removes pixel-level wiggle before
   drawing; the filter is available as {func}`vampire.contours.lowpass_contour`.
-- Documentation figures are rendered at 300 dpi.
+- Documentation figures are rendered at 300 dpi, shown at 96 px per inch,
+  and shrink to fit narrow screens without changing their aspect ratio.
 - {mod}`vampire.datasets`: bundled example images and a synthetic shape
   generator.
 - Method fixes: equidistant resampling without a duplicated endpoint, proper

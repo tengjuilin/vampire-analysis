@@ -79,3 +79,10 @@ html[data-theme="dark"] {
 div.cell_output table.dataframe {
   font-size: 0.8rem;
 }
+
+/* Executed-cell figures: never wider than the content column, and scale the
+   height with the width so the aspect ratio holds on narrow screens. */
+div.cell_output img {
+  max-width: 100%;
+  height: auto;
+}

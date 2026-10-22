@@ -112,6 +112,11 @@ with open(os.path.join(_profile_dir, "ipython_kernel_config.py"), "w") as _f:
         'c.InlineBackend.print_figure_kwargs = {"bbox_inches": "tight", "dpi": 300}\n'
     )
 os.environ["IPYTHONDIR"] = _ipython_dir
+# Retina metadata displays figures at 150 CSS px per inch, so a 10-inch-wide
+# figure would be 1500 px. Scale to 96 px per inch (the CSS inch); the PNGs
+# keep their 300 dpi pixels (about 3x density). vampire.css caps the width at
+# the content column and keeps the aspect ratio.
+nb_render_image_options = {"scale": 64}
 
 # -- sphinx-copybutton ---------------------------------------------------------
 
