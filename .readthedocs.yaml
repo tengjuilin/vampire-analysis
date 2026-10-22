@@ -1,24 +1,21 @@
-# .readthedocs.yaml
 # Read the Docs configuration file
-# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
-
-# Required
+# https://docs.readthedocs.io/en/stable/config-file/v2.html
 version: 2
 
-# Set the version of Python and other tools you might need
 build:
-   os: ubuntu-22.04
-   tools:
-      python: "3.10"
-      # You can also specify other tool versions:
-      # nodejs: "19"
-      # rust: "1.64"
-      # golang: "1.19"
+  os: ubuntu-24.04
+  tools:
+    python: "3.13"
+  jobs:
+    pre_create_environment:
+      - asdf plugin add uv
+      - asdf install uv latest
+      - asdf global uv latest
+    create_environment:
+      - uv venv "${READTHEDOCS_VIRTUALENV_PATH}"
+    install:
+      - UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv sync --frozen --group docs
 
-# If using Sphinx, optionally build your docs in additional formats such as PDF
-formats:
-   - pdf
-
-python:
-   install:
-   - requirements: requirements-doc.txt
+sphinx:
+  configuration: docs/conf.py
+  fail_on_warning: true

@@ -1,34 +1,46 @@
 # macOS
 .DS_Store
 
-######### Pycharm
-# all pycharm .idea and cache
-*.idea
-*__pycache__
+# IDEs
+.idea/
+.vscode/
 
-######### Python packaging
-# Setuptools distribution folder.
-build
+# Python
+__pycache__/
+*.py[cod]
+
+# Packaging
+build/
 dist/
-# Python egg metadata, regenerated from source files by setuptools.
-*.egg-info
+*.egg-info/
 *.egg
 
-######### Virtual environment
+# Virtual environments
+.venv/
 venv/
 
-######### Jupyter Notebook
-*.ipynb_checkpoints
+# Tool caches
+.pytest_cache/
+.ruff_cache/
 
-######### Sphinx documentation
-# automatically generated api rst by autosummary
+# Coverage
+.coverage
+coverage.xml
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+jupyter_execute/
+
+# Sphinx
+docs/_build/
+docs/api/generated/
 doc/source/reference/api
 doc/source/apidocs/api
-# documentation builds
 doc/build
 
-######### Testing Outputs
+# Testing outputs
 vampire/tests/data/quickstart/output
 
-######### Todos
+# Todos
 TODO.md
