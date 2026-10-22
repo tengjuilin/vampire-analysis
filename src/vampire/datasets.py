@@ -7,35 +7,36 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-def load_example_images() -> tuple[list[NDArray], list[str]]:
+def load_example_images() -> tuple[list[NDArray[np.uint16]], list[str]]:
     """Load the bundled segmented microglia images.
 
-    Four small binary images of microglia from rat brain slices (cortex and
-    hypothalamus) shipped in ``vampire/_data``.
+    Two 512 x 512 label images of segmented microglia (about 117 and 122
+    objects). Background is 0 and each object has a unique positive integer
+    label, so they can be passed straight to
+    :func:`vampire.extract_properties`. Stored compressed in
+    ``vampire/_data/example_images.npz``.
 
     Returns
     -------
-    images : list of ndarray of shape (height, width)
+    images : list of ndarray of shape (512, 512), dtype uint16
+        Label images.
     filenames : list of str
+        Names ``["img1", "img2"]``, usable as the ``filenames`` argument of
+        :func:`vampire.extract_properties`.
 
     Examples
     --------
     >>> images, filenames = load_example_images()
-    >>> len(images), images[0].ndim
-    (4, 2)
-    >>> filenames[0]
-    '4-50-1_40x_cortex_1_otsu_thresh_ogd.tif'
+    >>> len(images), images[0].shape
+    (2, (512, 512))
+    >>> filenames
+    ['img1', 'img2']
     """
-    from skimage.io import imread
-
-    data = resources.files("vampire") / "_data"
-    files = sorted(
-        (f for f in data.iterdir() if f.name.lower().endswith((".tif", ".tiff"))),
-        key=lambda f: f.name,
-    )
-    with resources.as_file(data) as directory:
-        images = [imread(directory / f.name) for f in files]
-    return images, [f.name for f in files]
+    data = resources.files("vampire") / "_data" / "example_images.npz"
+    with data.open("rb") as f, np.load(f) as archive:
+        filenames = sorted(archive.files)
+        images = [archive[name] for name in filenames]
+    return images, filenames
 
 
 def make_shapes(

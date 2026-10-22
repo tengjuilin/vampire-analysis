@@ -3,9 +3,9 @@ import pandas as pd
 import pytest
 from scipy.spatial import cKDTree
 from skimage.draw import disk
-from skimage.io import imread
 from skimage.segmentation import find_boundaries
 
+from vampire.datasets import load_example_images
 from vampire.extraction import extract_contour, extract_properties
 
 COLUMNS = [
@@ -158,7 +158,7 @@ def test_aspect_ratio_degenerate_line():
 
 
 def test_properties_real_images():
-    img = imread("tests/data/img1.tif")
-    props = extract_properties(img, filenames=["img1.tif"])
+    img = load_example_images()[0][0]
+    props = extract_properties(img, filenames=["img1"])
     assert len(props) > 0
     assert all(c.shape[0] == 2 and c.shape[1] >= 4 for c in props["contour"])
