@@ -81,6 +81,11 @@ print(props.shape)
 props[["filename", "image_id", "label", "area", "circularity"]].head()
 ```
 
+Tiny objects (segmentation debris) and objects cut off by the image edge do
+not have meaningful outlines. Drop them with
+`vp.extract_properties(images, filenames, min_area=50, exclude_border=True)`,
+choosing `min_area` (in pixels) for your magnification.
+
 If your images are spread over several folders, read each folder and
 concatenate the lists before calling `extract_properties` (or concatenate
 property tables with {func}`pandas.concat` using `ignore_index=True`).

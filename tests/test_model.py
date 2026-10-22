@@ -1,4 +1,5 @@
 import pickle
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -77,7 +78,7 @@ def test_fitted_attributes(fitted, four_kinds):
     assert set(fitted.labels_) == set(range(1, k + 1))
     assert fitted.linkage_matrix_.shape == (k - 1, 4)
     assert fitted.n_features_in_ == 2 * p
-    assert fitted.inertia_ == pytest.approx(-fitted.score(X))
+    assert fitted.inertia_ > 0
 
 
 def test_dendrogram_order(fitted, four_kinds):
@@ -208,7 +209,7 @@ def test_n_components_float(shapes):
     model = vp.Vampire(n_clusters=2, n_components=0.99, random_state=0).fit(X)
     cumulative = np.cumsum(model.explained_variance_ratio_)
     assert cumulative[-1] >= 0.99
-    assert model.n_components_ == 1 or cumulative[-2] < 0.99
+    assert model.n_components_ == 2 or cumulative[-2] < 0.99
 
 
 def test_n_points(shapes):
@@ -251,18 +252,53 @@ def test_rejects_bad_input(shapes):
         model.predict([np.zeros((2, 2))])
 
 
-def test_empty_cluster_falls_back_to_mean_contour(shapes):
-    # One PC + Normalizer maps every contour to +1 or -1: only 2 distinct points.
+@pytest.mark.parametrize("n_components", [0, 1, np.int64(1)])
+def test_rejects_fewer_than_two_components(shapes, n_components):
+    # One PC + Normalizer maps every contour to +1 or -1: at most 2 modes.
     X, _ = shapes
-    with pytest.warns(ConvergenceWarning):
-        model = vp.Vampire(n_clusters=3, n_components=1, random_state=0).fit(X)
-    assert len(set(model.labels_)) == 2
-    assert np.all(np.isfinite(model.mean_cluster_contours_))
-    empty = (set(range(1, 4)) - set(model.labels_)).pop()
-    np.testing.assert_array_equal(
-        model.mean_cluster_contours_[empty - 1], model.mean_contour_
-    )
-    assert model.dendrogram_["leaves"] == [0, 1, 2]
+    with pytest.raises(ValueError, match="n_components must be at least 2"):
+        vp.Vampire(n_clusters=3, n_components=n_components).fit(X)
+
+
+def test_float_n_components_keeps_at_least_two(shapes):
+    X, _ = shapes
+    # Circles vs. ellipses: the first component alone explains > 95 %.
+    pca_only = vp.Vampire(n_clusters=2, n_components=10, random_state=0).fit(X)
+    assert pca_only.explained_variance_ratio_[0] > 0.95
+    model = vp.Vampire(n_clusters=3, random_state=0).fit(X)
+    assert model.n_components_ == 2
+    assert set(model.labels_) == {1, 2, 3}
+
+
+def test_too_few_distinct_shapes_raises():
+    X = vp.datasets.make_shapes(2, kinds=("circle", "star"), random_state=0)
+    duplicated = [X[0]] * 10 + [X[1]] * 10
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", ConvergenceWarning)
+        with pytest.raises(ValueError, match="only 2 distinct shape modes"):
+            vp.Vampire(n_clusters=3, random_state=0).fit(duplicated)
+
+
+def test_score_is_mean_squared_point_distance_to_mode(fitted, four_kinds):
+    X, _ = four_kinds
+    normalized = fitted.normalize(X)
+    residuals = normalized - fitted.mean_cluster_contours_[fitted.predict(X) - 1]
+    expected = -np.mean(np.sum(residuals**2, axis=1))
+    assert fitted.score(X) == pytest.approx(expected)
+    assert fitted.score(X) < 0
+    # A mean over contours: duplicating the data does not change it.
+    assert fitted.score([*X, *X]) == pytest.approx(fitted.score(X))
+
+
+def test_score_comparable_across_n_components(four_kinds):
+    X, _ = four_kinds
+    scores = [
+        vp.Vampire(n_clusters=4, n_components=c, random_state=0).fit(X).score(X)
+        for c in (2, 5, 10)
+    ]
+    # Same partition (the kinds separate perfectly) -> same score, whereas
+    # the K-means inertia grows with the number of components.
+    assert np.ptp(scores) < 1e-9
 
 
 def test_get_feature_names_out(fitted):

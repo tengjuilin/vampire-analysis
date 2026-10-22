@@ -204,11 +204,23 @@ class ContourRegistrar(_ContourOutputMixin, TransformerMixin, BaseEstimator):
         return np.stack([register_contour(c) for c in contours])
 
 
+def _align_all(
+    registered: NDArray[np.float64], reference: NDArray[np.float64]
+) -> NDArray[np.float64]:
+    """Align each contour of ``registered`` (n_samples, 2, n) to ``reference``."""
+    return np.stack([align_contour(c, reference) for c in registered])
+
+
 class ContourAligner(TransformerMixin, BaseEstimator):
     """Align registered contours to their mean contour.
 
     Applies :func:`vampire.contours.align_contour` with
     ``reference_contour_`` as the reference to every contour.
+
+    ``fit`` finds the reference by generalized Procrustes analysis: it starts
+    from the mean of the registered contours, aligns every contour to it,
+    replaces the reference by the mean of the aligned contours, and repeats
+    until the reference stops changing.
 
     Parameters
     ----------
@@ -216,18 +228,37 @@ class ContourAligner(TransformerMixin, BaseEstimator):
         If True, ``transform`` returns shape ``(n_samples, 2 * n_points)``
         (x coordinates first, then y) so the output can feed scikit-learn
         estimators directly. If False, returns ``(n_samples, 2, n_points)``.
+    max_iter : int, default=30
+        Maximum number of alignment passes over the training contours
+        (>= 1). ``max_iter=1`` aligns once to the mean of the registered
+        contours, as before version 1.0.
+    tol : float, default=1e-6
+        Stop when the root-mean-square change of the reference between two
+        passes, relative to its root-mean-square size, is at most ``tol``
+        (>= 0). Alignment picks a discrete cyclic shift per contour; once
+        those choices stop changing, the reference converges geometrically,
+        typically within 10-20 passes.
 
     Attributes
     ----------
     reference_contour_ : ndarray of shape (2, n_points)
-        Mean of the registered training contours; the alignment target.
+        The alignment target: the mean of the registered training contours,
+        refined by the alignment passes.
     mean_contour_ : ndarray of shape (2, n_points)
         Mean of the aligned training contours.
+    n_iter_ : int
+        Number of alignment passes run during ``fit``.
     n_points_ : int
         Number of points per contour seen during ``fit``.
 
     Notes
     -----
+    Each pass aligns every contour to the current reference ``M``. The mean
+    of the aligned contours is itself aligned to ``M`` (rotation and cyclic
+    shift), so the reference cannot drift, and becomes the next reference.
+    The training contours returned by ``fit_transform`` are aligned to the
+    final ``reference_contour_``, exactly as ``transform`` aligns new ones.
+
     With ``flatten=True``, :meth:`get_feature_names_out` returns
     ``x0, ..., x{n-1}, y0, ..., y{n-1}``, so ``set_output(transform="pandas")``
     yields a DataFrame with these columns.
@@ -243,10 +274,14 @@ class ContourAligner(TransformerMixin, BaseEstimator):
     (6, 60)
     >>> aligner.mean_contour_.shape
     (2, 30)
+    >>> aligner.n_iter_ <= aligner.max_iter
+    True
     """
 
-    def __init__(self, flatten: bool = True):
+    def __init__(self, flatten: bool = True, max_iter: int = 30, tol: float = 1e-6):
         self.flatten = flatten
+        self.max_iter = max_iter
+        self.tol = tol
 
     def __sklearn_tags__(self):
         """Declare the input format (and statelessness, where applicable)."""
@@ -256,15 +291,37 @@ class ContourAligner(TransformerMixin, BaseEstimator):
 
     def _fit(self, X: ContourSet) -> NDArray[np.float64]:
         """Fit and return the aligned training contours, (n_samples, 2, n_points)."""
+        if (
+            not isinstance(self.max_iter, int | np.integer)
+            or isinstance(self.max_iter, bool)
+            or self.max_iter < 1
+        ):
+            raise ValueError(
+                f"max_iter must be an integer >= 1; got {self.max_iter!r}."
+            )
+        if not (isinstance(self.tol, int | float | np.number) and self.tol >= 0):
+            raise ValueError(f"tol must be a number >= 0; got {self.tol!r}.")
         registered = check_dense_contours(X)
         self.n_points_ = registered.shape[2]
-        self.reference_contour_ = registered.mean(axis=0)
-        aligned = self._align(registered)
+        reference = registered.mean(axis=0)
+        for n_iter in range(1, self.max_iter + 1):
+            aligned = _align_all(registered, reference)
+            if n_iter == self.max_iter:
+                break
+            # Align the new mean to the old one so the reference cannot drift.
+            new_reference = align_contour(aligned.mean(axis=0), reference)
+            change = np.sqrt(np.mean((new_reference - reference) ** 2))
+            size = np.sqrt(np.mean(reference**2))
+            if change <= self.tol * size:
+                break
+            reference = new_reference
+        self.n_iter_ = n_iter
+        self.reference_contour_ = reference
         self.mean_contour_ = aligned.mean(axis=0)
         return aligned
 
     def _align(self, registered: NDArray[np.float64]) -> NDArray[np.float64]:
-        return np.stack([align_contour(c, self.reference_contour_) for c in registered])
+        return _align_all(registered, self.reference_contour_)
 
     def _format(self, aligned: NDArray[np.float64]) -> NDArray[np.float64]:
         return aligned.reshape(len(aligned), -1) if self.flatten else aligned

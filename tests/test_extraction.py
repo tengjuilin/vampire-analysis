@@ -162,6 +162,43 @@ def test_aspect_ratio_degenerate_line():
     assert np.isinf(props.loc[0, "aspect_ratio"])
 
 
+def test_circularity_nan_for_zero_perimeter():
+    mask = np.zeros((10, 10), dtype=bool)
+    mask[2, 2] = True
+    mask[6, 5:7] = True
+    props = extract_properties(mask)
+    assert (props["perimeter"] == 0).all()
+    assert props["circularity"].isna().all()
+
+
+def test_min_area_drops_small_objects():
+    mask = np.zeros((20, 20), dtype=bool)
+    mask[2:8, 2:8] = True  # 36 px
+    mask[12:14, 12:14] = True  # 4 px
+    mask[17, 17] = True  # 1 px
+    assert extract_properties(mask)["area"].tolist() == [36.0, 4.0, 1.0]
+    assert extract_properties(mask, min_area=4)["area"].tolist() == [36.0, 4.0]
+    assert extract_properties(mask, min_area=5)["area"].tolist() == [36.0]
+    assert extract_properties(mask, min_area=100).empty
+
+
+def test_exclude_border_keeps_labels():
+    labels = np.zeros((20, 20), dtype=np.int32)
+    labels[0:4, 5:9] = 3  # top edge
+    labels[8:12, 8:12] = 5
+    labels[15:20, 2:6] = 7  # bottom edge
+    labels[6:9, 16:20] = 9  # right edge
+    props = extract_properties(labels, binary=False, exclude_border=True)
+    assert props["label"].tolist() == [5]
+    assert len(extract_properties(labels, binary=False)) == 4
+
+
+@pytest.mark.parametrize("min_area", [-1, "10", None])
+def test_min_area_rejects_bad_values(min_area):
+    with pytest.raises(ValueError, match="min_area"):
+        extract_properties(np.zeros((5, 5)), min_area=min_area)
+
+
 def test_properties_real_images():
     img = load_example_images()[0][0]
     props = extract_properties(img, filenames=["img1"])

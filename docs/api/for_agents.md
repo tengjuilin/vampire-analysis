@@ -62,20 +62,27 @@ Property-table columns: `filename` (only if `filenames` given), `image_id`,
 
 ```text
 vp.read_images(directory, pattern=None) -> (list[ndarray], list[str])
+    skips hidden files (".*", e.g. macOS "._x.tif"); unreadable file -> OSError naming it
 vp.label_by_regex(properties, annotations, column="filename") -> DataFrame
     annotations: {regex: {col: value}} or DataFrame with "regex" column
-vp.extract_properties(images, filenames=None, binary=None) -> DataFrame
+vp.extract_properties(images, filenames=None, binary=None, min_area=0,
+                      exclude_border=False) -> DataFrame
     binary: None = auto-detect, True = relabel image > 0, False = label image as is
+    min_area: drop objects with area < min_area px; exclude_border: drop objects
+    touching the image edge; circularity is NaN where perimeter == 0
 vp.extract_contour(object_mask) -> ndarray (2, n) | None
 
 vp.Vampire(n_points=50, n_clusters=5, n_components=0.95, n_init=3,
            max_iter=300, random_state=None)
+    n_components: int >= 2, or variance fraction (never fewer than 2 PCs kept)
+    fit raises ValueError if K-means leaves a shape mode empty
     .fit(X) -> self                 .predict(X) -> (n_samples,) int in 1..n_clusters
     .transform(X) -> (n_samples, n_clusters) distances to mode centers; column m-1 = mode m
     .fit_transform(X)               .fit_predict(X) -> labels_ (1-based)
     .get_feature_names_out() -> ["mode1", ..., "mode{n_clusters}"]
     .normalize(X) -> (n_samples, 2, n_points) aligned contours
-    .score(X) -> float (= -inertia; increases with n_clusters!)
+    .score(X) -> float: -mean squared point distance of normalize(X) to its mode's
+              mean contour; independent of n_components; increases with n_clusters!
     fitted: pipeline_, labels_, cluster_centers_ (n_clusters, n_components_),
             mean_contour_ (2, n_points), mean_cluster_contours_ (n_clusters, 2, n_points),
             n_components_, explained_variance_ratio_, inertia_,
@@ -86,8 +93,11 @@ vp.Vampire(n_points=50, n_clusters=5, n_components=0.95, n_init=3,
 
 vp.ContourResampler(n_points=50)   X -> (n_samples, 2, n_points); stateless
 vp.ContourRegistrar()              (n_samples, 2, n) -> same; stateless
-vp.ContourAligner(flatten=True)    -> (n_samples, 2 * n) or (n_samples, 2, n)
-    fitted: reference_contour_ (2, n), mean_contour_ (2, n), n_points_
+vp.ContourAligner(flatten=True, max_iter=30, tol=1e-6)
+                                   -> (n_samples, 2 * n) or (n_samples, 2, n)
+    fit: generalized Procrustes (align to mean, update mean, repeat);
+    max_iter=1 = single pass to the registered mean
+    fitted: reference_contour_ (2, n), mean_contour_ (2, n), n_iter_, n_points_
     set_output(transform="pandas"): ContourAligner(flatten=True) -> columns x0..x{n-1}, y0..y{n-1};
     Vampire.transform -> columns mode1..mode{k} (input index kept);
     ContourResampler/ContourRegistrar accept it as a no-op (output stays 3-D)
@@ -158,13 +168,15 @@ aligned contours (KMeans ids `0..K-1` in leaf order; public labels add 1).
 1. **Fitting per group.** Fit one model on all groups (optionally a balanced
    subsample), then `predict` each group. Separate models give incomparable
    modes.
-2. **Grid search with the default score.** `score` = minus inertia, which
-   always improves with more clusters; `GridSearchCV` then picks the largest
-   `n_clusters`. Use a custom scorer such as the silhouette of
-   `est.pipeline_[:-1].transform(X)` ({doc}`/examples/n_shape_modes`).
-3. **One principal component.** If `model.n_components_ == 1`, normalized
-   features are all +-1 and K-means finds at most 2 modes. Pass an integer
-   `n_components >= 2`. Mostly happens on trivial synthetic data.
+2. **Grid search over `n_clusters` with the default score.** `score` is a
+   within-cluster error, which improves with more clusters; `GridSearchCV`
+   then picks the largest `n_clusters`. Use a custom scorer such as the
+   silhouette of `est.pipeline_[:-1].transform(X)`
+   ({doc}`/examples/n_shape_modes`). (`score` is fine for comparing
+   `n_components`; `inertia_` is not.)
+3. **Small or truncated objects.** Objects of a few pixels and objects cut by
+   the image edge have meaningless outlines; use `extract_properties(...,
+   min_area=..., exclude_border=True)`.
 4. **Forgetting `n_clusters`** in `shape_mode_distribution`,
    `plot_distribution`, `plot_labeled_image`: without it, the length/colors
    follow `max(labels)` and trailing empty modes disappear.

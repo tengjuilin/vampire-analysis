@@ -16,7 +16,7 @@ than mixing versions within one study.
 | Resampling | B-spline through the points, `n_points` samples spaced evenly in cumulative chord length (inclusive of both ends), so the last sample duplicates the first | periodic cubic spline; `n_points` samples equidistant in true arc length; start point **not** duplicated |
 | Registration rotation | SVD principal axes with arbitrary signs, which can **mirror** a contour | sign-fixed axes forming a proper rotation (det = +1); mirror images stay distinct |
 | Direction | guessed from two points assuming local convexity | reversed if the signed (shoelace) area is negative -- exact for any simple contour |
-| Alignment | loop over shifts, Kabsch rotation for each | all cyclic shifts scored in closed form, then one Kabsch rotation; same optimum, faster |
+| Alignment | single pass to the mean registered contour; loop over shifts, Kabsch rotation for each | iterated to the mean aligned contour (generalized Procrustes; `ContourAligner(max_iter=1)` for a single pass); all cyclic shifts scored in closed form, then one Kabsch rotation |
 | Number of PCs | GUI and 0.0.1: fixed 20; later pre-1.0 code: 95 % variance by default | `n_components` (int or variance fraction, default 0.95), via scikit-learn PCA |
 | Normalization | GUI: row normalization when clustering but **not** when assigning new data | same {class}`~sklearn.preprocessing.Normalizer` step in fit and predict, so `predict(X_train)` reproduces `labels_` |
 | Labels | 0-based cluster ids reordered by dendrogram, plotted 1-based (`cluster_id + 1`) | dendrogram-ordered, **1-based** everywhere (`1 ... n_clusters`), in labels and figures alike |

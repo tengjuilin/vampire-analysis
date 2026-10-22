@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 from skimage.measure import find_contours, label, regionprops
+from skimage.segmentation import clear_border
 
 from ._validation import MIN_CONTOUR_POINTS
 
@@ -149,6 +150,8 @@ def extract_properties(
     filenames: Sequence[str] | None = None,
     *,
     binary: bool | None = None,
+    min_area: float = 0,
+    exclude_border: bool = False,
 ) -> pd.DataFrame:
     """Measure every object in a set of segmented images.
 
@@ -178,6 +181,15 @@ def extract_properties(
           ``binary=True`` or threshold them). A label image containing a
           single object is therefore relabeled to 1; pass ``binary=False`` to
           keep its label value.
+    min_area : float, default=0
+        Drop objects with fewer than ``min_area`` pixels (``area`` column).
+        Objects of a few pixels have pixel-staircase outlines (a single pixel
+        becomes a diamond) that carry no shape information; a threshold well
+        above the noise level of the segmentation is recommended.
+    exclude_border : bool, default=False
+        Drop objects that touch the image edge
+        (:func:`skimage.segmentation.clear_border`); their outlines are cut
+        off by the edge, not by the object.
 
     Returns
     -------
@@ -196,7 +208,8 @@ def extract_properties(
     ------
     ValueError
         If ``filenames`` and ``images`` differ in length, an image is not 2-D,
-        or an image cannot be interpreted as described under ``binary``.
+        an image cannot be interpreted as described under ``binary``, or
+        ``min_area`` is negative.
 
     Notes
     -----
@@ -206,7 +219,9 @@ def extract_properties(
     ``filled_area``. If a label in a label image consists of several
     disconnected pieces, its contour is that of the piece with the longest
     boundary, while the other properties cover all pieces. ``circularity``
-    is ``4 * pi * area / perimeter**2``; ``aspect_ratio`` is
+    is ``4 * pi * area / perimeter**2`` (``NaN`` when the perimeter is 0, as
+    for objects one pixel wide; above 1 for some small objects, whose
+    pixel perimeter underestimates the true one); ``aspect_ratio`` is
     ``major_axis_length / minor_axis_length`` and is ``inf`` for a
     zero-width object (``NaN`` if both are zero). ``image_id`` is the 0-based
     position of the image in ``images``.
@@ -231,7 +246,19 @@ def extract_properties(
     >>> labels[2:5, 2:5], labels[5:8, 2:5] = 3, 4
     >>> extract_properties(labels, binary=False)["label"].tolist()
     [3, 4]
+
+    Drop small objects and objects cut off by the image edge:
+
+    >>> mask = np.zeros((20, 20), dtype=bool)
+    >>> mask[0:5, 0:5] = True  # touches the edge
+    >>> mask[8:14, 8:14] = True
+    >>> mask[17, 10] = True  # one pixel
+    >>> props = extract_properties(mask, min_area=4, exclude_border=True)
+    >>> props["area"].tolist()
+    [36.0]
     """
+    if not (isinstance(min_area, int | float | np.number) and min_area >= 0):
+        raise ValueError(f"min_area must be a number >= 0; got {min_area!r}.")
     if isinstance(images, np.ndarray) and images.ndim == 2:
         images = [images]
     images = list(images)
@@ -245,7 +272,12 @@ def extract_properties(
 
     rows = []
     for image_id, image in enumerate(images):
-        for region in regionprops(_to_label_image(image, binary=binary)):
+        label_image = _to_label_image(image, binary=binary)
+        if exclude_border:
+            label_image = clear_border(label_image)
+        for region in regionprops(label_image):
+            if region.area < min_area:
+                continue
             contour = extract_contour(region.image)
             if contour is None:
                 continue
@@ -270,7 +302,8 @@ def extract_properties(
     for col in ("area", "bbox_area", "convex_area", "filled_area"):
         out[col] = out[col].astype(np.float64)
     with np.errstate(divide="ignore", invalid="ignore"):
-        out["circularity"] = 4 * np.pi * out["area"] / out["perimeter"] ** 2
+        perimeter = out["perimeter"].where(out["perimeter"] > 0)  # 0 -> NaN
+        out["circularity"] = 4 * np.pi * out["area"] / perimeter**2
         out["aspect_ratio"] = out["major_axis_length"] / out["minor_axis_length"]
     out["contour"] = out["contour"].astype(object)
     return out[columns]

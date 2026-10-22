@@ -41,6 +41,26 @@ files from earlier versions do not work with 1.0. See
   and shrink to fit narrow screens without changing their aspect ratio.
 - {mod}`vampire.datasets`: bundled example images and a synthetic shape
   generator.
+- Iterative alignment: {class}`~vampire.ContourAligner` refines its reference
+  by generalized Procrustes analysis (align to the mean, recompute the mean,
+  repeat; `max_iter=30`, `tol=1e-6`, passes in `n_iter_`) instead of aligning
+  once to the blurred mean of the registered contours. `max_iter=1` restores
+  the single pass.
+- `Vampire` keeps at least 2 principal components (with one, the normalized
+  scores are only +1 or -1): an integer `n_components < 2` raises, and a
+  variance fraction reached by one component keeps 2. `fit` raises
+  `ValueError` when K-means leaves a shape mode empty, instead of filling it
+  with the overall mean contour.
+- `Vampire.score` is minus the mean squared point distance between each
+  normalized contour and its shape mode's mean contour, so it no longer
+  depends on `n_components` (the K-means inertia, still in `inertia_`,
+  does).
+- {func}`vampire.extract_properties` has `min_area` (drop small objects) and
+  `exclude_border` (drop objects touching the image edge); `circularity` is
+  `NaN` instead of `inf` for objects with zero perimeter.
+- {func}`vampire.read_images` skips hidden files (such as the `._name.tif`
+  files macOS writes on external drives) and names the file when one cannot
+  be read.
 - Method fixes: equidistant resampling without a duplicated endpoint, proper
   rotations only (mirror images are no longer merged), exact orientation via
   signed area, identical normalization in fit and predict.
