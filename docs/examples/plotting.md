@@ -13,9 +13,11 @@ kernelspec:
 - return the `Axes`, or `(Figure, ndarray of Axes)` for multi-panel figures;
 - never call `plt.show()`, never save files, and never change global style --
   call `fig.savefig(...)` yourself (for an `Axes`, `ax.figure.savefig(...)`);
+- take the 1-based shape-mode labels from `predict` and show modes as
+  `1 ... n_clusters`;
 - use one categorical palette (`tab10`, or `tab20` above 10 modes), so shape
-  mode `i` has the same color in every figure;
-- place mode `i` at `x = 5 + 10 * i`, so distributions, contours, and
+  mode `m` has the same color in every figure;
+- place mode `m` at `x = 10 * m - 5`, so distributions, contours, and
   dendrograms line up when stacked with a shared x axis.
 
 | Function | Shows | Returns |
@@ -45,6 +47,10 @@ props["shape_mode"] = model.predict(props)
 ```{code-cell} ipython3
 fig, axes = vp.plotting.plot_summary(model, props["shape_mode"])
 ```
+
+From top to bottom: the percentage of objects in each mode (mode numbers
+underneath), the mean contour of each mode, and the dendrogram, whose root is
+at the bottom and whose branches point up to the modes they link.
 
 `labels` defaults to the training labels (`model.labels_`). Pass the labels of
 one group to show that group's distribution against the shared modes. For
@@ -94,11 +100,16 @@ vp.plotting.plot_shape_modes(model, ax=axes[1], colors="black", linewidth=1)
 
 ## Dendrogram
 
+By default the root is at the bottom and the leaves point up, so the
+dendrogram sits under the shape modes it links; the leaf labels are the mode
+numbers and the axis frame is hidden:
+
 ```{code-cell} ipython3
 ax = vp.plotting.plot_dendrogram(model)
 ```
 
-Extra keyword arguments go to {func}`scipy.cluster.hierarchy.dendrogram`:
+Extra keyword arguments go to {func}`scipy.cluster.hierarchy.dendrogram`,
+for example another `orientation` (`"top"`, `"left"`, `"right"`):
 
 ```{code-cell} ipython3
 ax = vp.plotting.plot_dendrogram(model, orientation="left")
@@ -136,12 +147,12 @@ for ax, image_id in zip(axes, [0, 1]):
 not listed in `objects` (for example objects dropped as too small):
 
 ```{code-cell} ipython3
-rows = props[(props["image_id"] == 0) & (props["shape_mode"] == 0)]
+rows = props[(props["image_id"] == 0) & (props["shape_mode"] == 1)]
 ax = vp.plotting.plot_labeled_image(
     images[0], rows, rows["shape_mode"], n_clusters=model.n_clusters,
     background_color="0.9",
 )
-ax.set_title("mode 0 only");
+ax.set_title("mode 1 only");
 ```
 
 ## Combining and saving

@@ -1,0 +1,7 @@
+{%- extends "!layout.html" %}
+{# PNG favicon for browsers without SVG favicon support (html_favicon is the SVG). #}
+{%- block extrahead %}
+  {{ super() }}
+  <link rel="icon" type="image/png" sizes="256x256" href="{{ pathto('_static/vampire-icon.png', 1) }}">
+  <link rel="apple-touch-icon" href="{{ pathto('_static/vampire-icon.png', 1) }}">
+{%- endblock extrahead %}

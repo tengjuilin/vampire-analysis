@@ -135,7 +135,7 @@ def plot_dendrogram(model: Any, ax: Axes | None = None, **kwargs: Any) -> Axes:
         Passed to :func:`scipy.cluster.hierarchy.dendrogram`. Defaults:
         ``orientation="bottom"`` (root at the bottom, leaves at the top; also
         ``"top"``, ``"left"``, ``"right"``), black links, and leaves labeled
-        with the shape-mode numbers ``"1"``..``"k"``.
+        with the shape-mode numbers ``"1"``, ..., ``"k"``.
 
     Returns
     -------
@@ -359,7 +359,7 @@ def plot_summary(
     fig : matplotlib.figure.Figure
     axes : ndarray of Axes, shape (3,)
         ``[distribution, shape modes, dendrogram]``, sharing the x axis. Only
-        the distribution axes shows x tick labels (``"1"``..``"k"``). The
+        the distribution axes shows x tick labels (``"1"``, ..., ``"k"``). The
         shape-mode axes has an inverted y axis (image orientation).
 
     Examples

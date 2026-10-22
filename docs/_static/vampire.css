@@ -1,8 +1,35 @@
 /* vampire-analysis docs: small tweaks on top of pydata-sphinx-theme.
    Colors use theme variables so light and dark mode both work. */
 
-.navbar-brand img {
-  height: 48px;
+/* Compact navbar: 3rem tall (theme default 4rem plus padding), logo ~32px. */
+:root {
+  --pst-header-height: 3rem;
+}
+
+.bd-header .bd-header__inner {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.bd-header .navbar-brand {
+  padding: 0.5rem 0;
+}
+
+.bd-header .navbar-brand img {
+  height: 100%;
+  max-height: 2rem;
+}
+
+/* Mobile: keep the search icon clear of the logo. */
+.bd-header .navbar-persistent--mobile {
+  margin-left: auto;
+  padding-left: 0.75rem;
+}
+
+.bd-header .navbar-item,
+.bd-header .navbar-nav .nav-link {
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 html[data-theme="light"] {

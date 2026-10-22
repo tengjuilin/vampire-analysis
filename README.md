@@ -1,4 +1,9 @@
-# vampire-analysis
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tengjuilin/vampire-analysis/main/docs/_static/vampire-logo-dark.svg">
+    <img alt="vampire-analysis" src="https://raw.githubusercontent.com/tengjuilin/vampire-analysis/main/docs/_static/vampire-logo.svg" height="80">
+  </picture>
+</h1>
 
 [![Documentation](https://readthedocs.org/projects/vampire/badge/?version=latest)](https://vampire.readthedocs.io/en/latest/)
 [![PyPI](https://img.shields.io/pypi/v/vampire-analysis)](https://pypi.org/project/vampire-analysis/)
@@ -45,7 +50,7 @@ images, filenames = vp.datasets.load_example_images()
 
 props = vp.extract_properties(images, filenames)  # pandas DataFrame, one row per object
 model = vp.Vampire(n_clusters=5, random_state=0).fit(props)
-props["shape_mode"] = model.predict(props)  # 0-based shape-mode labels
+props["shape_mode"] = model.predict(props)  # shape modes 1..5
 
 distribution = vp.shape_mode_distribution(props["shape_mode"], model.n_clusters)
 print(distribution, vp.shannon_entropy(distribution, base=2))
@@ -64,11 +69,12 @@ props = vp.label_by_regex(
 props.groupby("group")["shape_mode"].value_counts(normalize=True).unstack()
 ```
 
-See the [quickstart](https://vampire.readthedocs.io/en/latest/quickstart.html),
-[analyzing your own images](https://vampire.readthedocs.io/en/latest/user_guide/your_images.html),
+See the [quickstart](https://vampire.readthedocs.io/en/latest/tutorials/quickstart.html),
+[analyzing your own images](https://vampire.readthedocs.io/en/latest/tutorials/your_images.html),
+[applying a model to a new condition](https://vampire.readthedocs.io/en/latest/examples/new_condition.html),
 and [how VAMPIRE works](https://vampire.readthedocs.io/en/latest/user_guide/method.html).
 Upgrading from 0.x? See the
-[changelog and migration table](https://vampire.readthedocs.io/en/latest/changelog.html).
+[changelog and migration table](https://vampire.readthedocs.io/en/latest/releases/changelog.html).
 
 ## Development
 

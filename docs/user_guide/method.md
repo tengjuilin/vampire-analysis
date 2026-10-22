@@ -7,11 +7,11 @@ kernelspec:
 
 # How VAMPIRE works
 
-VAMPIRE {doc}`[1] <../references>` describes every object by its outline only,
+VAMPIRE {doc}`[1] <references>` describes every object by its outline only,
 removes everything that is not shape (position, size, rotation, where the
 outline "starts"), and clusters the normalized outlines. {class}`vampire.Vampire`
 runs the steps below in this order; each step is also available on its own so
-you can inspect or replace it ({doc}`custom_pipelines`).
+you can inspect or replace it ({doc}`/examples/custom_pipelines`).
 
 | Step | What it removes / does | Implemented by |
 |-|-|-|
@@ -280,7 +280,7 @@ If only **one** component is kept, every normalized score is exactly $+1$ or
 $-1$, so K-means can find at most two distinct groups. This happens on very
 simple data (for example two shape kinds only). Check `model.n_components_`
 and set `n_components` to an integer of at least 2 if needed; see
-{doc}`custom_pipelines`.
+{doc}`/examples/n_shape_modes`.
 ```
 
 ## 6. K-means clustering
@@ -308,15 +308,17 @@ d(\mathcal{A}, \mathcal{B}) = \max_{a \in \mathcal{A},\, b \in \mathcal{B}}
 \lVert \mathbf{m}_a - \mathbf{m}_b \rVert ,
 $$
 
-and renumbers the clusters `0, 1, ..., K - 1` in the dendrogram's left-to-right
-leaf order. Similar modes therefore get adjacent numbers, and the labels from
-`predict`, `labels_`, `cluster_centers_`, and `mean_cluster_contours_` all use
-this numbering.
+and renumbers the clusters in the dendrogram's left-to-right leaf order.
+Shape modes are numbered **from 1**: `predict` and `labels_` return
+`1, 2, ..., K`, so similar modes get adjacent numbers. Arrays with one row per
+mode (`mean_cluster_contours_`, `cluster_centers_`, the columns of
+`transform`) are sorted in the same order and indexed from 0 as usual, so
+mode $m$ is row `m - 1`.
 
 ```{code-cell} ipython3
 model = vp.Vampire(n_clusters=4, random_state=0).fit(X)
 print("n_components_:", model.n_components_)
-print("leaf order:", model.dendrogram_["leaves"])
+print("dendrogram leaves (left to right):", model.dendrogram_["ivl"])
 fig, axes = vp.plotting.plot_summary(model)
 ```
 

@@ -5,7 +5,7 @@
 A rewrite with a scikit-learn-style API. It requires **Python 3.13+** and is
 **not backward compatible** with 0.x: code, saved models (pickles), and output
 files from earlier versions do not work with 1.0. See
-{doc}`user_guide/differences_from_gui` for the changes in the method itself.
+{doc}`/user_guide/differences_from_gui` for the changes in the method itself.
 
 ### Highlights
 
@@ -27,12 +27,27 @@ files from earlier versions do not work with 1.0. See
 - {mod}`vampire.plotting`: consistent colors across figures, every function
   returns Matplotlib objects and accepts `ax`; new
   {func}`~vampire.plotting.plot_labeled_image`.
+  {func}`~vampire.plotting.plot_dendrogram` defaults to
+  `orientation="bottom"` (root at the bottom, leaves pointing up to the shape
+  modes) without axis spines; {func}`~vampire.plotting.plot_summary` shows the
+  mode numbers once, under the distribution bars, with the dendrogram under
+  the shape modes.
 - {mod}`vampire.datasets`: bundled example images and a synthetic shape
   generator.
 - Method fixes: equidistant resampling without a duplicated endpoint, proper
   rotations only (mirror images are no longer merged), exact orientation via
-  signed area, identical normalization in fit and predict, 0-based
-  dendrogram-ordered labels.
+  signed area, identical normalization in fit and predict.
+- Shape modes are **1-based** and dendrogram-ordered: `labels_`, `predict`,
+  and `fit_predict` return `1 ... n_clusters` (left to right in the
+  dendrogram), the same numbers every figure shows. Arrays with one row per
+  mode keep 0-based indexing (mode `m` is `mean_cluster_contours_[m - 1]`,
+  `cluster_centers_[m - 1]`, column `m - 1` of `transform`);
+  `dendrogram_["ivl"]` is `["1", ..., "K"]`; `linkage_matrix_` keeps SciPy's
+  0-based leaf ids, and the K-means inside `pipeline_` stays 0-based
+  (`pipeline_.predict(X) + 1 == predict(X)`).
+  {func}`~vampire.metrics.shape_mode_distribution` takes 1-based labels
+  (entry `i` is mode `i + 1`, default length `max(labels)`, a 0 label raises
+  `ValueError`), and every plotting function takes them directly.
 - {func}`vampire.extract_properties` and
   {func}`~vampire.plotting.plot_labeled_image` take `binary=None` (auto-detect
   binary masks vs. label images), `True` (relabel `image > 0`), or `False`
@@ -44,13 +59,16 @@ files from earlier versions do not work with 1.0. See
   stay in image coordinates (y = row, pointing down); shape-mode plots invert
   the y axis so shapes look as they do in the image.
 - scikit-learn `set_output` support: `Vampire.transform` gives columns
-  `vampire0 ... vampire{k-1}`, `ContourAligner` gives `x0 ... y{n-1}`;
+  `mode1 ... mode{k}`, `ContourAligner` gives `x0 ... y{n-1}`;
   `ContourResampler`/`ContourRegistrar` accept it as a no-op so
   `Pipeline.set_output` works.
 - {func}`vampire.label_by_regex` keeps existing columns and skips missing
   annotation values.
-- Documentation rebuilt; tutorials are executed at build time. Machine-readable
-  summaries at [`llms.txt`](https://vampire.readthedocs.io/en/latest/llms.txt) and {doc}`for_agents`.
+- Documentation rebuilt in five sections (User Guide, Tutorials, Examples,
+  API Reference, Releases) with a new vector logo; tutorials and examples are
+  executed at build time. Machine-readable summaries at
+  [`llms.txt`](https://vampire.readthedocs.io/en/latest/llms.txt) and
+  {doc}`/api/for_agents`.
 
 ### Migration from 0.x
 
@@ -62,8 +80,8 @@ files from earlier versions do not work with 1.0. See
 | column `raw_contour` | column `contour` (same `(2, n)` layout: row 0 = x, row 1 = y) |
 | `vp.model.Vampire(model_name, n_points=50, n_clusters=5, n_pcs=None, random_state=None)` | `vp.Vampire(n_points=50, n_clusters=5, n_components=0.95, random_state=None)` -- no name; `n_pcs=None` corresponds to `n_components=0.95`, an int `n_pcs` to the same int |
 | `model.fit(properties_df)` | `model.fit(props)` (returns the model) |
-| `model.transform(df)` returning a DataFrame with `cluster_id`, `distance_to_centroid` | `model.predict(props)` for labels; `model.transform(props)` for `(n, n_clusters)` distances (`.min(axis=1)` = distance to own center); `model.normalize(props)` for aligned contours |
-| `cluster_id` (plotted as `plot_cluster_id = cluster_id + 1`) | 0-based shape-mode label from `predict` |
+| `model.transform(df)` returning a DataFrame with `cluster_id`, `distance_to_centroid` | `model.predict(props)` for labels; `model.transform(props)` for `(n, n_clusters)` distances (column `m - 1` = mode `m`; `.min(axis=1)` = distance to own center); `model.normalize(props)` for aligned contours |
+| `cluster_id` (plotted as `plot_cluster_id = cluster_id + 1`) | 1-based shape mode from `predict` (= `cluster_id + 1`, the number the old figures showed) |
 | `model.mean_registered_contour` / `model.mean_aligned_contour` | `model.pipeline_.named_steps["align"].reference_contour_` / `model.mean_contour_` |
 | `model.principal_directions`, `explained_variance_ratio` | `model.pipeline_.named_steps["pca"].components_`, `model.explained_variance_ratio_` |
 | `model.centroids`, `model.inertia` | `model.cluster_centers_`, `model.inertia_` |
@@ -73,7 +91,7 @@ files from earlier versions do not work with 1.0. See
 | `vp.plot.plot_contours(model)` | `vp.plotting.plot_shape_modes(model)` |
 | `vp.plot.plot_dendrogram(model)` | `vp.plotting.plot_dendrogram(model)` |
 | `vp.plot.plot_representatives(model, ...)` | `vp.plotting.plot_representatives(model, X)` |
-| `vp.plot.plot_contour_dendrogram`, `plot_distribution_contour` | compose `plot_shape_modes`, `plot_dendrogram`, `plot_distribution` on shared axes (see {doc}`user_guide/plotting`) |
+| `vp.plot.plot_contour_dendrogram`, `plot_distribution_contour` | compose `plot_shape_modes`, `plot_dendrogram`, `plot_distribution` on shared axes (see {doc}`/examples/plotting`) |
 | `vp.plot.save_fig(...)`, `vp.plot.set_plot_style()` | `fig.savefig(...)`; use Matplotlib styles directly |
 | `vp.coloring.label_imgs` / `color_img` | `vp.plotting.plot_labeled_image(image, rows, rows["shape_mode"])` |
 | `vp.util.read_pickle(path)` / `write_pickle(path, obj)` | `joblib.load(path)` / `joblib.dump(obj, path)` (or {mod}`pickle`) |
@@ -85,7 +103,7 @@ files from earlier versions do not work with 1.0. See
 ## 0.0.1
 
 First release of `vampire-analysis`, based on the `vampireanalysis` GUI
-{doc}`[1] <references>`. The algorithmic operations were separated from the
+{doc}`[1] </user_guide/references>`. The algorithmic operations were separated from the
 GUI and grouped into modules to encourage reuse and improve reproducibility.
 
 **Changes**
@@ -125,4 +143,4 @@ GUI and grouped into modules to encourage reuse and improve reproducibility.
   than chosen from the explained variance (1.0: `n_components`, default 95 %
   of the variance).
 - No scree plot of the PCA explained variance (1.0: `explained_variance_ratio_`;
-  see {doc}`user_guide/custom_pipelines` for a scree plot).
+  see {doc}`/examples/n_shape_modes` for a scree plot).
