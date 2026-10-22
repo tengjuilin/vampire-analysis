@@ -10,6 +10,14 @@ to 10 modes, ``tab20`` beyond) so mode ``i`` has the same color in every figure.
 Distribution bars, shape-mode contours, and dendrogram leaves share x positions
 ``5, 15, 25, ...`` (SciPy's leaf positions), so they can be stacked with a
 shared x axis, as :func:`plot_summary` does.
+
+Orientation: contours keep the image convention of
+:func:`vampire.extract_properties` (x = column, y = row, so y grows
+downward). Every axes that draws contours (:func:`plot_shape_modes`,
+:func:`plot_representatives`, and the shape-mode axes of
+:func:`plot_summary`) therefore has an inverted y axis, so shapes appear as
+in the image rather than mirrored top to bottom (which would flip chiral
+shapes).
 """
 
 from collections.abc import Sequence
@@ -25,7 +33,7 @@ from numpy.typing import ArrayLike, NDArray
 from scipy.cluster.hierarchy import dendrogram
 from sklearn.utils.validation import check_is_fitted
 
-from ._validation import ContourSet
+from ._validation import ContourSet, check_labels
 from .extraction import _to_label_image
 from .metrics import shape_mode_distribution
 
@@ -99,6 +107,12 @@ def _as_labels(labels: ArrayLike) -> NDArray:
     return np.asarray(labels)
 
 
+def _invert_y(ax: Axes) -> None:
+    """Make y grow downward (image convention), idempotently."""
+    if not ax.yaxis_inverted():
+        ax.invert_yaxis()
+
+
 def plot_dendrogram(model: Any, ax: Axes | None = None, **kwargs: Any) -> Axes:
     """Plot the dendrogram linking shape modes.
 
@@ -117,8 +131,9 @@ def plot_dendrogram(model: Any, ax: Axes | None = None, **kwargs: Any) -> Axes:
     Returns
     -------
     ax : matplotlib.axes.Axes
-        Leaf ``i`` (shape mode ``i``) sits at ``x = 5 + 10 * i``; the y axis is
-        hidden.
+        Leaf ``i`` (shape mode ``i``) sits at ``5 + 10 * i`` along the leaf
+        axis (x for ``orientation`` ``"top"``/``"bottom"``, y for
+        ``"left"``/``"right"``); the distance axis is hidden.
 
     Examples
     --------
@@ -144,10 +159,22 @@ def plot_dendrogram(model: Any, ax: Axes | None = None, **kwargs: Any) -> Axes:
     }
     options.update(kwargs)
     dendrogram(model.linkage_matrix_, ax=ax, **options)
-    for side in ("top", "right", "left"):
-        ax.spines[side].set_visible(False)
-    ax.set_yticks([])
-    ax.tick_params(axis="x", length=0)
+    orientation = options["orientation"]
+    if orientation not in ("top", "bottom", "left", "right"):
+        raise ValueError(
+            "orientation must be 'top', 'bottom', 'left' or 'right'; "
+            f"got {orientation!r}."
+        )
+    leaf_axis = "x" if orientation in ("top", "bottom") else "y"
+    # Keep only the spine on the leaf side (opposite the root).
+    leaf_side = {"top": "bottom", "bottom": "top", "left": "right", "right": "left"}
+    for side in ("top", "bottom", "left", "right"):
+        ax.spines[side].set_visible(side == leaf_side[orientation])
+    if leaf_axis == "x":
+        ax.set_yticks([])
+    else:
+        ax.set_xticks([])
+    ax.tick_params(axis=leaf_axis, length=0)
     return ax
 
 
@@ -188,7 +215,8 @@ def plot_shape_modes(
     -------
     ax : matplotlib.axes.Axes
         Contains one closed line per mode, labeled ``"0"``, ``"1"``, ...;
-        x ticks mark the mode centers and are labeled with the mode ids.
+        x ticks mark the mode centers and are labeled with the mode ids. The
+        y axis is inverted (image orientation, see the module docstring).
 
     Examples
     --------
@@ -224,6 +252,7 @@ def plot_shape_modes(
     ax.set_xticks(centers, [str(i) for i in range(k)])
     ax.tick_params(axis="x", length=0)
     ax.set_yticks([])
+    _invert_y(ax)
     for side in ("top", "right", "left", "bottom"):
         ax.spines[side].set_visible(False)
     return ax
@@ -311,7 +340,8 @@ def plot_summary(
     -------
     fig : matplotlib.figure.Figure
     axes : ndarray of Axes, shape (3,)
-        ``[distribution, shape modes, dendrogram]``, sharing the x axis.
+        ``[distribution, shape modes, dendrogram]``, sharing the x axis. The
+        shape-mode axes has an inverted y axis (image orientation).
 
     Examples
     --------
@@ -363,7 +393,7 @@ def plot_summary(
 
 
 def _equalize_y(ax: Axes) -> None:
-    """Set symmetric y limits so one data unit has equal length in x and y."""
+    """Set symmetric, inverted y limits so x and y data units have equal length."""
     fig = ax.get_figure()
     assert fig is not None
     bbox = ax.get_position()
@@ -371,7 +401,7 @@ def _equalize_y(ax: Axes) -> None:
     height_in = bbox.height * fig.get_figheight()
     x0, x1 = ax.get_xlim()
     half = 0.5 * (x1 - x0) * height_in / width_in
-    ax.set_ylim(-half, half)
+    ax.set_ylim(half, -half)  # inverted: image orientation
 
 
 def plot_representatives(
@@ -415,7 +445,8 @@ def plot_representatives(
     fig : matplotlib.figure.Figure
     axes : ndarray of Axes, shape (n_clusters,)
         One axes per mode. Axes ``i`` holds ``min(n_per_mode, count_i)``
-        contour lines (plus the mean line if ``show_mean``).
+        contour lines (plus the mean line if ``show_mean``). Y axes are
+        inverted (image orientation).
 
     Raises
     ------
@@ -438,9 +469,13 @@ def plot_representatives(
     _check_model(model)
     if n_per_mode < 1:
         raise ValueError(f"n_per_mode must be at least 1; got {n_per_mode}.")
-    normalized = model.normalize(X)
-    distances = model.transform(X)
-    labels = model.predict(X) if labels is None else _as_labels(labels)
+    normalized = model.normalize(X)  # (n_samples, 2, n_points), computed once
+    features = np.asarray(
+        model.pipeline_[3:-1].transform(normalized.reshape(len(normalized), -1))
+    )
+    kmeans = model.pipeline_[-1]
+    distances = np.asarray(kmeans.transform(features))
+    labels = kmeans.predict(features) if labels is None else _as_labels(labels)
     if labels.shape != (len(normalized),):
         raise ValueError(
             f"labels must have shape ({len(normalized)},); got {labels.shape}."
@@ -473,6 +508,7 @@ def plot_representatives(
                 ls="--",
             )
         ax.set_aspect("equal", adjustable="datalim")
+        _invert_y(ax)
         ax.set_title(str(i), color=palette[i], fontweight="bold")
         ax.axis("off")
     return fig, axes
@@ -486,6 +522,7 @@ def plot_labeled_image(
     cmap: ColorSpec = None,
     background_color: str = "white",
     n_clusters: int | None = None,
+    binary: bool | None = None,
 ) -> Axes:
     """Color each object of a segmented image by its shape mode.
 
@@ -493,8 +530,8 @@ def plot_labeled_image(
     ----------
     image_label : ndarray of shape (height, width)
         Label image in which object ``l`` has pixel value ``l`` (background
-        0), or a binary mask (labeled the same way as
-        :func:`vampire.extract_properties`).
+        0), or a binary mask. Interpreted exactly as by
+        :func:`vampire.extract_properties` with the same ``binary``.
     objects : DataFrame or array-like of shape (n_objects,)
         Rows of the property table belonging to this image (needs a ``label``
         column), or directly the integer object labels.
@@ -509,6 +546,10 @@ def plot_labeled_image(
     n_clusters : int, optional
         Number of shape modes, so colors match other figures. Defaults to
         ``max(labels) + 1``; pass ``model.n_clusters``.
+    binary : bool or None, default=None
+        How ``image_label`` is interpreted; see the ``binary`` parameter of
+        :func:`vampire.extract_properties`. Pass the value used there so the
+        object labels match.
 
     Returns
     -------
@@ -520,7 +561,8 @@ def plot_labeled_image(
     ------
     ValueError
         If ``image_label`` is not 2-D, or ``objects`` and ``labels`` differ in
-        length, or labels are not non-negative integers.
+        length, or labels or object labels are not non-negative integers
+        (whole-number floats are accepted).
 
     Examples
     --------
@@ -549,18 +591,20 @@ def plot_labeled_image(
             "objects and labels must be 1-D and of equal length; got "
             f"{object_labels.shape} and {modes.shape}."
         )
-    if modes.size and (not np.issubdtype(modes.dtype, np.integer) or modes.min() < 0):
-        raise ValueError("labels must be non-negative integers.")
-    k = int(n_clusters) if n_clusters is not None else int(modes.max(initial=-1)) + 1
-    if modes.size and modes.max() >= k:
-        raise ValueError(f"labels must be below n_clusters={k}.")
-    image = _to_label_image(image)  # binary masks are labeled as in extract_properties
-    rgba = np.empty((*image.shape, 4))
-    rgba[:] = to_rgba(background_color)
-    if modes.size:
-        palette = _mode_colors(k, cmap)
-        for obj, mode in zip(object_labels, modes, strict=True):
-            rgba[image == obj] = palette[mode]
+    modes, k = check_labels(modes, n_clusters, allow_empty=True)
+    try:
+        object_labels, _ = check_labels(object_labels, allow_empty=True)
+    except ValueError as err:
+        raise ValueError(f"Object labels are invalid: {err}") from None
+    image = _to_label_image(image, binary=binary)
+    # Lookup table: pixel label -> color index (k = background).
+    size = max(int(image.max(initial=0)), int(object_labels.max(initial=0))) + 1
+    lut = np.full(size, k)
+    lut[object_labels] = modes
+    table = np.vstack(
+        [_mode_colors(k, cmap) if k else np.empty((0, 4)), to_rgba(background_color)]
+    )
+    rgba = table[lut[image]]
     ax = _get_ax(ax, (5, 5))
     ax.imshow(rgba, interpolation="nearest")
     ax.set_axis_off()

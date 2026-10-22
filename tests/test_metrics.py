@@ -74,3 +74,19 @@ def test_entropy_ignores_zeros():
 def test_entropy_rejects_bad_distribution(distribution, match):
     with pytest.raises(ValueError, match=match):
         vp.shannon_entropy(distribution)
+
+
+@pytest.mark.parametrize("n_clusters", [0, -2, 2.5, 3.0, True, "3"])
+def test_distribution_rejects_bad_n_clusters(n_clusters):
+    with pytest.raises(ValueError, match="n_clusters"):
+        vp.shape_mode_distribution([0], n_clusters=n_clusters)
+
+
+@pytest.mark.parametrize("base", [1, 1.0, 0, -2, np.inf, np.nan, True, "2"])
+def test_entropy_rejects_bad_base(base):
+    with pytest.raises(ValueError, match="base"):
+        vp.shannon_entropy([0.5, 0.5], base=base)
+
+
+def test_entropy_accepts_fractional_base():
+    assert vp.shannon_entropy([0.5, 0.5], base=0.5) == pytest.approx(-1.0)

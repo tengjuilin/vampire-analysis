@@ -48,6 +48,36 @@ def test_dendrogram_given_ax_and_kwargs(fitted):
     assert out is ax
 
 
+@pytest.mark.parametrize("orientation", ["left", "right"])
+def test_dendrogram_sideways_keeps_leaf_labels(fitted, orientation):
+    model, _ = fitted
+    ax = plotting.plot_dendrogram(model, orientation=orientation)
+    assert [t.get_text() for t in ax.get_yticklabels()] == [str(i) for i in range(K)]
+    np.testing.assert_allclose(sorted(ax.get_yticks()), 5 + 10 * np.arange(K))
+    assert len(ax.get_xticks()) == 0
+
+
+def test_dendrogram_rejects_bad_orientation(fitted):
+    model, _ = fitted
+    with pytest.raises(ValueError, match="orientation"):
+        plotting.plot_dendrogram(model, orientation="diagonal")
+
+
+def test_contour_axes_have_inverted_y(fitted):
+    model, X = fitted
+    assert plotting.plot_shape_modes(model).yaxis_inverted()
+    _, ax = plt.subplots()
+    ax.invert_yaxis()  # already inverted: stays inverted
+    assert plotting.plot_shape_modes(model, ax=ax).yaxis_inverted()
+    _, axes = plotting.plot_representatives(model, X, n_per_mode=2)
+    assert all(ax.yaxis_inverted() for ax in axes)
+    _, axes = plotting.plot_summary(model)
+    assert axes[1].yaxis_inverted()
+    assert not axes[0].yaxis_inverted()
+    bottom, top = axes[1].get_ylim()
+    assert bottom == pytest.approx(-top)
+
+
 def test_shape_modes(fitted):
     model, _ = fitted
     ax = plotting.plot_shape_modes(model)
@@ -215,6 +245,33 @@ def test_labeled_image_bad_input(image_and_props):
         plotting.plot_labeled_image(image, props, [-1] * len(props))
     with pytest.raises(ValueError, match="n_clusters"):
         plotting.plot_labeled_image(image, props, [3] * len(props), n_clusters=3)
+    with pytest.raises(ValueError, match="integers"):
+        plotting.plot_labeled_image(image, props, [0.5] * len(props))
+    with pytest.raises(ValueError, match="Object labels"):
+        plotting.plot_labeled_image(image, props["label"] - 1000, [0] * len(props))
+
+
+def test_labeled_image_accepts_whole_number_float_modes(image_and_props):
+    image, props = image_and_props
+    modes = np.arange(len(props)) % 3
+    as_int = plotting.plot_labeled_image(image, props, modes).images[0].get_array()
+    as_float = plotting.plot_labeled_image(image, props, modes.astype(float))
+    np.testing.assert_array_equal(as_float.images[0].get_array(), as_int)
+    np.testing.assert_array_equal(
+        vp.shape_mode_distribution(modes.astype(float)),
+        vp.shape_mode_distribution(modes),
+    )
+
+
+def test_labeled_image_binary_keyword():
+    labels = np.zeros((10, 10), dtype=np.int32)
+    labels[1:4, 1:4] = 7  # single object: auto treats it as a mask (label 1)
+    ax = plotting.plot_labeled_image(labels, [7], [0], binary=False)
+    rgba = np.asarray(ax.images[0].get_array())
+    np.testing.assert_allclose(rgba[2, 2], plotting._mode_colors(1)[0])
+    ax = plotting.plot_labeled_image(labels, [1], [0])
+    rgba = np.asarray(ax.images[0].get_array())
+    np.testing.assert_allclose(rgba[2, 2], plotting._mode_colors(1)[0])
 
 
 def test_mode_colors():

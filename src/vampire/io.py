@@ -5,6 +5,7 @@ from collections.abc import Mapping, Sequence
 from os import PathLike
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 from skimage.io import imread
@@ -94,13 +95,24 @@ def label_by_regex(
         Either a DataFrame with a ``"regex"`` column plus one column per
         metadata field, or a mapping ``{regex: {field: value, ...}}``.
     column : str, default="filename"
-        Column of ``properties`` searched with each regex.
+        Column of ``properties`` searched with each regex (with
+        :func:`re.search`; missing values never match).
 
     Returns
     -------
     labeled : DataFrame
-        Copy of ``properties`` with the metadata columns added. Rows matching no
-        regex get NaN; later regexes override earlier ones on overlap.
+        Copy of ``properties`` with the metadata columns set. Rules are applied
+        in order, so later regexes override earlier ones on overlap. Missing
+        values (NaN/None) in an annotation are skipped and never override an
+        earlier match. Fields that are not yet columns of ``properties`` are
+        created and are NaN for rows matching no regex; existing columns keep
+        their values in rows no rule sets.
+
+    Raises
+    ------
+    ValueError
+        If ``column`` is missing from ``properties`` or an annotations
+        DataFrame has no ``"regex"`` column.
 
     Examples
     --------
@@ -119,10 +131,13 @@ def label_by_regex(
     if isinstance(annotations, pd.DataFrame):
         if "regex" not in annotations.columns:
             raise ValueError("annotations DataFrame must have a 'regex' column.")
-        rules = [
-            (row["regex"], row.drop("regex").to_dict())
-            for _, row in annotations.iterrows()
-        ]
+        rules = list(
+            zip(
+                annotations["regex"],
+                annotations.drop(columns="regex").to_dict("records"),
+                strict=True,
+            )
+        )
     else:
         rules = [(rx, dict(fields)) for rx, fields in annotations.items()]
     if column not in properties.columns:
@@ -131,12 +146,27 @@ def label_by_regex(
     labeled = properties.copy()
     fields = list(dict.fromkeys(f for _, d in rules for f in d))
     for field in fields:
-        labeled[field] = pd.Series(float("nan"), index=labeled.index, dtype=object)
-    text = labeled[column].astype(str)
+        if field in labeled.columns:
+            labeled[field] = labeled[field].astype(object)
+        else:
+            labeled[field] = pd.Series(float("nan"), index=labeled.index, dtype=object)
+    text = labeled[column].tolist()
     for regex, values in rules:
-        mask = text.str.contains(regex, regex=True)
+        compiled = re.compile(regex)
+        mask = np.array(
+            [not _is_missing(v) and compiled.search(str(v)) is not None for v in text],
+            dtype=bool,
+        )
+        if not mask.any():
+            continue
         for field, value in values.items():
-            labeled.loc[mask, field] = value
+            if not _is_missing(value):
+                labeled.loc[mask, field] = value
     for field in fields:
         labeled[field] = labeled[field].infer_objects()
     return labeled
+
+
+def _is_missing(value: object) -> bool:
+    """Return True for scalar missing values (None, NaN, NA, NaT)."""
+    return bool(pd.api.types.is_scalar(value) and pd.isna(value))

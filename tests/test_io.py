@@ -84,3 +84,41 @@ def test_label_by_regex_custom_column_and_errors(props):
         label_by_regex(props, {"a": {"g": 1}}, column="nope")
     with pytest.raises(ValueError, match="regex"):
         label_by_regex(props, pd.DataFrame({"g": [1]}))
+
+
+def test_label_by_regex_skips_missing_annotation_values(props):
+    ann = pd.DataFrame({"regex": ["_1", "ogd"], "group": ["one", None], "dose": [1, 5]})
+    out = label_by_regex(props, ann)
+    assert out["group"].iloc[:2].tolist() == ["one", "one"]  # None does not clobber
+    assert out["dose"].iloc[:2].tolist() == [1, 5]
+    out = label_by_regex(props, {"_1": {"g": "a"}, "ogd": {"g": float("nan")}})
+    assert out["g"].iloc[:2].tolist() == ["a", "a"]
+
+
+def test_label_by_regex_keeps_existing_columns(props):
+    existing = props.assign(group=["old0", "old1", "old2"], dose=[1.5, 2.5, 3.5])
+    out = label_by_regex(existing, {"ctrl": {"group": "control", "dose": 0.0}})
+    assert out["group"].tolist() == ["control", "old1", "old2"]
+    assert out["dose"].tolist() == [0.0, 2.5, 3.5]
+    assert out["dose"].dtype == np.float64
+    assert out["x"].tolist() == [1, 1, 1]
+
+
+def test_label_by_regex_capture_groups_do_not_warn(props, recwarn):
+    out = label_by_regex(props, {r"(ctrl|ogd)_1": {"g": "x"}})
+    assert out["g"].iloc[:2].tolist() == ["x", "x"]
+    assert pd.isna(out.loc[2, "g"])
+    assert not [w for w in recwarn if issubclass(w.category, UserWarning)]
+
+
+def test_label_by_regex_missing_and_categorical_text():
+    props = pd.DataFrame({"filename": ["nan_1.tif", None]})
+    out = label_by_regex(props, {"nan|None": {"g": 1}})
+    assert out["g"].iloc[0] == 1 and pd.isna(out["g"].iloc[1])
+    cat = pd.DataFrame({"filename": pd.Categorical(["ctrl_1", "ogd_1"])})
+    assert label_by_regex(cat, {"ctrl": {"g": 1}})["g"].iloc[0] == 1
+
+
+def test_label_by_regex_preserves_int_dtype(props):
+    out = label_by_regex(props.iloc[:2], {"ctrl": {"dose": 0}, "ogd": {"dose": 5}})
+    assert out["dose"].dtype == np.int64

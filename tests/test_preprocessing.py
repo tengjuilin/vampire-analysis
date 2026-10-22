@@ -73,8 +73,8 @@ def test_resampler_rejects_bad_n_points(contours, n_points):
 def test_resampler_rejects_bad_input(contours):
     with pytest.raises(ValueError, match="empty"):
         vp.ContourResampler().fit_transform([])
-    with pytest.raises(ValueError, match="at least 4"):
-        vp.ContourResampler().fit_transform([*contours, np.zeros((2, 3))])
+    with pytest.raises(ValueError, match="at least 3"):
+        vp.ContourResampler().fit_transform([*contours, np.zeros((2, 2))])
 
 
 # --- ContourRegistrar ------------------------------------------------------
@@ -179,3 +179,44 @@ def test_chain_feeds_sklearn_estimators(contours):
     )
     assert pipeline.fit_transform(contours).shape == (6, 2)
     assert pipeline.transform(contours[:2]).shape == (2, 2)
+
+
+def test_registrar_rejects_single_2d_contour(contours):
+    resampled = vp.ContourResampler(20).transform(contours)
+    with pytest.raises(ValueError, match="wrap a single contour in a list"):
+        vp.ContourRegistrar().fit_transform(resampled[0])
+    with pytest.raises(ValueError, match="wrap a single contour in a list"):
+        vp.ContourAligner().fit(resampled[0])
+    assert vp.ContourRegistrar().fit_transform([resampled[0]]).shape == (1, 2, 20)
+
+
+def test_aligner_feature_names(registered):
+    aligner = vp.ContourAligner().fit(registered)
+    n = aligner.n_points_
+    names = aligner.get_feature_names_out().tolist()
+    assert names == [f"x{i}" for i in range(n)] + [f"y{i}" for i in range(n)]
+    with pytest.raises(ValueError, match="flatten=True"):
+        vp.ContourAligner(flatten=False).fit(registered).get_feature_names_out()
+
+
+def test_pipeline_set_output_pandas(contours):
+    pipeline = make_pipeline(
+        vp.ContourResampler(30), vp.ContourRegistrar(), vp.ContourAligner(), PCA(3)
+    ).set_output(transform="pandas")
+    out = pipeline.fit_transform(contours)
+    assert isinstance(out, pd.DataFrame)
+    assert out.columns.tolist() == ["pca0", "pca1", "pca2"]
+    aligned = pipeline[:3].transform(contours)
+    assert isinstance(aligned, pd.DataFrame)
+    assert aligned.columns[0] == "x0" and aligned.columns[-1] == "y29"
+
+
+@pytest.mark.parametrize("cls", [vp.ContourResampler, vp.ContourRegistrar])
+def test_contour_steps_set_output(cls, contours):
+    estimator = cls()
+    for transform in (None, "default", "pandas"):
+        assert estimator.set_output(transform=transform) is estimator
+    resampled = vp.ContourResampler(20).transform(contours)
+    assert isinstance(estimator.fit_transform(resampled), np.ndarray)
+    with pytest.raises(ValueError, match="3-D ndarray"):
+        estimator.set_output(transform="csv")

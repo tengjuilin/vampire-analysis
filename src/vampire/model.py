@@ -4,7 +4,12 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.cluster.hierarchy import dendrogram, linkage
 from scipy.spatial.distance import pdist
-from sklearn.base import BaseEstimator, ClusterMixin, TransformerMixin
+from sklearn.base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    ClusterMixin,
+    TransformerMixin,
+)
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
@@ -18,7 +23,9 @@ from .preprocessing import ContourAligner, ContourRegistrar, ContourResampler
 _N_CONTOUR_STEPS = 3
 
 
-class Vampire(ClusterMixin, TransformerMixin, BaseEstimator):
+class Vampire(
+    ClassNamePrefixFeaturesOutMixin, ClusterMixin, TransformerMixin, BaseEstimator
+):
     """Cluster object contours into shape modes (VAMPIRE).
 
     Pipeline fitted by :meth:`fit`::
@@ -59,9 +66,9 @@ class Vampire(ClusterMixin, TransformerMixin, BaseEstimator):
         Mean of the aligned training contours.
     n_components_ : int
         Number of principal components kept.
-    explained_variance_ratio_ : ndarray of shape (n_components_,)
+    explained_variance_ratio_ : ndarray of shape ``(n_components_,)``
         Variance fraction explained by each kept component.
-    cluster_centers_ : ndarray of shape (n_clusters, n_components_)
+    cluster_centers_ : ndarray of shape ``(n_clusters, n_components_)``
         K-means centers in normalized PC space, dendrogram-ordered.
     labels_ : ndarray of shape (n_samples,)
         Shape-mode label of each training contour.
@@ -96,6 +103,11 @@ class Vampire(ClusterMixin, TransformerMixin, BaseEstimator):
     left to right. Barring exact distance ties it equals
     ``linkage(pdist(mean_cluster_contours_.reshape(n_clusters, -1)),
     "complete")``.
+
+    ``get_feature_names_out()`` returns ``["vampire0", ..., "vampire{k-1}"]``
+    (one column per shape-mode distance), so
+    ``set_output(transform="pandas")`` makes :meth:`transform` and
+    :meth:`fit_transform` return DataFrames.
 
     References
     ----------
@@ -132,6 +144,11 @@ class Vampire(ClusterMixin, TransformerMixin, BaseEstimator):
         self.n_init = n_init
         self.max_iter = max_iter
         self.random_state = random_state
+
+    @property
+    def _n_features_out(self) -> int:
+        """Number of ``transform`` output columns (used by get_feature_names_out)."""
+        return self.cluster_centers_.shape[0]
 
     def __sklearn_tags__(self):
         """Declare that input is a contour set rather than a 2-D array."""

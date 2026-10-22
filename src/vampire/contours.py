@@ -21,6 +21,7 @@ from numpy.typing import NDArray
 from scipy.interpolate import make_interp_spline
 
 from ._linalg import kabsch_rotation
+from ._validation import MIN_CONTOUR_POINTS
 
 #: Dense spline evaluations per output (or input) point used to measure the
 #: spline's arc length in :func:`resample_contour`.
@@ -35,9 +36,10 @@ def _check_contour(contour: NDArray, name: str = "contour") -> NDArray[np.float6
             f"{name} must have shape (2, n_points) (row 0 = x, row 1 = y); "
             f"got shape {contour.shape}."
         )
-    if contour.shape[1] < 3:
+    if contour.shape[1] < MIN_CONTOUR_POINTS:
         raise ValueError(
-            f"{name} has {contour.shape[1]} points; at least 3 are required."
+            f"{name} has {contour.shape[1]} points; at least "
+            f"{MIN_CONTOUR_POINTS} are required."
         )
     if not np.all(np.isfinite(contour)):
         raise ValueError(f"{name} contains NaN or infinite coordinates.")
@@ -143,10 +145,10 @@ def resample_contour(contour: NDArray, n_points: int = 50) -> NDArray[np.float64
         raise ValueError(f"n_points must be an integer >= 3; got {n_points!r}.")
 
     points = _drop_repeated_points(contour)
-    if points.shape[1] < 3:
+    if points.shape[1] < MIN_CONTOUR_POINTS:
         raise ValueError(
-            f"contour has only {points.shape[1]} distinct points; at least 3 are "
-            "required to fit a closed spline."
+            f"contour has only {points.shape[1]} distinct points; at least "
+            f"{MIN_CONTOUR_POINTS} are required to fit a closed spline."
         )
 
     # Periodic spline through the closed polygon, parameterized by chord length.

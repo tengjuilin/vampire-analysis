@@ -2,7 +2,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from vampire._validation import check_contours, check_dense_contours
+from vampire._validation import (
+    check_contours,
+    check_dense_contours,
+    check_labels,
+    check_n_clusters,
+)
 
 
 @pytest.fixture
@@ -75,7 +80,7 @@ def test_missing_contour_column_raises():
     [
         (np.zeros((3, 10)), "shape"),
         (np.zeros(10), "shape"),
-        (np.zeros((2, 3)), "at least 4"),
+        (np.zeros((2, 2)), "at least 3"),
         (np.array([[0.0, 1, np.nan, 0], [0, 0, 1, 1]]), "NaN"),
         (np.array([[0.0, 1, np.inf, 0], [0, 0, 1, 1]]), "NaN"),
         ([["a", "b", "c", "d"], ["e", "f", "g", "h"]], "floats"),
@@ -113,3 +118,45 @@ def test_check_dense_contours_rejects_odd_columns():
 def test_check_dense_contours_rejects_ragged(ragged):
     with pytest.raises(ValueError, match="ContourResampler"):
         check_dense_contours(ragged)
+
+
+def test_check_dense_contours_rejects_single_2d_contour():
+    contour = np.random.default_rng(0).standard_normal((2, 50))
+    with pytest.raises(ValueError, match="wrap a single contour in a list"):
+        check_dense_contours(contour)
+    with pytest.raises(ValueError, match="Wrap a single contour in a list"):
+        check_contours(contour)
+    assert check_dense_contours([contour]).shape == (1, 2, 50)
+    assert check_dense_contours(contour[None]).shape == (1, 2, 50)
+    # one or three flattened contours are unambiguous
+    assert check_dense_contours(contour.reshape(1, -1)).shape == (1, 2, 50)
+    assert check_dense_contours(np.zeros((3, 100))).shape == (3, 2, 50)
+
+
+def test_check_labels():
+    values, k = check_labels([0.0, 2.0, 1.0])
+    assert values.dtype == np.intp and values.tolist() == [0, 2, 1] and k == 3
+    assert check_labels([0], n_clusters=4)[1] == 4
+    values, k = check_labels([], allow_empty=True)
+    assert values.size == 0 and k == 0
+    for bad, match in [
+        ([], "non-empty"),
+        ([True, False], "integers"),
+        ([0.5], "integers"),
+        ([np.nan], "integers"),
+        ([-1], "non-negative"),
+    ]:
+        with pytest.raises(ValueError, match=match):
+            check_labels(bad)
+    with pytest.raises(ValueError, match="below n_clusters"):
+        check_labels([3], n_clusters=3)
+
+
+@pytest.mark.parametrize("bad", [0, -1, 2.5, 2.0, True, "3", None])
+def test_check_n_clusters_rejects(bad):
+    with pytest.raises(ValueError, match="n_clusters"):
+        check_n_clusters(bad)
+
+
+def test_check_n_clusters_accepts_numpy_int():
+    assert check_n_clusters(np.int64(3)) == 3

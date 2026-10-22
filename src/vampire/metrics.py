@@ -3,6 +3,8 @@
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
+from ._validation import check_labels
+
 
 def shape_mode_distribution(
     labels: ArrayLike, n_clusters: int | None = None
@@ -27,8 +29,9 @@ def shape_mode_distribution(
     Raises
     ------
     ValueError
-        If ``labels`` is empty, not 1-D, not integer-valued, negative, or not
-        below ``n_clusters``.
+        If ``labels`` is empty, not 1-D, not integer-valued (whole-number
+        floats are accepted), negative, or not below ``n_clusters``; or if
+        ``n_clusters`` is not an integer >= 1.
 
     Examples
     --------
@@ -38,27 +41,7 @@ def shape_mode_distribution(
     >>> shape_mode_distribution([0, 1], n_clusters=4)
     array([0.5, 0.5, 0. , 0. ])
     """
-    values = np.asarray(labels)
-    if values.ndim != 1 or values.size == 0:
-        raise ValueError(
-            f"labels must be a non-empty 1-D array; got shape {values.shape}."
-        )
-    integral_floats = (
-        np.issubdtype(values.dtype, np.floating)
-        and np.all(np.isfinite(values))
-        and np.all(values == np.round(values))
-    )
-    if not (np.issubdtype(values.dtype, np.integer) or integral_floats):
-        raise ValueError("labels must be integers.")
-    values = values.astype(np.intp)
-    if values.min() < 0:
-        raise ValueError(f"labels must be non-negative; got {values.min()}.")
-    if n_clusters is None:
-        n_clusters = int(values.max()) + 1
-    elif values.max() >= n_clusters:
-        raise ValueError(
-            f"labels must be below n_clusters={n_clusters}; got {values.max()}."
-        )
+    values, n_clusters = check_labels(labels, n_clusters)
     counts = np.bincount(values, minlength=n_clusters)
     return counts / counts.sum()
 
@@ -74,7 +57,8 @@ def shannon_entropy(distribution: ArrayLike, base: float | None = None) -> float
     distribution : array-like of shape (n_clusters,)
         Probabilities summing to 1, e.g. from :func:`shape_mode_distribution`.
     base : float, optional
-        Logarithm base. Defaults to natural log (nats); use 2 for bits.
+        Logarithm base, positive and not 1. Defaults to natural log (nats);
+        use 2 for bits.
 
     Returns
     -------
@@ -85,7 +69,8 @@ def shannon_entropy(distribution: ArrayLike, base: float | None = None) -> float
     ------
     ValueError
         If ``distribution`` is empty, not 1-D, has negative or non-finite
-        entries, or does not sum to 1.
+        entries, or does not sum to 1; or if ``base`` is not a positive
+        number other than 1.
 
     Examples
     --------
@@ -95,6 +80,14 @@ def shannon_entropy(distribution: ArrayLike, base: float | None = None) -> float
     >>> shannon_entropy([1.0, 0.0])
     0.0
     """
+    if base is not None and not (
+        isinstance(base, int | float | np.integer | np.floating)
+        and not isinstance(base, bool)
+        and np.isfinite(base)
+        and base > 0
+        and base != 1
+    ):
+        raise ValueError(f"base must be a positive number other than 1; got {base!r}.")
     p = np.asarray(distribution, dtype=np.float64)
     if p.ndim != 1 or p.size == 0:
         raise ValueError(

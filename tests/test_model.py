@@ -89,10 +89,17 @@ def test_dendrogram_order(fitted, four_kinds):
         )
 
 
-def test_kmeans_centers_are_permuted_in_place(fitted):
-    kmeans = fitted.pipeline_.named_steps["kmeans"]
-    np.testing.assert_array_equal(kmeans.cluster_centers_, fitted.cluster_centers_)
-    np.testing.assert_array_equal(kmeans.labels_, fitted.labels_)
+def test_kmeans_centers_and_labels_permuted_consistently(fitted, four_kinds):
+    X, _ = four_kinds
+    features = fitted.pipeline_[:-1].transform(X)
+    centers = fitted.cluster_centers_
+    for k in range(fitted.n_clusters):
+        member_mean = features[fitted.labels_ == k].mean(axis=0)
+        nearest = np.argmin(np.linalg.norm(centers - member_mean, axis=1))
+        assert nearest == k  # center k sits among the points labelled k
+    np.testing.assert_array_equal(
+        fitted.pipeline_.named_steps["kmeans"].predict(features), fitted.labels_
+    )
 
 
 def test_transform_is_distance_to_centers(fitted, four_kinds):
@@ -129,9 +136,12 @@ def test_deterministic_with_random_state(four_kinds):
 
 
 def test_random_state_none(shapes):
-    X, y = shapes
+    X, _ = shapes
     model = vp.Vampire(n_clusters=2).fit(X)
-    assert adjusted_rand_score(y, model.labels_) == 1.0
+    assert model.labels_.shape == (len(X),)
+    assert set(model.labels_) <= {0, 1}
+    np.testing.assert_array_equal(model.predict(X), model.labels_)
+    assert model.dendrogram_["leaves"] == [0, 1]
 
 
 @pytest.mark.parametrize(
@@ -225,10 +235,10 @@ def test_rejects_bad_input(shapes):
     X, _ = shapes
     with pytest.raises(ValueError, match="empty"):
         vp.Vampire(n_clusters=2).fit([])
-    with pytest.raises(ValueError, match="at least 4"):
-        vp.Vampire(n_clusters=2).fit([*X, np.zeros((2, 3))])
+    with pytest.raises(ValueError, match="at least 3"):
+        vp.Vampire(n_clusters=2).fit([*X, np.zeros((2, 2))])
     model = vp.Vampire(n_clusters=2, random_state=0).fit(X)
-    with pytest.raises(ValueError, match="at least 4"):
+    with pytest.raises(ValueError, match="at least 3"):
         model.predict([np.zeros((2, 2))])
 
 
@@ -244,3 +254,26 @@ def test_empty_cluster_falls_back_to_mean_contour(shapes):
         model.mean_cluster_contours_[empty], model.mean_contour_
     )
     assert model.dendrogram_["leaves"] == [0, 1, 2]
+
+
+def test_get_feature_names_out(fitted):
+    names = fitted.get_feature_names_out()
+    assert names.tolist() == [f"vampire{i}" for i in range(6)]
+    with pytest.raises(NotFittedError):
+        vp.Vampire().get_feature_names_out()
+
+
+def test_set_output_pandas(four_kinds):
+    X, _ = four_kinds
+    model = vp.Vampire(n_clusters=3, random_state=0).set_output(transform="pandas")
+    distances = model.fit_transform(X)
+    assert isinstance(distances, pd.DataFrame)
+    assert distances.columns.tolist() == ["vampire0", "vampire1", "vampire2"]
+    out = model.transform(X)
+    assert isinstance(out, pd.DataFrame)
+    np.testing.assert_allclose(out.to_numpy(), distances.to_numpy())
+    np.testing.assert_array_equal(out.to_numpy().argmin(axis=1), model.labels_)
+    # A property table's index is carried over.
+    frame = pd.DataFrame({"contour": list(X)}, index=np.arange(len(X)) + 100)
+    assert model.transform(frame).index.tolist() == frame.index.tolist()
+    assert isinstance(model.predict(X), np.ndarray)

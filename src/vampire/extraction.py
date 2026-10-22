@@ -5,7 +5,9 @@ from collections.abc import Sequence
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
-from skimage.measure import find_contours, label, regionprops, regionprops_table
+from skimage.measure import find_contours, label, regionprops
+
+from ._validation import MIN_CONTOUR_POINTS
 
 #: Mapping from output column name to :func:`skimage.measure.regionprops` name.
 _PROPERTY_NAMES = {
@@ -39,20 +41,24 @@ _COLUMNS = (
 def extract_contour(object_mask: NDArray) -> NDArray[np.float64] | None:
     """Return the outer boundary of a single object as a ``(2, n)`` contour.
 
-    Uses :func:`skimage.measure.find_contours` on a zero-padded copy of the
-    mask and keeps the longest contour. Coordinates are in the mask's pixel
+    Uses :func:`skimage.measure.find_contours` (with
+    ``fully_connected="high"``, i.e. 8-connected foreground, matching the
+    8-connectivity of :func:`skimage.measure.label`) on a zero-padded copy of
+    the mask and keeps the longest contour. Coordinates are in the mask's pixel
     frame (row 0 = x = column index, row 1 = y = row index). The closing point
     duplicated by ``find_contours`` is removed.
 
     Parameters
     ----------
     object_mask : ndarray of shape (height, width)
-        Binary (or boolean) image containing one object.
+        Binary (or boolean) image containing one object; nonzero pixels are
+        foreground. Pixels touching only diagonally belong to the same object.
 
     Returns
     -------
     contour : ndarray of shape (2, n) or None
-        ``None`` if the object has fewer than 4 boundary points.
+        ``None`` if the mask is empty (any nonempty mask yields at least 4
+        boundary points).
 
     Examples
     --------
@@ -68,44 +74,86 @@ def extract_contour(object_mask: NDArray) -> NDArray[np.float64] | None:
     mask = np.asarray(object_mask)
     if mask.ndim != 2:
         raise ValueError(f"object_mask must be 2-D, got {mask.ndim}-D.")
-    padded = np.pad(mask.astype(np.float64) != 0, 1).astype(np.float64)
-    contours = find_contours(padded, 0.5)
+    padded = np.pad(mask != 0, 1).astype(np.float64)
+    contours = find_contours(padded, 0.5, fully_connected="high")
     if not contours:
         return None
     longest = max(contours, key=len)
     if len(longest) > 1 and np.array_equal(longest[0], longest[-1]):
         longest = longest[:-1]
-    if len(longest) < 4:
+    if len(longest) < MIN_CONTOUR_POINTS:
         return None
     longest = longest - 1.0  # remove padding offset
     return np.ascontiguousarray(longest[:, ::-1].T)  # (row, col) -> (x, y)
 
 
-def _to_label_image(image: NDArray) -> NDArray:
-    """Return an integer label image for a binary mask or label image."""
+def _is_integer_valued(arr: NDArray) -> bool:
+    if np.issubdtype(arr.dtype, np.integer):
+        return True
+    return bool(
+        np.issubdtype(arr.dtype, np.floating)
+        and np.all(np.isfinite(arr))
+        and np.all(arr == np.round(arr))
+    )
+
+
+def _to_label_image(image: NDArray, binary: bool | None = None) -> NDArray:
+    """Return an integer label image for a binary mask or label image.
+
+    See the ``binary`` parameter of :func:`extract_properties`.
+    """
     arr = np.asarray(image)
     if arr.ndim != 2:
         raise ValueError(f"Each image must be 2-D, got shape {arr.shape}.")
-    if arr.dtype == bool:
-        return label(arr)
-    if np.issubdtype(arr.dtype, np.integer):
-        values = set(np.unique(arr).tolist())
-        if values <= {0, 1} or values <= {0, 255}:
-            return label(arr != 0)
-        return arr
-    # Floating point: anything non-zero is foreground.
-    return label(arr != 0)
+    if not (
+        arr.dtype == bool
+        or np.issubdtype(arr.dtype, np.integer)
+        or np.issubdtype(arr.dtype, np.floating)
+    ):
+        raise ValueError(f"Images must be boolean or numeric; got dtype {arr.dtype}.")
+    if binary is None:
+        if arr.dtype == bool:
+            binary = True
+        else:
+            if np.issubdtype(arr.dtype, np.floating) and not np.all(np.isfinite(arr)):
+                raise ValueError(
+                    "Image contains NaN or infinite values; pass binary=True "
+                    "(foreground = pixels > 0) or clean the image."
+                )
+            nonzero = np.unique(arr[arr != 0])
+            if nonzero.size <= 1:
+                binary = True
+            elif _is_integer_valued(nonzero):
+                binary = False
+            else:
+                raise ValueError(
+                    "Image has non-integer values, so it is neither a label image "
+                    "nor a binary mask; pass binary=True to treat pixels > 0 as "
+                    "foreground, or threshold the image first."
+                )
+    if binary:
+        return label(arr > 0)  # 8-connectivity (connectivity=ndim)
+    if arr.dtype == bool or not _is_integer_valued(arr):
+        raise ValueError(
+            "binary=False requires an integer-valued label image (0 = background); "
+            f"got dtype {arr.dtype} with non-integer values. Pass binary=True for "
+            "a mask."
+        )
+    if arr.size and arr.min() < 0:
+        raise ValueError("Label images must not contain negative values.")
+    return arr if np.issubdtype(arr.dtype, np.integer) else arr.astype(np.int64)
 
 
 def extract_properties(
     images: Sequence[NDArray] | NDArray,
     filenames: Sequence[str] | None = None,
+    *,
+    binary: bool | None = None,
 ) -> pd.DataFrame:
     """Measure every object in a set of segmented images.
 
-    Each image is labeled with :func:`skimage.measure.label` if it is binary
-    (already-labeled integer images are used as is), then measured with
-    :func:`skimage.measure.regionprops_table`.
+    Each image is turned into a label image (see ``binary``) and every object
+    is measured with :func:`skimage.measure.regionprops`.
 
     Parameters
     ----------
@@ -113,11 +161,28 @@ def extract_properties(
         Segmented images (binary masks or label images).
     filenames : sequence of str, optional
         One name per image; stored in the ``"filename"`` column.
+    binary : bool or None, default=None
+        How pixel values are interpreted:
+
+        - ``True``: the image is a mask; pixels ``> 0`` are foreground and are
+          labeled with :func:`skimage.measure.label` (8-connectivity), so each
+          connected blob becomes one object with labels ``1, 2, ...``.
+        - ``False``: the image is a label image (0 = background, ``l`` =
+          object ``l``) and is used as is. It must be integer-valued (integer
+          dtype, or floats that are whole numbers) and non-negative. Touching
+          objects stay separate and label values are kept.
+        - ``None`` (auto): boolean images, and images with exactly one
+          nonzero value (e.g. 0/1, 0/255, 0/65535, 0.0/1.0), are masks;
+          integer-valued images with more than one nonzero value are label
+          images; images with non-integer values raise ``ValueError`` (pass
+          ``binary=True`` or threshold them). A label image containing a
+          single object is therefore relabeled to 1; pass ``binary=False`` to
+          keep its label value.
 
     Returns
     -------
     properties : DataFrame of shape (n_objects, n_columns)
-        One row per object (objects with < 4 boundary points are dropped), with
+        One row per object (objects without a boundary are dropped), with
         columns ``filename`` (if given), ``image_id``, ``label``,
         ``centroid_x``, ``centroid_y``, ``area``, ``bbox_area``,
         ``convex_area``, ``filled_area``, ``perimeter``,
@@ -130,14 +195,17 @@ def extract_properties(
     Raises
     ------
     ValueError
-        If ``filenames`` and ``images`` differ in length, or an image is not 2-D.
+        If ``filenames`` and ``images`` differ in length, an image is not 2-D,
+        or an image cannot be interpreted as described under ``binary``.
 
     Notes
     -----
-    Integer images with more than two distinct values (or values other than
-    ``{0, 1}`` / ``{0, 255}``) are treated as label images and used as is;
-    boolean, 0/1 and 0/255 images are binary and labeled with 8-connectivity.
-    ``centroid_x`` / ``centroid_y`` are column / row coordinates. ``circularity``
+    ``centroid_x`` / ``centroid_y`` are column / row coordinates (y grows
+    downward, as in the image). The contour is the outer boundary of the
+    object (8-connected, holes ignored), so its enclosed area is close to
+    ``filled_area``. If a label in a label image consists of several
+    disconnected pieces, its contour is that of the piece with the longest
+    boundary, while the other properties cover all pieces. ``circularity``
     is ``4 * pi * area / perimeter**2``; ``aspect_ratio`` is
     ``major_axis_length / minor_axis_length`` and is ``inf`` for a
     zero-width object (``NaN`` if both are zero). ``image_id`` is the 0-based
@@ -156,6 +224,13 @@ def extract_properties(
     1    a.tif         0      2  48.0
     >>> props.loc[0, "contour"].shape[0]
     2
+
+    A label image whose objects touch keeps them apart:
+
+    >>> labels = np.zeros((10, 10), dtype=np.int32)
+    >>> labels[2:5, 2:5], labels[5:8, 2:5] = 3, 4
+    >>> extract_properties(labels, binary=False)["label"].tolist()
+    [3, 4]
     """
     if isinstance(images, np.ndarray) and images.ndim == 2:
         images = [images]
@@ -168,43 +243,34 @@ def extract_properties(
                 f"{len(images)} images."
             )
 
-    frames = []
+    rows = []
     for image_id, image in enumerate(images):
-        labels = _to_label_image(image)
-        if labels.max(initial=0) == 0:
-            continue
-        table = regionprops_table(
-            labels,
-            properties=["label", "centroid", *_PROPERTY_NAMES.values()],
-        )
-        df = pd.DataFrame(table).rename(
-            columns={
-                "centroid-0": "centroid_y",
-                "centroid-1": "centroid_x",
-                **{v: k for k, v in _PROPERTY_NAMES.items()},
-            }
-        )
-        regions = regionprops(labels)
-        contours: list[NDArray | None] = []
-        for region in regions:
+        for region in regionprops(_to_label_image(image, binary=binary)):
             contour = extract_contour(region.image)
-            if contour is not None:
-                min_row, min_col = region.bbox[0], region.bbox[1]
-                contour = contour + np.array([[min_col], [min_row]], dtype=float)
-            contours.append(contour)
-        df["contour"] = pd.Series(contours, dtype=object)
-        df["image_id"] = image_id
-        if filenames is not None:
-            df["filename"] = filenames[image_id]
-        frames.append(df[df["contour"].notna()])
+            if contour is None:
+                continue
+            min_row, min_col = region.bbox[0], region.bbox[1]
+            row = {
+                "image_id": image_id,
+                "label": region.label,
+                "centroid_x": region.centroid[1],
+                "centroid_y": region.centroid[0],
+            }
+            row |= {col: region[name] for col, name in _PROPERTY_NAMES.items()}
+            row["contour"] = contour + np.array([[min_col], [min_row]], dtype=float)
+            if filenames is not None:
+                row["filename"] = filenames[image_id]
+            rows.append(row)
 
     lead = ["filename"] if filenames is not None else []
     columns = [*lead, *_COLUMNS]
-    if not frames:
+    if not rows:
         return pd.DataFrame({c: [] for c in columns})
-    out = pd.concat(frames, ignore_index=True)
+    out = pd.DataFrame(rows)
+    for col in ("area", "bbox_area", "convex_area", "filled_area"):
+        out[col] = out[col].astype(np.float64)
     with np.errstate(divide="ignore", invalid="ignore"):
         out["circularity"] = 4 * np.pi * out["area"] / out["perimeter"] ** 2
         out["aspect_ratio"] = out["major_axis_length"] / out["minor_axis_length"]
     out["contour"] = out["contour"].astype(object)
-    return out[columns].reset_index(drop=True)
+    return out[columns]

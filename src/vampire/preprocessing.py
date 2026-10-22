@@ -12,6 +12,12 @@ DataFrame with a ``"contour"`` column. :class:`ContourRegistrar` and
 :class:`ContourAligner` additionally accept flattened arrays of shape
 ``(n_samples, 2 * n_points)`` and require all contours to have the same
 length.
+
+``set_output``: :class:`ContourAligner` (with ``flatten=True``) supports
+``set_output(transform="pandas")`` with columns ``x0, ..., x{n-1}, y0, ...,
+y{n-1}``. :class:`ContourResampler` and :class:`ContourRegistrar` return 3-D
+arrays, which cannot be DataFrames; their ``set_output`` accepts the standard
+values (so ``Pipeline.set_output`` works) but leaves the output an ndarray.
 """
 
 import numpy as np
@@ -22,8 +28,44 @@ from sklearn.utils.validation import check_is_fitted
 from ._validation import ContourSet, check_contours, check_dense_contours
 from .contours import align_contour, register_contour, resample_contour
 
+_OUTPUT_CONTAINERS = (None, "default", "pandas", "polars")
 
-class ContourResampler(TransformerMixin, BaseEstimator):
+
+class _ContourOutputMixin:
+    """``set_output`` for transformers whose output is a 3-D contour array."""
+
+    def set_output(self, *, transform: str | None = None):
+        """Accept an output container request; output stays a 3-D ndarray.
+
+        Contour arrays of shape ``(n_samples, 2, n_points)`` cannot be stored
+        in a DataFrame, so ``"pandas"`` and ``"polars"`` are accepted (letting
+        :meth:`sklearn.pipeline.Pipeline.set_output` configure a whole
+        pipeline) but have no effect on this step.
+
+        Parameters
+        ----------
+        transform : {"default", "pandas", "polars"} or None, default=None
+            Requested output container.
+
+        Returns
+        -------
+        self : estimator
+
+        Raises
+        ------
+        ValueError
+            If ``transform`` is not one of the values above.
+        """
+        if transform not in _OUTPUT_CONTAINERS:
+            raise ValueError(
+                f"transform must be one of {list(_OUTPUT_CONTAINERS)}; got "
+                f"{transform!r}. {type(self).__name__} always returns a 3-D "
+                "ndarray of shape (n_samples, 2, n_points)."
+            )
+        return self
+
+
+class ContourResampler(_ContourOutputMixin, TransformerMixin, BaseEstimator):
     """Resample contours to a fixed number of equidistant points.
 
     Stateless: ``fit`` only validates the input and parameters, and
@@ -104,7 +146,7 @@ class ContourResampler(TransformerMixin, BaseEstimator):
         return np.stack([resample_contour(c, self.n_points) for c in contours])
 
 
-class ContourRegistrar(TransformerMixin, BaseEstimator):
+class ContourRegistrar(_ContourOutputMixin, TransformerMixin, BaseEstimator):
     """Remove translation, scale, and rotation from each contour.
 
     Stateless: ``transform`` may be called without fitting. Applies
@@ -183,6 +225,12 @@ class ContourAligner(TransformerMixin, BaseEstimator):
         Mean of the aligned training contours.
     n_points_ : int
         Number of points per contour seen during ``fit``.
+
+    Notes
+    -----
+    With ``flatten=True``, :meth:`get_feature_names_out` returns
+    ``x0, ..., x{n-1}, y0, ..., y{n-1}``, so ``set_output(transform="pandas")``
+    yields a DataFrame with these columns.
 
     Examples
     --------
@@ -277,3 +325,32 @@ class ContourAligner(TransformerMixin, BaseEstimator):
                 f"{self.n_points_} points."
             )
         return self._format(self._align(registered))
+
+    def get_feature_names_out(self, input_features=None) -> NDArray[np.object_]:
+        """Return the names of the flattened output columns.
+
+        Parameters
+        ----------
+        input_features : None
+            Ignored (the input is a contour set, not named features).
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects of shape ``(2 * n_points_,)``
+            ``["x0", ..., "x{n-1}", "y0", ..., "y{n-1}"]``.
+
+        Raises
+        ------
+        ValueError
+            If ``flatten`` is False (the output is 3-D and has no columns).
+        """
+        check_is_fitted(self)
+        if not self.flatten:
+            raise ValueError(
+                "get_feature_names_out requires flatten=True; with flatten=False "
+                "the output has shape (n_samples, 2, n_points) and no columns."
+            )
+        n = self.n_points_
+        return np.asarray(
+            [f"x{i}" for i in range(n)] + [f"y{i}" for i in range(n)], dtype=object
+        )
