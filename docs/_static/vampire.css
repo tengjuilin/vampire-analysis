@@ -55,14 +55,17 @@ h5, h6 { margin: 1rem 0 0.35rem; }
 
 /* Section links fill the full navbar height (clickable everywhere), and the
    hover/current underline sits on the navbar's bottom edge. */
-.bd-header .bd-header__inner,
-.bd-header .navbar-header-items,
 .bd-header .navbar-header-items__center,
 .bd-header .navbar-header-items__center .navbar-item,
 .bd-header .navbar-header-items__center nav,
 .bd-header .navbar-header-items__center ul.navbar-nav {
   align-items: stretch;
   height: var(--pst-header-height);
+}
+
+.bd-header .navbar-header-items {
+  height: var(--pst-header-height);
+  align-items: center;
 }
 
 .bd-header ul.navbar-nav > li.nav-item {
