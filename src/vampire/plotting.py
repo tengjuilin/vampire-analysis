@@ -35,9 +35,11 @@ from matplotlib.figure import Figure
 from matplotlib.font_manager import FontProperties
 from numpy.typing import ArrayLike, NDArray
 from scipy.cluster.hierarchy import dendrogram
+from scipy.interpolate import make_interp_spline
 from sklearn.utils.validation import check_is_fitted
 
 from ._validation import ContourSet, check_labels
+from .contours import _drop_repeated_points, _segment_lengths
 from .extraction import _to_label_image
 from .metrics import shape_mode_distribution
 
@@ -52,6 +54,9 @@ __all__ = [
 
 #: Distance between adjacent SciPy dendrogram leaves in data units.
 _LEAF_SPACING = 10.0
+
+#: Number of points at which smoothed contours are drawn.
+_SMOOTH_POINTS = 400
 
 ColorSpec = str | Colormap | Sequence[Any] | None
 
@@ -109,6 +114,26 @@ def _get_ax(ax: Axes | None, figsize: tuple[float, float]) -> Axes:
 def _as_labels(labels: ArrayLike) -> NDArray:
     """Convert labels (array-like or Series) to a 1-D ndarray."""
     return np.asarray(labels)
+
+
+def _closed_curve(contour: NDArray, smooth: bool = True) -> NDArray[np.float64]:
+    """Return a closed ``(2, m)`` curve for drawing a ``(2, n)`` contour.
+
+    With ``smooth``, a periodic cubic spline is fitted *through* the contour
+    points (parameterized by chord length) and sampled at ``_SMOOTH_POINTS``
+    points, so straight segments between the few stored points are replaced by
+    a smooth curve without moving the points themselves. Otherwise the polygon
+    is closed by repeating its first point.
+    """
+    points = np.asarray(contour, dtype=float)
+    if smooth:
+        points = _drop_repeated_points(points)
+    if not smooth or points.shape[1] < 4:
+        return np.hstack([points, points[:, :1]])
+    closed = np.hstack([points, points[:, :1]])
+    t = np.concatenate([[0.0], np.cumsum(_segment_lengths(closed))])
+    spline = make_interp_spline(t, closed, k=3, bc_type="periodic", axis=1)
+    return spline(np.linspace(0.0, t[-1], _SMOOTH_POINTS + 1))
 
 
 def _invert_y(ax: Axes) -> None:
@@ -195,6 +220,7 @@ def plot_shape_modes(
     scale: float | None = None,
     linewidth: float = 2.0,
     equal_aspect: bool = True,
+    smooth: bool = True,
 ) -> Axes:
     """Draw the mean contour of each shape mode side by side.
 
@@ -219,6 +245,10 @@ def plot_shape_modes(
     equal_aspect : bool, default=True
         Use equal data aspect (shapes undistorted). Set ``False`` when the axes
         shares x with other axes; :func:`plot_summary` then adjusts y limits.
+    smooth : bool, default=True
+        Draw each contour as a periodic cubic spline passing through its
+        ``n_points`` points instead of straight segments between them. The
+        points themselves (``model.mean_cluster_contours_``) are unchanged.
 
     Returns
     -------
@@ -253,8 +283,8 @@ def plot_shape_modes(
         scale = 0.85 * spacing / width if width > 0 else 1.0
     centers = spacing * (np.argsort(model.dendrogram_["leaves"]) + 0.5)
     for i, contour in enumerate(contours):
-        x = np.append(contour[0], contour[0, 0]) * scale + centers[i]
-        y = np.append(contour[1], contour[1, 0]) * scale
+        x, y = _closed_curve(contour, smooth) * scale
+        x = x + centers[i]
         ax.plot(x, y, color=palette[i], lw=linewidth, label=str(i + 1))
     ax.set_xlim(0, spacing * k)
     if equal_aspect:
@@ -452,6 +482,7 @@ def plot_representatives(
     show_mean: bool = True,
     alpha: float = 0.7,
     figsize: tuple[float, float] | None = None,
+    smooth: bool = True,
 ) -> tuple[Figure, NDArray[Any]]:
     """Overlay the contours closest to each shape-mode center.
 
@@ -479,6 +510,9 @@ def plot_representatives(
         Opacity of the representative contours.
     figsize : (float, float), optional
         Defaults to ``(1.6 * n_clusters, 1.8)``.
+    smooth : bool, default=True
+        Draw contours as periodic cubic splines through their points instead
+        of straight segments (see :func:`plot_shape_modes`).
 
     Returns
     -------
@@ -536,19 +570,15 @@ def plot_representatives(
         members = np.flatnonzero(labels == i + 1)
         closest = members[np.argsort(distances[members, i])[:n_per_mode]]
         for idx in closest:
-            c = normalized[idx]
             ax.plot(
-                np.append(c[0], c[0, 0]),
-                np.append(c[1], c[1, 0]),
+                *_closed_curve(normalized[idx], smooth),
                 color=palette[i],
                 alpha=alpha,
                 lw=1.5,
             )
         if show_mean:
-            m = model.mean_cluster_contours_[i]
             ax.plot(
-                np.append(m[0], m[0, 0]),
-                np.append(m[1], m[1, 0]),
+                *_closed_curve(model.mean_cluster_contours_[i], smooth),
                 color="black",
                 lw=2,
                 ls="--",

@@ -10,6 +10,7 @@ Set ``NB_EXECUTION_MODE=cache`` to reuse outputs between local rebuilds.
 """
 
 import os
+import tempfile
 from datetime import date
 from importlib.metadata import version as _version
 
@@ -97,6 +98,20 @@ nb_execution_show_tb = True
 nb_execution_timeout = 300
 nb_merge_streams = True
 nb_execution_excludepatterns = []
+
+# Render executed matplotlib figures at 300 dpi. "retina" makes IPython attach
+# width/height metadata of half the pixel size, so figures are shown at
+# 150 CSS px per inch with 2x pixel density (sharp on high-DPI screens).
+# The notebook kernel reads this from a throwaway IPython profile directory.
+_ipython_dir = tempfile.mkdtemp(prefix="vampire-docs-ipython-")
+_profile_dir = os.path.join(_ipython_dir, "profile_default")
+os.makedirs(_profile_dir)
+with open(os.path.join(_profile_dir, "ipython_kernel_config.py"), "w") as _f:
+    _f.write(
+        'c.InlineBackend.figure_formats = {"retina"}\n'
+        'c.InlineBackend.print_figure_kwargs = {"bbox_inches": "tight", "dpi": 300}\n'
+    )
+os.environ["IPYTHONDIR"] = _ipython_dir
 
 # -- sphinx-copybutton ---------------------------------------------------------
 
