@@ -33,7 +33,7 @@ print("objects per image:", [len(np.unique(img)) - 1 for img in images])
 `images` is a `list` of `(512, 512)` `uint16` label images; `filenames` is a
 `list` of `str`. For your own data use
 `images, filenames = vp.read_images("path/to/folder")`, which returns the same
-two lists (see {doc}`user_guide/your_images`).
+two lists (see {doc}`your_images`).
 
 ## 2. Extract contours and properties
 
@@ -58,7 +58,7 @@ print("points per contour: min", props["contour"].map(lambda c: c.shape[1]).min(
 ```
 
 The other columns (area, perimeter, circularity, ...) are standard
-morphological measurements; see {doc}`user_guide/data_conventions`.
+morphological measurements; see {doc}`/user_guide/data_conventions`.
 
 ## 3. Fit the model and predict shape modes
 
@@ -72,9 +72,9 @@ props["shape_mode"] = model.predict(props)
 props["shape_mode"].value_counts().sort_index()
 ```
 
-Shape modes are integers `0 ... n_clusters - 1`, numbered left to right in
-the dendrogram that links similar modes (so modes 0 and 1 are more alike than
-modes 0 and 4, roughly). Pass `random_state` to make K-means reproducible.
+Shape modes are integers `1 ... n_clusters`, numbered left to right in the
+dendrogram that links similar modes (so modes 1 and 2 are more alike than
+modes 1 and 5, roughly). Pass `random_state` to make K-means reproducible.
 
 A few fitted attributes (all names ending in `_`):
 
@@ -100,8 +100,9 @@ props.groupby("filename")["shape_mode"].value_counts(normalize=True).unstack().r
 
 ## 5. Plot
 
-{func}`vampire.plotting.plot_summary` stacks the shape-mode distribution, the
-mean contour of each mode, and the dendrogram:
+{func}`vampire.plotting.plot_summary` stacks the shape-mode distribution
+(with the mode numbers underneath), the mean contour of each mode, and the
+dendrogram, whose branches point up to the modes they join:
 
 ```{code-cell} ipython3
 fig, axes = vp.plotting.plot_summary(model, props["shape_mode"])
@@ -122,8 +123,10 @@ use `ax.figure.savefig(...)`).
 
 ## Next steps
 
-- {doc}`user_guide/your_images` -- your own folders, experimental groups,
+- {doc}`your_images` -- your own folders, experimental groups,
   saving results.
-- {doc}`user_guide/method` -- what each step of the model does.
-- {doc}`user_guide/plotting` -- all figures.
-- {doc}`api/index` -- full reference.
+- {doc}`/user_guide/method` -- what each step of the model does.
+- {doc}`/examples/plotting` -- all figures.
+- {doc}`/examples/new_condition` -- label a new experimental condition with
+  an existing model.
+- {doc}`/api/index` -- full reference.

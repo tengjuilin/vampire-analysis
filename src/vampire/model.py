@@ -4,12 +4,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.cluster.hierarchy import dendrogram, linkage
 from scipy.spatial.distance import pdist
-from sklearn.base import (
-    BaseEstimator,
-    ClassNamePrefixFeaturesOutMixin,
-    ClusterMixin,
-    TransformerMixin,
-)
+from sklearn.base import BaseEstimator, ClusterMixin, TransformerMixin
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
@@ -23,9 +18,7 @@ from .preprocessing import ContourAligner, ContourRegistrar, ContourResampler
 _N_CONTOUR_STEPS = 3
 
 
-class Vampire(
-    ClassNamePrefixFeaturesOutMixin, ClusterMixin, TransformerMixin, BaseEstimator
-):
+class Vampire(ClusterMixin, TransformerMixin, BaseEstimator):
     """Cluster object contours into shape modes (VAMPIRE).
 
     Pipeline fitted by :meth:`fit`::
@@ -36,8 +29,13 @@ class Vampire(
     After K-means, the mean contour of each cluster is computed, clusters are
     hierarchically linked (complete linkage on Euclidean distance between mean
     cluster contours), and cluster ids are renumbered to follow the dendrogram
-    leaf order. Labels from :meth:`predict` therefore run 0..n_clusters-1 from
-    left to right in the dendrogram, so similar shape modes get adjacent ids.
+    leaf order. Shape modes are **1-based**: labels from :meth:`predict`
+    (and ``labels_``) run 1..n_clusters from left to right in the dendrogram,
+    so similar shape modes get adjacent numbers.
+
+    Arrays indexed by shape mode keep ordinary 0-based rows/columns: shape
+    mode ``m`` is ``mean_cluster_contours_[m - 1]``, ``cluster_centers_[m - 1]``
+    and column ``m - 1`` of :meth:`transform` (named ``"mode{m}"``).
 
     Parameters
     ----------
@@ -59,9 +57,9 @@ class Vampire(
     ----------
     pipeline_ : sklearn.pipeline.Pipeline
         Fitted pipeline (steps ``resample``, ``register``, ``align``, ``pca``,
-        ``normalize``, ``kmeans``). Its KMeans centers (and ``labels_``) are
-        already in dendrogram order, so ``pipeline_.predict`` returns shape-mode
-        labels.
+        ``normalize``, ``kmeans``). Its KMeans centers are already in
+        dendrogram order, but scikit-learn cluster ids are 0-based:
+        ``pipeline_.predict(X) + 1 == predict(X)``.
     mean_contour_ : ndarray of shape (2, n_points)
         Mean of the aligned training contours.
     n_components_ : int
@@ -69,20 +67,27 @@ class Vampire(
     explained_variance_ratio_ : ndarray of shape ``(n_components_,)``
         Variance fraction explained by each kept component.
     cluster_centers_ : ndarray of shape ``(n_clusters, n_components_)``
-        K-means centers in normalized PC space, dendrogram-ordered.
+        K-means centers in normalized PC space, dendrogram-ordered; row
+        ``m - 1`` is the center of shape mode ``m``.
     labels_ : ndarray of shape (n_samples,)
-        Shape-mode label of each training contour.
+        Shape-mode label of each training contour, integers in
+        ``1..n_clusters``.
     inertia_ : float
         K-means inertia on the training data.
     mean_cluster_contours_ : ndarray of shape (n_clusters, 2, n_points)
-        Mean aligned contour of each shape mode (the shape-mode "picture").
-        A mode with no training contours (possible only with heavily
-        duplicated data) gets ``mean_contour_``.
+        Mean aligned contour of each shape mode (the shape-mode "picture");
+        ``mean_cluster_contours_[m - 1]`` is shape mode ``m``. A mode with
+        no training contours (possible only with heavily duplicated data)
+        gets ``mean_contour_``.
     linkage_matrix_ : ndarray of shape (n_clusters - 1, 4)
-        SciPy linkage matrix over shape modes (in the new label numbering).
+        SciPy linkage matrix over shape modes in dendrogram order. SciPy
+        requires 0-based leaf ids, so leaf id ``m - 1`` is shape mode ``m``.
     dendrogram_ : dict
         Output of :func:`scipy.cluster.hierarchy.dendrogram` (``no_plot=True``)
-        for ``linkage_matrix_``; ``dendrogram_["leaves"] == list(range(n_clusters))``.
+        for ``linkage_matrix_`` with leaf labels ``"1"``..``"k"``:
+        ``dendrogram_["leaves"] == list(range(n_clusters))`` (SciPy's 0-based
+        leaf ids) and ``dendrogram_["ivl"] == ["1", ..., str(n_clusters)]``
+        (shape-mode numbers).
     n_features_in_ : int
         ``2 * n_points``.
 
@@ -94,18 +99,18 @@ class Vampire(
     -----
     Renumbering. Let ``order = dendrogram(linkage(...))["leaves"]`` for the
     K-means clusters in their original numbering; original cluster
-    ``order[j]`` becomes shape mode ``j``. The fitted KMeans step's
+    ``order[j]`` becomes shape mode ``j + 1``. The fitted KMeans step's
     ``cluster_centers_`` and ``labels_`` are permuted in place. The linkage
     matrix is renumbered by mapping its leaf ids (entries ``< n_clusters`` in
     the first two columns) through the same permutation while keeping
     merge order and left/right positions, so the dendrogram drawn from
-    ``linkage_matrix_`` is the same tree with leaves labelled 0, 1, ... from
-    left to right. Barring exact distance ties it equals
+    ``linkage_matrix_`` is the same tree with leaf ids 0, 1, ... (shape modes
+    1, 2, ...) from left to right. Barring exact distance ties it equals
     ``linkage(pdist(mean_cluster_contours_.reshape(n_clusters, -1)),
     "complete")``.
 
-    ``get_feature_names_out()`` returns ``["vampire0", ..., "vampire{k-1}"]``
-    (one column per shape-mode distance), so
+    ``get_feature_names_out()`` returns ``["mode1", ..., "mode{k}"]``
+    (column ``m - 1`` is the distance to shape mode ``m``), so
     ``set_output(transform="pandas")`` makes :meth:`transform` and
     :meth:`fit_transform` return DataFrames.
 
@@ -121,12 +126,17 @@ class Vampire(
     >>> import vampire as vp
     >>> X = vp.datasets.make_shapes(n_samples=60, random_state=0)
     >>> model = vp.Vampire(n_clusters=2, random_state=0).fit(X)
-    >>> model.predict(X).shape
+    >>> labels = model.predict(X)
+    >>> labels.shape
     (60,)
+    >>> sorted(set(labels.tolist()))
+    [1, 2]
     >>> model.mean_cluster_contours_.shape
     (2, 2, 50)
-    >>> model.dendrogram_["leaves"]
-    [0, 1]
+    >>> model.dendrogram_["ivl"]
+    ['1', '2']
+    >>> model.get_feature_names_out().tolist()
+    ['mode1', 'mode2']
     """
 
     def __init__(
@@ -145,10 +155,23 @@ class Vampire(
         self.max_iter = max_iter
         self.random_state = random_state
 
-    @property
-    def _n_features_out(self) -> int:
-        """Number of ``transform`` output columns (used by get_feature_names_out)."""
-        return self.cluster_centers_.shape[0]
+    def get_feature_names_out(self, input_features=None) -> NDArray[np.object_]:
+        """Return names of the :meth:`transform` output columns.
+
+        Parameters
+        ----------
+        input_features : None
+            Ignored (contours have no feature names).
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects, shape (n_clusters,)
+            ``["mode1", ..., "mode{n_clusters}"]``; column ``m - 1`` is the
+            distance to shape mode ``m``.
+        """
+        check_is_fitted(self)
+        k = self.cluster_centers_.shape[0]
+        return np.asarray([f"mode{m}" for m in range(1, k + 1)], dtype=object)
 
     def __sklearn_tags__(self):
         """Declare that input is a contour set rather than a 2-D array."""
@@ -229,11 +252,13 @@ class Vampire(
         self.n_components_ = int(pca.n_components_)
         self.explained_variance_ratio_ = pca.explained_variance_ratio_
         self.cluster_centers_ = kmeans.cluster_centers_
-        self.labels_ = kmeans.labels_
+        self.labels_ = (kmeans.labels_ + 1).astype(np.intp)  # 1-based modes
         self.inertia_ = float(kmeans.inertia_)
         self.mean_cluster_contours_ = mean_cluster_contours[order]
         self.linkage_matrix_ = Z
-        self.dendrogram_ = dendrogram(Z, no_plot=True)
+        self.dendrogram_ = dendrogram(
+            Z, no_plot=True, labels=[str(m) for m in range(1, n_clusters + 1)]
+        )
         self.n_features_in_ = 2 * pipeline.named_steps["align"].n_points_
         return features
 
@@ -256,6 +281,22 @@ class Vampire(
         self._fit(X)
         return self
 
+    def fit_predict(self, X: ContourSet, y=None) -> NDArray[np.intp]:
+        """Fit the model and return the shape-mode label of each contour.
+
+        Parameters
+        ----------
+        X : contour set
+        y : None
+            Ignored.
+
+        Returns
+        -------
+        labels : ndarray of shape (n_samples,)
+            ``labels_``: shape modes, integers in ``1..n_clusters``.
+        """
+        return self.fit(X).labels_
+
     def fit_transform(self, X: ContourSet, y=None) -> NDArray[np.float64]:
         """Fit the model and return distances to each shape-mode center.
 
@@ -270,6 +311,7 @@ class Vampire(
         Returns
         -------
         distances : ndarray of shape (n_samples, n_clusters)
+            Column ``m - 1`` is the distance to shape mode ``m``.
         """
         features = self._fit(X)
         return self.pipeline_.named_steps["kmeans"].transform(features)
@@ -284,10 +326,11 @@ class Vampire(
         Returns
         -------
         labels : ndarray of shape (n_samples,)
-            Integers in ``[0, n_clusters)`` (dendrogram order).
+            Shape modes, integers in ``1..n_clusters`` (dendrogram leaf order,
+            left to right).
         """
         check_is_fitted(self)
-        return self.pipeline_.predict(X)
+        return (self.pipeline_.predict(X) + 1).astype(np.intp)
 
     def transform(self, X: ContourSet) -> NDArray[np.float64]:
         """Return distances to each shape-mode center.
@@ -301,7 +344,8 @@ class Vampire(
         Returns
         -------
         distances : ndarray of shape (n_samples, n_clusters)
-            Column ``k`` is the distance to shape mode ``k``.
+            Column ``m - 1`` is the distance to shape mode ``m`` (named
+            ``"mode{m}"`` by :meth:`get_feature_names_out`).
         """
         check_is_fitted(self)
         return self.pipeline_.transform(X)

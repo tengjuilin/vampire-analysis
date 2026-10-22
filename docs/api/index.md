@@ -1,7 +1,17 @@
-# API reference
+# API Reference
 
 ```python
 import vampire as vp
+```
+
+This page documents every public function and class. For a compact summary of
+signatures, array shapes, invariants, and common pitfalls (also useful for
+coding agents and LLMs), see {doc}`for_agents`.
+
+```{toctree}
+:hidden:
+
+for_agents
 ```
 
 Everything below is public and stable for 1.x. Names in the top-level
@@ -13,7 +23,7 @@ functions in {mod}`vampire.metrics`.
 Shapes use NumPy notation. A **contour** is an array of shape `(2, n)`
 (row 0 = x, row 1 = y); a **contour set** is a list of contours, an array of
 shape `(n_samples, 2, n)`, a Series of contours, or a DataFrame with a
-`"contour"` column. See {doc}`../user_guide/data_conventions`.
+`"contour"` column. See {doc}`/user_guide/data_conventions`.
 
 ```{eval-rst}
 .. automodule:: vampire

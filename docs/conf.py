@@ -119,13 +119,14 @@ html_theme = "pydata_sphinx_theme"
 html_title = f"vampire-analysis {release}"
 html_static_path = ["_static"]
 html_css_files = ["vampire.css"]
-html_favicon = "_static/vampire-logo.png"
+html_favicon = "_static/vampire-icon.svg"
 html_baseurl = "https://vampire.readthedocs.io/en/latest/"
 html_theme_options = {
+    # The logo lockup already contains the project name, so no text title.
     "logo": {
-        "image_light": "_static/vampire-logo.png",
-        "image_dark": "_static/vampire-logo.png",
-        "text": "vampire-analysis",
+        "image_light": "_static/vampire-logo.svg",
+        "image_dark": "_static/vampire-logo-dark.svg",
+        "alt_text": "vampire-analysis - Home",
     },
     "github_url": "https://github.com/tengjuilin/vampire-analysis",
     "icon_links": [
@@ -136,6 +137,12 @@ html_theme_options = {
         },
     ],
     "navbar_align": "left",
+    # Top-level sections in the navbar: the five toctree entries of index.md.
+    "header_links_before_dropdown": 5,
+    # Search: magnifier icon only, no search field (Ctrl/Cmd+K still opens the
+    # search dialog). "Persistent" items also stay in the header on mobile.
+    "navbar_persistent": ["search-button"],
+    "navbar_end": ["theme-switcher", "navbar-icon-links"],
     "show_toc_level": 2,
     "navigation_with_keys": False,
     "use_edit_page_button": True,
@@ -149,7 +156,7 @@ html_context = {
     "doc_path": "docs",
     "default_mode": "auto",
 }
-html_sidebars = {"index": [], "changelog": [], "license": [], "references": []}
+html_sidebars = {"index": []}  # landing page: no primary sidebar
 
 # -- linkcheck ---------------------------------------------------------------
 linkcheck_ignore = [

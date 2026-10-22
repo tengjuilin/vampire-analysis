@@ -172,39 +172,53 @@ def check_labels(
     n_clusters: int | None = None,
     *,
     allow_empty: bool = False,
+    one_based: bool = True,
 ) -> tuple[NDArray[np.intp], int]:
     """Validate shape-mode labels and return them with the number of modes.
+
+    Shape modes are numbered ``1..n_clusters`` (dendrogram leaf order), so by
+    default label 0 is rejected.
 
     Parameters
     ----------
     labels : array-like of shape (n_samples,)
-        Non-negative integer labels. Whole-number floats (e.g. ``1.0``) are
-        accepted; booleans are not.
+        Integer labels in ``1..n_clusters`` (or ``>= 0`` if ``one_based`` is
+        false). Whole-number floats (e.g. ``1.0``) are accepted; booleans are
+        not.
     n_clusters : int, optional
-        Number of shape modes (>= 1). Defaults to ``max(labels) + 1`` (0 for
-        empty labels).
+        Number of shape modes (>= 1). Defaults to ``max(labels)`` (one-based)
+        or ``max(labels) + 1`` (zero-based); 0 for empty labels.
     allow_empty : bool, default=False
         Accept an empty array.
+    one_based : bool, default=True
+        Validate one-based shape-mode labels. Pass ``False`` for other
+        non-negative integer ids (e.g. region labels of a label image), which
+        are then only checked to be ``< n_clusters``.
 
     Returns
     -------
     labels : ndarray of shape (n_samples,)
-        ``intp`` labels.
+        ``intp`` labels, unchanged in value (still one-based by default).
     n_clusters : int
 
     Raises
     ------
     ValueError
         If ``labels`` is not 1-D, is empty (unless ``allow_empty``), is not
-        integer-valued, is negative, or is not below ``n_clusters``; or if
+        integer-valued, is below 1 (below 0 if not ``one_based``), or is above
+        ``n_clusters`` (not below it if not ``one_based``); or if
         ``n_clusters`` is not an integer >= 1.
 
     Examples
     --------
     >>> from vampire._validation import check_labels
-    >>> values, k = check_labels([0.0, 2.0])
+    >>> values, k = check_labels([1.0, 3.0])
     >>> values.tolist(), k
-    ([0, 2], 3)
+    ([1, 3], 3)
+    >>> check_labels([0, 1])
+    Traceback (most recent call last):
+    ...
+    ValueError: Shape-mode labels are 1-based (1..n_clusters); got 0. ...
     """
     values = np.asarray(labels)
     if values.ndim != 1 or (values.size == 0 and not allow_empty):
@@ -220,14 +234,22 @@ def check_labels(
         if not (np.issubdtype(values.dtype, np.integer) or integral_floats):
             raise ValueError("labels must be integers.")
     values = values.astype(np.intp)
+    offset = 0 if one_based else 1
     if values.size and values.min() < 0:
         raise ValueError(f"labels must be non-negative; got {values.min()}.")
+    if one_based and values.size and values.min() == 0:
+        raise ValueError(
+            "Shape-mode labels are 1-based (1..n_clusters); got 0. Use the "
+            "output of Vampire.predict or Vampire.labels_, or add 1 to "
+            "0-based cluster ids."
+        )
     if n_clusters is None:
-        n_clusters = int(values.max(initial=-1)) + 1
+        n_clusters = int(values.max()) + offset if values.size else 0
     else:
         n_clusters = check_n_clusters(n_clusters)
-        if values.size and values.max() >= n_clusters:
+        if values.size and values.max() + offset > n_clusters:
+            bound = "at most" if one_based else "below"
             raise ValueError(
-                f"labels must be below n_clusters={n_clusters}; got {values.max()}."
+                f"labels must be {bound} n_clusters={n_clusters}; got {values.max()}."
             )
     return values, n_clusters

@@ -150,14 +150,22 @@ model only reads `contour`.
 
 ## Shape-mode labels
 
-`Vampire.predict` returns an integer ndarray of shape `(n_samples,)` with values
-in `0 ... n_clusters - 1`:
+`Vampire.predict` (and `fit_predict`, `labels_`) returns an integer ndarray of
+shape `(n_samples,)` with values in `1 ... n_clusters`:
 
-- labels are **0-based** (the pre-1.0 package and the GUI plotted them 1-based);
-- labels follow the dendrogram leaf order, so similar modes have adjacent ids;
-- mode `k` corresponds to `model.mean_cluster_contours_[k]`,
-  `model.cluster_centers_[k]`, column `k` of `model.transform(X)`, and color
-  `k` in every {mod}`vampire.plotting` figure.
+- shape modes are **1-based**, the numbers shown in every figure;
+- they follow the dendrogram leaf order from left to right, so similar modes
+  have adjacent numbers (`model.dendrogram_["ivl"]` is `["1", ..., "K"]`);
+- arrays with one row per mode keep 0-based NumPy indexing: mode `m`
+  corresponds to `model.mean_cluster_contours_[m - 1]`,
+  `model.cluster_centers_[m - 1]`, and column `m - 1` of `model.transform(X)`
+  (named `mode{m}` with `set_output(transform="pandas")`); every
+  {mod}`vampire.plotting` function takes the 1-based labels directly and draws
+  mode `m` in the same color everywhere;
+- {func}`vampire.shape_mode_distribution` returns fractions whose entry `i` is
+  mode `i + 1`; a label of 0 raises `ValueError`;
+- `model.pipeline_` ends with the scikit-learn K-means, which stays 0-based:
+  `model.pipeline_.predict(X) + 1 == model.predict(X)`.
 
 ```{code-cell} ipython3
 model = vp.Vampire(n_clusters=5, random_state=0).fit(props)

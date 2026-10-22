@@ -34,7 +34,8 @@ Python 3.13+. Dependencies live in `pyproject.toml`; never edit `uv.lock` by han
 | `tests/` | pytest suite, one `test_<module>.py` per module, `tests/data/` for fixtures |
 | `docs/` | Sphinx (MyST markdown, executed tutorials via myst-nb); see "Documentation" below |
 | `docs/api/index.md` | API reference (autosummary; stubs generated into `docs/api/generated/`, gitignored) |
-| `docs/for_agents.md` | Compact API/invariants/pitfalls summary; keep in sync with the public API |
+| `docs/api/for_agents.md` | Compact API/invariants/pitfalls summary; keep in sync with the public API |
+| `tools/make_logo.py` | Generates the logos in `docs/_static/` (`vampire-logo.svg`, `vampire-logo-dark.svg`, `vampire-icon.svg`/`.png`) |
 
 ## Data conventions (invariants — do not break)
 
@@ -52,7 +53,16 @@ Python 3.13+. Dependencies live in `pyproject.toml`; never edit `uv.lock` by han
   raise on it (wrap as `[contour]`).
 - Flattened contours are `(n_samples, 2 * n_points)` with all x first, then all y
   (i.e. `contours.reshape(n_samples, -1)` of a `(n_samples, 2, n_points)` array).
-- Shape-mode labels are 0-based ints ordered by dendrogram leaf order.
+- Shape modes are **1-based** ints `1..n_clusters` in dendrogram leaf order
+  (left to right): `labels_`, `predict`, `fit_predict`, and every metrics and
+  plotting function use them; plots show `1..k`, mode `m` at x = `10 * m - 5`.
+  Arrays with one row/column per mode stay 0-based: mode `m` is
+  `mean_cluster_contours_[m - 1]`, `cluster_centers_[m - 1]`,
+  `transform(X)[:, m - 1]` (pandas column `mode{m}`). `linkage_matrix_` keeps
+  SciPy's 0-based leaf ids (`dendrogram_["ivl"] == ["1", ..., "k"]`), and the
+  KMeans in `pipeline_` is 0-based (`pipeline_.predict(X) + 1 == predict(X)`).
+  `shape_mode_distribution(labels)[i]` is the fraction of mode `i + 1`; label 0
+  raises `ValueError`.
 
 ## Code conventions
 
@@ -77,11 +87,25 @@ Python 3.13+. Dependencies live in `pyproject.toml`; never edit `uv.lock` by han
   every code cell must run top to bottom with only `vampire` and its
   dependencies, use bundled/synthetic data (`datasets.load_example_images`,
   `datasets.make_shapes`), write only to a temp directory, and stay fast.
-- Structure: `index.md`, `installation.md`, `quickstart.md`,
-  `user_guide/{method,data_conventions,your_images,custom_pipelines,plotting,differences_from_gui}.md`,
-  `api/index.md`, `for_agents.md`, `changelog.md`, `references.md`, `license.md`.
+- Structure: five top-level sections, which are the navbar entries; each has
+  an `index.md` (short intro + toctree) and the root `index.md` is a landing
+  page whose hidden toctree lists exactly these five indexes:
+  - `user_guide/`: `installation`, `method`, `data_conventions`,
+    `differences_from_gui`, `references`, `license`
+  - `tutorials/`: `quickstart`, `your_images`
+  - `examples/`: `plotting`, `new_condition`, `n_shape_modes`, `custom_pipelines`
+  - `api/`: `index` (autosummary) and `for_agents`
+  - `releases/`: `changelog`
+  Do not add top-level sections; put new pages into one of these. Cross-link
+  with absolute `{doc}` targets (e.g. ``{doc}`/user_guide/method` ``).
 - New public function/class: add it to the autosummary list in
-  `docs/api/index.md` and to `docs/for_agents.md`; add a changelog entry.
+  `docs/api/index.md` and to `docs/api/for_agents.md`; add a changelog entry
+  in `docs/releases/changelog.md`.
+- Theme (pydata-sphinx-theme) settings are in `docs/conf.py`: vector logos
+  `_static/vampire-logo.svg` / `vampire-logo-dark.svg` (the lockup includes
+  the name, so no text title), favicon `_static/vampire-icon.svg` (PNG
+  fallback in `_templates/layout.html`), search as a navbar icon only
+  (Ctrl/Cmd+K). Navbar height and colors are in `_static/vampire.css`.
 - Docstrings are rendered by numpydoc: avoid bare `name_` (trailing
   underscore) in type fields -- RST reads it as a link; write ``name_``.
 - `sphinx-llms-txt` emits `llms.txt` and `llms-full.txt` at the HTML root.

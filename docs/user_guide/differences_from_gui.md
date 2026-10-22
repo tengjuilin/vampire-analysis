@@ -2,7 +2,7 @@
 
 `vampire-analysis` 1.0 implements the method of the original VAMPIRE GUI
 ([`vampireanalysis`](https://pypi.org/project/vampireanalysis/),
-[source](https://github.com/kukionfr/VAMPIRE_open)) {doc}`[1] <../references>`
+[source](https://github.com/kukionfr/VAMPIRE_open)) {doc}`[1] <references>`
 and of the pre-1.0 releases of this package, but fixes several details. The
 overall result -- shape modes, their distributions, and the figures -- is
 comparable, but **labels and distributions are not numerically identical** to
@@ -19,7 +19,7 @@ than mixing versions within one study.
 | Alignment | loop over shifts, Kabsch rotation for each | all cyclic shifts scored in closed form, then one Kabsch rotation; same optimum, faster |
 | Number of PCs | GUI and 0.0.1: fixed 20; later pre-1.0 code: 95 % variance by default | `n_components` (int or variance fraction, default 0.95), via scikit-learn PCA |
 | Normalization | GUI: row normalization when clustering but **not** when assigning new data | same {class}`~sklearn.preprocessing.Normalizer` step in fit and predict, so `predict(X_train)` reproduces `labels_` |
-| Labels | cluster ids reordered by dendrogram, plotted 1-based | dendrogram-ordered, **0-based** everywhere (`0 ... n_clusters - 1`) |
+| Labels | 0-based cluster ids reordered by dendrogram, plotted 1-based (`cluster_id + 1`) | dendrogram-ordered, **1-based** everywhere (`1 ... n_clusters`), in labels and figures alike |
 | Randomness | random seed drawn when none was given | `random_state=None` follows scikit-learn; pass an int for reproducibility |
 
 ## Why these changes matter
@@ -40,10 +40,14 @@ contours are assigned with unnormalized scores, an object can receive a
 different label at prediction time than during training. In 1.0 the full
 fitted pipeline is reused, so this cannot happen.
 
-**0-based labels.** Labels are now NumPy-style indices: `mean_cluster_contours_[k]`
-is the shape of mode `k`, and color `k` in every figure. Add 1 yourself if a
-figure for publication should start at 1.
+**1-based labels.** Shape modes are numbered `1 ... n_clusters` from left to
+right in the dendrogram, the same numbers the figures show, so a label in a
+table always matches the mode number in a plot. Arrays with one row per mode
+keep NumPy indexing: mode `m` is `mean_cluster_contours_[m - 1]`,
+`cluster_centers_[m - 1]`, and column `m - 1` of `transform` (named
+`mode{m}` with pandas output). Old 0-based `cluster_id` values correspond to
+`cluster_id + 1`.
 
 ## Migrating code
 
-See the migration table in the {doc}`../changelog`.
+See the migration table in the {doc}`/releases/changelog`.

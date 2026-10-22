@@ -4,6 +4,6 @@
 (the `LICENSE` file in the
 [repository](https://github.com/tengjuilin/vampire-analysis/blob/main/LICENSE)).
 
-```{literalinclude} ../LICENSE
+```{literalinclude} ../../LICENSE
 :language: text
 ```

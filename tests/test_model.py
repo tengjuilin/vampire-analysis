@@ -45,7 +45,16 @@ def test_separates_four_kinds(four_kinds):
 def test_predict_on_training_data_equals_labels(fitted, four_kinds):
     X, _ = four_kinds
     np.testing.assert_array_equal(fitted.predict(X), fitted.labels_)
-    np.testing.assert_array_equal(fitted.pipeline_.predict(X), fitted.labels_)
+    np.testing.assert_array_equal(fitted.pipeline_.predict(X) + 1, fitted.labels_)
+
+
+def test_labels_are_one_based(fitted, four_kinds):
+    X, _ = four_kinds
+    k = fitted.n_clusters
+    for labels in (fitted.labels_, fitted.predict(X), clone(fitted).fit_predict(X)):
+        assert np.issubdtype(labels.dtype, np.integer)
+        assert set(labels.tolist()) == set(range(1, k + 1))
+    assert fitted.dendrogram_["ivl"] == [str(m) for m in range(1, k + 1)]
 
 
 def test_fitted_attributes(fitted, four_kinds):
@@ -65,7 +74,7 @@ def test_fitted_attributes(fitted, four_kinds):
     assert fitted.cluster_centers_.shape == (k, fitted.n_components_)
     assert fitted.explained_variance_ratio_.shape == (fitted.n_components_,)
     assert fitted.labels_.shape == (len(X),)
-    assert set(fitted.labels_) == set(range(k))
+    assert set(fitted.labels_) == set(range(1, k + 1))
     assert fitted.linkage_matrix_.shape == (k - 1, 4)
     assert fitted.n_features_in_ == 2 * p
     assert fitted.inertia_ == pytest.approx(-fitted.score(X))
@@ -80,12 +89,12 @@ def test_dendrogram_order(fitted, four_kinds):
     flat = fitted.mean_cluster_contours_.reshape(k, -1)
     recomputed = linkage(pdist(flat), "complete")
     np.testing.assert_allclose(fitted.linkage_matrix_, recomputed)
-    # Mean cluster contours follow the new numbering.
+    # Mean cluster contours follow the new numbering (row m - 1 is mode m).
     normalized = fitted.normalize(X)
-    for label in range(k):
+    for mode in range(1, k + 1):
         np.testing.assert_allclose(
-            fitted.mean_cluster_contours_[label],
-            normalized[fitted.labels_ == label].mean(axis=0),
+            fitted.mean_cluster_contours_[mode - 1],
+            normalized[fitted.labels_ == mode].mean(axis=0),
         )
 
 
@@ -93,12 +102,12 @@ def test_kmeans_centers_and_labels_permuted_consistently(fitted, four_kinds):
     X, _ = four_kinds
     features = fitted.pipeline_[:-1].transform(X)
     centers = fitted.cluster_centers_
-    for k in range(fitted.n_clusters):
-        member_mean = features[fitted.labels_ == k].mean(axis=0)
+    for mode in range(1, fitted.n_clusters + 1):
+        member_mean = features[fitted.labels_ == mode].mean(axis=0)
         nearest = np.argmin(np.linalg.norm(centers - member_mean, axis=1))
-        assert nearest == k  # center k sits among the points labelled k
+        assert nearest == mode - 1  # center row m - 1 sits among mode-m points
     np.testing.assert_array_equal(
-        fitted.pipeline_.named_steps["kmeans"].predict(features), fitted.labels_
+        fitted.pipeline_.named_steps["kmeans"].predict(features) + 1, fitted.labels_
     )
 
 
@@ -106,7 +115,7 @@ def test_transform_is_distance_to_centers(fitted, four_kinds):
     X, _ = four_kinds
     distances = fitted.transform(X)
     assert distances.shape == (len(X), 6)
-    np.testing.assert_array_equal(distances.argmin(axis=1), fitted.labels_)
+    np.testing.assert_array_equal(distances.argmin(axis=1) + 1, fitted.labels_)
 
 
 def test_fit_transform_and_fit_predict(four_kinds):
@@ -139,7 +148,7 @@ def test_random_state_none(shapes):
     X, _ = shapes
     model = vp.Vampire(n_clusters=2).fit(X)
     assert model.labels_.shape == (len(X),)
-    assert set(model.labels_) <= {0, 1}
+    assert set(model.labels_) <= {1, 2}
     np.testing.assert_array_equal(model.predict(X), model.labels_)
     assert model.dendrogram_["leaves"] == [0, 1]
 
@@ -249,16 +258,16 @@ def test_empty_cluster_falls_back_to_mean_contour(shapes):
         model = vp.Vampire(n_clusters=3, n_components=1, random_state=0).fit(X)
     assert len(set(model.labels_)) == 2
     assert np.all(np.isfinite(model.mean_cluster_contours_))
-    empty = (set(range(3)) - set(model.labels_)).pop()
+    empty = (set(range(1, 4)) - set(model.labels_)).pop()
     np.testing.assert_array_equal(
-        model.mean_cluster_contours_[empty], model.mean_contour_
+        model.mean_cluster_contours_[empty - 1], model.mean_contour_
     )
     assert model.dendrogram_["leaves"] == [0, 1, 2]
 
 
 def test_get_feature_names_out(fitted):
     names = fitted.get_feature_names_out()
-    assert names.tolist() == [f"vampire{i}" for i in range(6)]
+    assert names.tolist() == [f"mode{m}" for m in range(1, 7)]
     with pytest.raises(NotFittedError):
         vp.Vampire().get_feature_names_out()
 
@@ -268,11 +277,11 @@ def test_set_output_pandas(four_kinds):
     model = vp.Vampire(n_clusters=3, random_state=0).set_output(transform="pandas")
     distances = model.fit_transform(X)
     assert isinstance(distances, pd.DataFrame)
-    assert distances.columns.tolist() == ["vampire0", "vampire1", "vampire2"]
+    assert distances.columns.tolist() == ["mode1", "mode2", "mode3"]
     out = model.transform(X)
     assert isinstance(out, pd.DataFrame)
     np.testing.assert_allclose(out.to_numpy(), distances.to_numpy())
-    np.testing.assert_array_equal(out.to_numpy().argmin(axis=1), model.labels_)
+    np.testing.assert_array_equal(out.to_numpy().argmin(axis=1) + 1, model.labels_)
     # A property table's index is carried over.
     frame = pd.DataFrame({"contour": list(X)}, index=np.arange(len(X)) + 100)
     assert model.transform(frame).index.tolist() == frame.index.tolist()

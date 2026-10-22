@@ -145,8 +145,8 @@ print("fitted on", len(balanced), "objects; labeled", len(props))
 ```
 
 `model.transform(props)` returns an `(n_objects, n_clusters)` array of
-distances to each shape-mode center; its row minimum measures how typical an
-object is of its mode.
+distances to each shape-mode center (column `m - 1` is mode `m`); its row
+minimum measures how typical an object is of its mode.
 
 ## 5. Compare groups
 
@@ -162,7 +162,7 @@ summary = pd.DataFrame(
         for group, df in props.groupby("group")
     }
 ).T
-summary.columns = [f"mode {i}" for i in range(k)]
+summary.columns = [f"mode {m}" for m in range(1, k + 1)]
 summary["entropy_bits"] = [
     vp.shannon_entropy(row, base=2) for row in summary.iloc[:, :k].to_numpy()
 ]
@@ -206,7 +206,7 @@ per_image = (
     props.groupby(["group", "filename"])["shape_mode"]
     .value_counts(normalize=True)
     .unstack(fill_value=0)
-    .reindex(columns=range(k), fill_value=0)
+    .reindex(columns=range(1, k + 1), fill_value=0)
 )
 per_image.round(2)
 ```
@@ -224,7 +224,9 @@ summary.to_csv(workdir / "summary_by_group.csv")
 
 A fitted model is an ordinary scikit-learn estimator and can be saved with
 {mod}`joblib` (installed with scikit-learn) or {mod}`pickle`, then reused to
-label new images with the same shape modes:
+label new images with the same shape modes (see
+{doc}`/examples/new_condition` for a model fitted on one condition and applied
+to another):
 
 ```{code-cell} ipython3
 import joblib
