@@ -39,7 +39,7 @@ from scipy.interpolate import make_interp_spline
 from sklearn.utils.validation import check_is_fitted
 
 from ._validation import ContourSet, check_labels
-from .contours import _drop_repeated_points, _segment_lengths
+from .contours import _drop_repeated_points, _segment_lengths, lowpass_contour
 from .extraction import _to_label_image
 from .metrics import shape_mode_distribution
 
@@ -116,16 +116,22 @@ def _as_labels(labels: ArrayLike) -> NDArray:
     return np.asarray(labels)
 
 
-def _closed_curve(contour: NDArray, smooth: bool = True) -> NDArray[np.float64]:
+def _closed_curve(
+    contour: NDArray, smooth: bool = True, n_harmonics: int | None = None
+) -> NDArray[np.float64]:
     """Return a closed ``(2, m)`` curve for drawing a ``(2, n)`` contour.
 
-    With ``smooth``, a periodic cubic spline is fitted *through* the contour
-    points (parameterized by chord length) and sampled at ``_SMOOTH_POINTS``
-    points, so straight segments between the few stored points are replaced by
-    a smooth curve without moving the points themselves. Otherwise the polygon
-    is closed by repeating its first point.
+    With ``n_harmonics``, the contour is first low-pass filtered with
+    :func:`vampire.contours.lowpass_contour`. With ``smooth``, a periodic
+    cubic spline is fitted *through* the points (parameterized by chord
+    length) and sampled at ``_SMOOTH_POINTS`` points, so straight segments
+    between the few stored points are replaced by a smooth curve without
+    moving the points themselves. Otherwise the polygon is closed by repeating
+    its first point.
     """
     points = np.asarray(contour, dtype=float)
+    if n_harmonics is not None:
+        points = lowpass_contour(points, n_harmonics)
     if smooth:
         points = _drop_repeated_points(points)
     if not smooth or points.shape[1] < 4:
@@ -221,6 +227,7 @@ def plot_shape_modes(
     linewidth: float = 2.0,
     equal_aspect: bool = True,
     smooth: bool = True,
+    n_harmonics: int | None = None,
 ) -> Axes:
     """Draw the mean contour of each shape mode side by side.
 
@@ -249,6 +256,13 @@ def plot_shape_modes(
         Draw each contour as a periodic cubic spline passing through its
         ``n_points`` points instead of straight segments between them. The
         points themselves (``model.mean_cluster_contours_``) are unchanged.
+    n_harmonics : int, optional
+        Low-pass filter each contour before drawing, keeping only its first
+        ``n_harmonics`` Fourier harmonics (see
+        :func:`vampire.contours.lowpass_contour`). Removes high-frequency
+        wiggles such as the pixel staircase of segmented outlines; around 8-12
+        keeps the overall shape of typical cells. ``None`` (default) draws the
+        contours unfiltered. Only the drawing changes, not the model.
 
     Returns
     -------
@@ -283,9 +297,16 @@ def plot_shape_modes(
         scale = 0.85 * spacing / width if width > 0 else 1.0
     centers = spacing * (np.argsort(model.dendrogram_["leaves"]) + 0.5)
     for i, contour in enumerate(contours):
-        x, y = _closed_curve(contour, smooth) * scale
+        x, y = _closed_curve(contour, smooth, n_harmonics) * scale
         x = x + centers[i]
-        ax.plot(x, y, color=palette[i], lw=linewidth, label=str(i + 1))
+        ax.plot(
+            x,
+            y,
+            color=palette[i],
+            lw=linewidth,
+            label=str(i + 1),
+            solid_capstyle="round",
+        )
     ax.set_xlim(0, spacing * k)
     if equal_aspect:
         ax.set_aspect("equal", adjustable="datalim")
@@ -361,6 +382,7 @@ def plot_summary(
     labels: ArrayLike | None = None,
     figsize: tuple[float, float] | None = None,
     height_ratios: Sequence[float] = (4, 1, 1),
+    n_harmonics: int | None = None,
 ) -> tuple[Figure, NDArray[Any]]:
     """Plot shape-mode distribution, mean contours, and dendrogram stacked.
 
@@ -383,6 +405,9 @@ def plot_summary(
     height_ratios : sequence of 3 floats, default=(4, 1, 1)
         Relative heights of the distribution, shape-mode, and dendrogram axes.
         Use smaller shape-mode heights for many modes.
+    n_harmonics : int, optional
+        Low-pass filter the shape-mode contours before drawing (see
+        :func:`plot_shape_modes`). ``None`` (default) draws them unfiltered.
 
     Returns
     -------
@@ -446,7 +471,9 @@ def plot_summary(
     widest = np.ptp(contours[:, 0, :], axis=1).max()
     tallest = np.abs(contours[:, 1, :]).max()
     scale = min(0.85 * _LEAF_SPACING / widest, 0.9 * half_height / tallest)
-    plot_shape_modes(model, ax=ax_modes, scale=scale, equal_aspect=False)
+    plot_shape_modes(
+        model, ax=ax_modes, scale=scale, equal_aspect=False, n_harmonics=n_harmonics
+    )
     plot_dendrogram(model, ax=ax_dend, orientation="bottom")
     ax_dend.set_xlim(0, _LEAF_SPACING * k)
     ax_dist.tick_params(axis="x", length=0, labelbottom=True)
@@ -483,6 +510,7 @@ def plot_representatives(
     alpha: float = 0.7,
     figsize: tuple[float, float] | None = None,
     smooth: bool = True,
+    n_harmonics: int | None = None,
 ) -> tuple[Figure, NDArray[Any]]:
     """Overlay the contours closest to each shape-mode center.
 
@@ -513,6 +541,13 @@ def plot_representatives(
     smooth : bool, default=True
         Draw contours as periodic cubic splines through their points instead
         of straight segments (see :func:`plot_shape_modes`).
+    n_harmonics : int, optional
+        Low-pass filter each contour before drawing, keeping only its first
+        ``n_harmonics`` Fourier harmonics (see
+        :func:`vampire.contours.lowpass_contour`). Removes high-frequency
+        wiggles such as the pixel staircase of segmented outlines; around 8-12
+        keeps the overall shape of typical cells. ``None`` (default) draws the
+        contours unfiltered. Only the drawing changes, not the model.
 
     Returns
     -------
@@ -571,16 +606,18 @@ def plot_representatives(
         closest = members[np.argsort(distances[members, i])[:n_per_mode]]
         for idx in closest:
             ax.plot(
-                *_closed_curve(normalized[idx], smooth),
+                *_closed_curve(normalized[idx], smooth, n_harmonics),
                 color=palette[i],
                 alpha=alpha,
                 lw=1.5,
+                solid_capstyle="round",
             )
         if show_mean:
             ax.plot(
-                *_closed_curve(model.mean_cluster_contours_[i], smooth),
+                *_closed_curve(model.mean_cluster_contours_[i], smooth, n_harmonics),
                 color="black",
                 lw=2,
+                solid_capstyle="round",
                 ls="--",
             )
         ax.set_aspect("equal", adjustable="datalim")

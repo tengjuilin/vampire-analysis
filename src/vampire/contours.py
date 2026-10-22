@@ -14,6 +14,10 @@ except shape:
    fix the starting point and direction;
 3. :func:`align_contour` -- fine-tune starting point and rotation against a
    reference (the mean registered contour of a data set).
+
+:func:`lowpass_contour` is not part of that pipeline: it removes
+high-frequency detail (pixel staircase, segmentation noise) for display, as
+used by the ``n_harmonics`` option of :mod:`vampire.plotting`.
 """
 
 import numpy as np
@@ -335,3 +339,58 @@ def align_contour(contour: NDArray, reference: NDArray) -> NDArray[np.float64]:
     s = shifted[0] @ B[1] - shifted[1] @ B[0]
     A_best = shifted[:, np.argmax(np.hypot(c, s))]
     return kabsch_rotation(A_best, B) @ A_best
+
+
+def lowpass_contour(contour: NDArray, n_harmonics: int) -> NDArray[np.float64]:
+    r"""Remove high-frequency detail from a closed contour (Fourier low-pass).
+
+    The contour is treated as a periodic complex signal
+    :math:`z_j = x_j + i\,y_j` and expanded in its discrete Fourier series
+    (elliptic Fourier descriptors). Harmonics above ``n_harmonics`` are set to
+    zero, and the contour is reconstructed at the same points. Harmonic 0 is
+    the centroid, harmonic 1 the best-fitting ellipse; each further harmonic
+    adds finer detail, so small values give smoother outlines.
+
+    Points should be roughly equidistant along the contour, as produced by
+    :func:`resample_contour` (and therefore by every fitted model attribute
+    such as ``Vampire.mean_cluster_contours_``).
+
+    Parameters
+    ----------
+    contour : ndarray of shape (2, n_points)
+        Closed contour.
+    n_harmonics : int
+        Number of harmonics kept in each rotation direction (>= 1). Values of
+        ``n_points // 2`` or more keep every harmonic and return the contour
+        unchanged.
+
+    Returns
+    -------
+    smoothed : ndarray of shape (2, n_points)
+        Low-pass filtered contour with the same number of points and the same
+        centroid.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> t = np.linspace(0, 2 * np.pi, 64, endpoint=False)
+    >>> noisy = np.vstack([np.cos(t), np.sin(t)]) * (1 + 0.05 * np.cos(20 * t))
+    >>> smooth = lowpass_contour(noisy, n_harmonics=5)
+    >>> smooth.shape
+    (2, 64)
+    >>> bool(np.allclose(np.hypot(*smooth), 1.0))  # the ripple is gone
+    True
+    """
+    contour = _check_contour(contour)
+    if (
+        isinstance(n_harmonics, bool)
+        or not isinstance(n_harmonics, int | np.integer)
+        or n_harmonics < 1
+    ):
+        raise ValueError(f"n_harmonics must be an integer >= 1; got {n_harmonics!r}.")
+    n = contour.shape[1]
+    coefficients = np.fft.fft(contour[0] + 1j * contour[1])
+    frequencies = np.fft.fftfreq(n, d=1.0 / n)  # integer harmonic numbers
+    coefficients[np.abs(frequencies) > n_harmonics] = 0
+    smoothed = np.fft.ifft(coefficients)
+    return np.vstack([smoothed.real, smoothed.imag])

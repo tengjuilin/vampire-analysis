@@ -96,6 +96,7 @@ vp.contours.signed_area(contour) -> float  (> 0 counterclockwise in a y-up frame
 vp.contours.resample_contour(contour, n_points=50) -> (2, n_points)
 vp.contours.register_contour(contour) -> (2, n)
 vp.contours.align_contour(contour, reference) -> (2, n)
+vp.contours.lowpass_contour(contour, n_harmonics) -> (2, n)  (Fourier low-pass; display only)
 
 vp.shape_mode_distribution(labels, n_clusters=None) -> (n_clusters,) fractions
     # labels in 1..n_clusters; entry i = fraction of mode i+1; default n_clusters = max(labels);
@@ -103,9 +104,13 @@ vp.shape_mode_distribution(labels, n_clusters=None) -> (n_clusters,) fractions
 vp.shannon_entropy(distribution, base=None) -> float   # nats by default; base > 0, != 1
     (aliases of vp.metrics.*)
 
-vp.plotting.plot_summary(model, labels=None, figsize=None, height_ratios=(4, 1, 1)) -> (Figure, axes(3,))
+vp.plotting.plot_summary(model, labels=None, figsize=None, height_ratios=(4, 1, 1),
+                         n_harmonics=None) -> (Figure, axes(3,))
 vp.plotting.plot_distribution(labels, n_clusters=None, ax=None, colors=None) -> Axes
-vp.plotting.plot_shape_modes(model, ax=None, colors=None, ...) -> Axes
+vp.plotting.plot_shape_modes(model, ax=None, colors=None, ..., smooth=True,
+                             n_harmonics=None) -> Axes
+    # smooth: draw a periodic spline through the points; n_harmonics: Fourier
+    # low-pass before drawing (~8-12 removes pixel staircase). Drawing only.
 vp.plotting.plot_dendrogram(model, ax=None, **dendrogram_kwargs) -> Axes
     # default orientation="bottom" (root at bottom, leaves up toward the modes), no spines;
     # also "top"/"left"/"right"; mode m at 10*m - 5 on the leaf axis

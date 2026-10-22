@@ -4,6 +4,7 @@ import pytest
 from vampire._linalg import kabsch_rotation
 from vampire.contours import (
     align_contour,
+    lowpass_contour,
     register_contour,
     resample_contour,
     signed_area,
@@ -218,3 +219,53 @@ def test_chain_is_invariant_up_to_sampling(transform):
     np.testing.assert_allclose(
         normalize(transform(contour), reference), reference, atol=0.05
     )
+
+
+# --- lowpass_contour ---------------------------------------------------------
+
+
+def _ripple_circle(n=64, ripple=0.05, freq=20):
+    t = np.linspace(0, 2 * np.pi, n, endpoint=False)
+    radius = 1 + ripple * np.cos(freq * t)
+    return np.vstack([radius * np.cos(t), radius * np.sin(t)])
+
+
+def test_lowpass_removes_high_frequency_ripple():
+    smooth = lowpass_contour(_ripple_circle(), n_harmonics=5)
+    assert smooth.shape == (2, 64)
+    np.testing.assert_allclose(np.hypot(*smooth), 1.0, atol=1e-12)
+
+
+def test_lowpass_keeps_low_harmonics_exactly():
+    t = np.linspace(0, 2 * np.pi, 50, endpoint=False)
+    ellipse = np.vstack([3 * np.cos(t) + 2, np.sin(t) - 1])  # harmonics 0 and 1
+    np.testing.assert_allclose(lowpass_contour(ellipse, 1), ellipse, atol=1e-12)
+
+
+def test_lowpass_preserves_centroid_and_point_count():
+    rng = np.random.default_rng(0)
+    contour = _ripple_circle(n=51) + rng.normal(0, 0.02, (2, 51)) + [[5.0], [-3.0]]
+    smooth = lowpass_contour(contour, 4)
+    assert smooth.shape == contour.shape
+    np.testing.assert_allclose(smooth.mean(axis=1), contour.mean(axis=1))
+
+
+def test_lowpass_all_harmonics_is_identity():
+    contour = _ripple_circle(n=40)
+    np.testing.assert_allclose(lowpass_contour(contour, 20), contour, atol=1e-12)
+    np.testing.assert_allclose(lowpass_contour(contour, 100), contour, atol=1e-12)
+
+
+def test_lowpass_commutes_with_rotation():
+    contour = _ripple_circle(n=48, freq=7)
+    theta = 0.7
+    R = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
+    np.testing.assert_allclose(
+        lowpass_contour(R @ contour, 3), R @ lowpass_contour(contour, 3), atol=1e-12
+    )
+
+
+@pytest.mark.parametrize("bad", [0, -1, 2.5, True, None, "3"])
+def test_lowpass_rejects_bad_n_harmonics(bad):
+    with pytest.raises(ValueError, match="n_harmonics"):
+        lowpass_contour(_ripple_circle(), bad)

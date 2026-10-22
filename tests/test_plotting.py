@@ -50,6 +50,13 @@ def _max_turn(curve):
     return np.abs(np.angle(np.exp(1j * np.diff(angle)))).max()
 
 
+def _total_turn(curve):
+    """Sum of absolute turning angles along the curve (2*pi for convex)."""
+    seg = np.diff(curve, axis=1)
+    angle = np.arctan2(seg[1], seg[0])
+    return np.abs(np.angle(np.exp(1j * np.diff(angle)))).sum()
+
+
 def test_dendrogram(fitted):
     model, _ = fitted
     ax = plotting.plot_dendrogram(model)
@@ -428,3 +435,28 @@ def test_mode_colors():
         plotting._mode_colors(0)
     with pytest.raises(ValueError):
         plotting._mode_colors(3, "notacolor")
+
+
+def test_shape_modes_lowpass_smooths_but_keeps_shape(fitted):
+    model, _ = fitted
+    raw = plotting.plot_shape_modes(model, scale=1.0)
+    plt.close("all")
+    filtered = plotting.plot_shape_modes(model, scale=1.0, n_harmonics=4)
+    for raw_line, line in zip(raw.lines, filtered.lines, strict=True):
+        a, b = np.vstack(raw_line.get_data()), np.vstack(line.get_data())
+        assert a.shape == b.shape
+        assert not np.allclose(a, b)  # filtering changed the drawing
+        # ... but only slightly: same overall size and position.
+        np.testing.assert_allclose(np.ptp(a, axis=1), np.ptp(b, axis=1), rtol=0.25)
+        # Fewer wiggles: less total turning along the outline (>= 2*pi).
+        assert _total_turn(b) < _total_turn(a)
+
+
+def test_lowpass_option_threads_through(fitted):
+    model, X = fitted
+    _, axes = plotting.plot_summary(model, n_harmonics=6)
+    assert len(axes[1].lines) == K
+    _, axes = plotting.plot_representatives(model, X, n_per_mode=2, n_harmonics=6)
+    assert all(len(ax.lines) >= 1 for ax in axes)
+    with pytest.raises(ValueError, match="n_harmonics"):
+        plotting.plot_shape_modes(model, n_harmonics=0)
