@@ -32,6 +32,32 @@
   padding-bottom: 0;
 }
 
+/* Section links fill the full navbar height (clickable everywhere), and the
+   hover/current underline sits on the navbar's bottom edge. */
+.bd-header .bd-header__inner,
+.bd-header .navbar-header-items,
+.bd-header .navbar-header-items__center,
+.bd-header .navbar-header-items__center .navbar-item,
+.bd-header .navbar-header-items__center nav,
+.bd-header .navbar-header-items__center ul.navbar-nav {
+  align-items: stretch;
+  height: var(--pst-header-height);
+}
+
+.bd-header ul.navbar-nav > li.nav-item {
+  display: flex;
+}
+
+.bd-header ul.navbar-nav > li.nav-item > .nav-link {
+  display: flex;
+  align-items: center;
+}
+
+.bd-header ul.navbar-nav > li.nav-item > .nav-link::before {
+  margin: 0;
+  bottom: 0;
+}
+
 html[data-theme="light"] {
   --pst-color-primary: #0a5173;
 }
